@@ -535,4 +535,272 @@
 #define X86_TSS_DBG_T     0x0001
 #define X86_TSS_TERM_BYT  0xff     /* Terminator byte (last byte of TSS) */
 
+
+/*
+* CPUID Instruction Output
+*
+* Input: EAX = 0
+*
+* Output: EBX:EDX:ECX - vendor string. For example for Intel processor
+* EBX:EDX:ECX = "uneG":"Ieni":"letn" which is "GenuineIntel" or
+* "AuthenticAMD" for AMD chips.
+*
+* The following are known processor manufacturer ID strings:
+* "GenuineIntel" - Intel Corporation (Intel)
+* "AuthenticAMD" - Advanced Micro Devices, Inc. (AMD)
+* "AMDisbetter!", "AMD ISBETTER" - early AMD engineering prototypes
+* "CyrixInstead" - Cyrix
+* "CentaurHauls" - Centaur Technology (Centaur)
+* "SiS SiS SiS " - Silicon Integrated Systems (SiS)
+* "NexGenDriven" - NexGen
+* "GenuineTMx86", "TransmetaCPU" - Transmeta Corporation (Transmeta)
+* "RiseRiseRise" - Rise Technology (Rise)
+* "UMC UMC UMC " - United Microelectronics Corporation (UMC)
+* "Geode by NSC" - National Semiconductor
+*
+*
+* Input: EAX = 1
+*
+* Output:
+*
+* EAX
+* 31 27            20 19   16   13  11     8 7 6 5 4 3 2 1 0
+* -----------------------------------------------------------
+* |  |   Extended    | Ext.  |  |CPU|       |       | Step- |
+* |..|    Family     | Model |..|Ty-|Family | Model | ping  |
+* |  |               |       |  |pe |       |       |  ID   |
+* |  |               |       |  |   |       |       |       |
+* -----------------------------------------------------------
+* EBX
+* 31       24 23           16 15           8 7 6 5 4 3 2 1 0
+* -----------------------------------------------------------
+* |  Local   |    Logical    |   CLFLUSH    |     Brand     |
+* |  APIC    |   Processor   |    Size      |      ID       |
+* |   ID     |     Count     |              |               |
+* |          |               |              |               |
+* -----------------------------------------------------------
+* ECX
+* 31              23  21    18   15  13   10 9 8 7 6 5 4 3    0
+* --------------------------------------------------------------
+* |               |P| |x|S|S|D|  |P|x|C|  |C|S|T|E|S|V|D|M|  |S|
+* |               |O| |2|S|S|C|  |D|T|X|  |I|S|M|S|M|M|S|O|  |S|
+* |   RESERVED    |P|.|A|E|E|A|..|C|P|1|..|D|S|2|T|X|X|C|N|..|E|
+* |               |C| |P|4|4| |  |M|R|6|  | |E| | | | |P| |  |3|
+* |               |N| |I|2|1| |  | | | |  | |3| | | | |L| |  | |
+* |               |T| |C| | | |  | | | |  | | | | | | | | |  | |
+* --------------------------------------------------------------
+* SSE3  - Streaming SIMD Extensions 3   xTPR   - Send Task Priority
+* MON   - MONITOR/MWAIT Supported                Messages
+* DSCPL - CPL Qualified Debug Store     PDCM   - Perf/Debug Capability
+* VMX   - Virtual Machine Extensions             MSR
+* SMX   - Safer Mode Extensions         DCA    - Direct Cache Access
+* EST   - Enhanced Intel SpeedStep      SSE41  - SSE4.1 Supported
+*         Technology                    SSE42  - SSE4.2 Supported
+* TM2   - Thermal Monitor 2             x2APIC - x2APIC Support
+* SSSE3 - Supplemental Streaming        POPCNT - POPCNT Instruction
+*         SIMD Extensions 3                      Supported
+* CID   - Context ID
+* CX16  - CMPXCHG16B Instruction
+*         Supported
+*
+* EDX
+* 31        26        21  19      15      11   9 8 7 6 5 4 3 2 1 0
+* -----------------------------------------------------------------
+* |P|I|T|H|S|S|S|F|M|A|D| |C|P|P|P|C|M|P|M|S| |A|C|M|P|M|T|P|D|V|F|
+* |B|A|M|T|S|S|S|X|M|C|S|.|L|S|S|A|M|C|G|T|E|.|P|X|C|A|S|S|S|E|M|P|
+* |E|6|1|T| |E|E|S|X|P| | |F|N|E|T|O|A|E|R|P| |I|8|E|E|R|C|E| |E|U|
+* | |4| | | |2| |R| |I| | |S| |3| |V| | |R| | |C| | | | | | | | | |
+* | | | | | | | | | | | | |H| |6| | | | | | | | | | | | | | | | | |
+* -----------------------------------------------------------------
+* FPU  - Floating-point unit on-Chip   CLFSH - CLFLUSH Instruction
+* VME  - Virtual Mode Extension                Supported
+* DE   - Debugging Extension           DS    - Debug Store
+* PSE  - Page Size Extension           ACPI  - Thermal Monitor and Software
+* TSC  - Time-Stamp Counter                    Controlled Clock Facilities
+* MSR  - Model Specific Registers              Supported
+* PAE  - Physical Address Extension    MMX   - MMX Supported
+* MCE  - Machine Check Exception       FXSR  - Fast Floating Point Save and
+* CX8  - CMPXCHG8 Instruction                  Restore
+*        Supported                     SSE   - Streaming SIMD Extensions
+* APIC - On-chip APIC Hardware                 Supported
+*        Supported                     SSE2  - Streaming SIMD Extensions 2
+* SEP  - Fast System Call Supported    SS    - Self-Snoop
+* MTRR - Memory Type Range Registers   HTT   - Hyper-Threading Technology
+* PGE  - Page Global Enable                    Supported
+* MCA  - Machine Check Architecture    TM    - Thermal Monitor Supported
+* CMOV - Conditional MOV Instruction   IA64  - IA64 Capabilities
+*        Supported                             (for Intel Itanium family)
+* PAT   - Page Attribute Table         PBE   - Pending Break Enable
+* PSE36 - 36bit Page Size Extension
+* PSN   - Processor Serial Number
+*         Present and Enabled
+*/
+
+/* Flags returned in ECX */
+#define X86_CPUID_SSE3    0x00000001
+#define X86_CPUID_MON     0x00000008
+#define X86_CPUID_DSCPL   0x00000010
+#define X86_CPUID_VMX     0x00000020
+#define X86_CPUID_SMX     0x00000040
+#define X86_CPUID_EST     0x00000080
+#define X86_CPUID_TM2     0x00000100
+#define X86_CPUID_SSSE3   0x00000200
+#define X86_CPUID_CID     0x00000400
+#define X86_CPUID_CX16    0x00002000
+#define X86_CPUID_XTPR    0x00004000
+#define X86_CPUID_PDCM    0x00008000
+#define X86_CPUID_DCA     0x00040000
+#define X86_CPUID_SSE41   0x00080000
+#define X86_CPUID_SSE42   0x00100000
+#define X86_CPUID_X2APIC  0x00200000
+#define X86_CPUID_POPCNT  0x00800000
+
+/* Flags returned in EDX */
+#define X86_CPUID_FPU    0x00000001
+#define X86_CPUID_VME    0x00000002
+#define X86_CPUID_DE     0x00000004
+#define X86_CPUID_PSE    0x00000008
+#define X86_CPUID_TSC    0x00000010
+#define X86_CPUID_MSR    0x00000020
+#define X86_CPUID_PAE    0x00000040
+#define X86_CPUID_MCE    0x00000080
+#define X86_CPUID_CX8    0x00000100
+#define X86_CPUID_APIC   0x00000200
+#define X86_CPUID_SEP    0x00000800
+#define X86_CPUID_MTRR   0x00001000
+#define X86_CPUID_PGE    0x00002000
+#define X86_CPUID_MCA    0x00004000
+#define X86_CPUID_CMOV   0x00008000
+#define X86_CPUID_PAT    0x00010000
+#define X86_CPUID_PSE36  0x00020000
+#define X86_CPUID_PSN    0x00040000
+#define X86_CPUID_CLFSH  0x00080000
+#define X86_CPUID_DS     0x00200000
+#define X86_CPUID_ACPI   0x00400000
+#define X86_CPUID_MMX    0x00800000
+#define X86_CPUID_FXSR   0x01000000
+#define X86_CPUID_SSE    0x02000000
+#define X86_CPUID_SSE2   0x04000000
+#define X86_CPUID_SS     0x08000000
+#define X86_CPUID_HTT    0x10000000
+#define X86_CPUID_TM1    0x20000000
+#define X86_CPUID_IA64   0x40000000
+#define X86_CPUID_PBE    0x80000000
+
+/*
+* CPUID Extensions by AMD
+*
+* Input: EAX = 0x8000_0000
+*
+* Output: EBX:EDX:ECX - "htuA":"itne":"DMAc" (AuthenticAMD)
+*
+* Input: EAX = 0x8000_0001
+*
+* Output:
+*
+* EAX
+* 31 27            20 19   16   13  11     8 7 6 5 4 3 2 1 0
+* -----------------------------------------------------------
+* |  |   Extended    | Ext.  |  |CPU|       |       | Step- |
+* |..|    Family     | Model |..|Ty-|Family | Model | ping  |
+* |  |               |       |  |pe |       |       |  ID   |
+* |  |               |       |  |   |       |       |       |
+* -----------------------------------------------------------
+* EBX
+* 31  28 27                     16 15                           0
+* ----------------------------------------------------------------
+* | Pkg |                         |           Brand ID           |
+* |Type |                         |                              |
+* |     |                         |                              |
+* |     |                         |                              |
+* ----------------------------------------------------------------
+* ECX
+* 31                                 13    10 9 8 7 6 5 4 3 2 1 0
+* ----------------------------------------------------------------
+* |                                  |W|S|S|I|O|3|M|S|A|C|E|S|C|A|
+* |                                  |D|K|S|B|S|D|S|S|B|R|A|V|M|H|
+* |   RESERVED                       |T|I|E|S|V|N|S|E|M|8|S|M|P|F|
+* |                                  | |N|5| |M|o|E|4| |D| | | |6|
+* |                                  | |I|A| | |w| |A| | | | | |4|
+* |                                  | |T| | | |!| | | | | | | | |
+* |                                  | | | | | |-| | | | | | | | |
+* ----------------------------------------------------------------
+* AHF64   - LAHF/SAHF Instruction      MSSE    - Misaligned SSE Mode
+*           Support in 64bit Mode      3DNow!- - 3DNow! Prefetch Support
+* CMP     - Core Multi-Processing      OSVM    - OS Visible Workaround
+*           Legacy Mode                IBS     - Instruction Based
+* SVM     - Secure Virtual Machine               Sampling
+*           Feature                    SSE5A   - SSE5A Support
+* EAS     - Extended APIC Space        SKINIT  - SKINIT, STGI and DEV
+* CR8D    - LOCK MOV CR0 Means                   Support
+*           MOV CR8                    WDT     - Watchdog Timer
+* ABM     - Advanced Bit Manipulation            Support
+*           LZCNT Instruction Support
+* SSE4A   - SSE4A Support
+*
+* EDX
+* 31  29  27        22  20 19 17          11   9 8 7 6 5 4 3 2 1 0
+* -----------------------------------------------------------------
+* |3|3|L| |T|P|F|F|M|M| |N|M| |P|P|C|M|P|M|S| |A|C|M|P|M|T|P|D|V|F|
+* |D|D|M| |S|G|F|X|M|M| |X|P| |S|A|M|C|G|T|E|.|P|X|C|A|S|S|S|E|M|P|
+* |N|N| |.|C|1|X|S|X|X|.| | |.|E|T|O|A|E|R|P| |I|8|E|E|R|C|E| |E|U|
+* |o|o| | |P|G|S|R| |+| | | | |3| |V| | |R| | |C| | | | | | | | | |
+* |w|w| | | | |R| | | | | | | |6| | | | | | | | | | | | | | | | | |
+* |!|!| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+* | |+| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+* -----------------------------------------------------------------
+* MP    - MP-Capable                   TSCP    - RDTSCP Instruction
+* NX    - No-Execute Page Protection             Supported
+* MMX+  - Extensions to MMX            LM      - Long Mode
+* FFXSR - FXSAVE/FSRSTOR Instruction   3DNow!+ - Extensions to 3DNow!
+*         Optimizations                3DNow!  - 3DNow! Supported
+* PG1G  - 1Gb Large Page Support
+*/
+
+/* Flags returned in ECX */
+#define X86_CPUID_AMD_AHF64      0x00000001
+#define X86_CPUID_AMD_CMP        0x00000002
+#define X86_CPUID_AMD_SVM        0x00000004
+#define X86_CPUID_AMD_EAS        0x00000008
+#define X86_CPUID_AMD_CR8D       0x00000010
+#define X86_CPUID_AMD_ABM        0x00000020
+#define X86_CPUID_AMD_SSE4A      0x00000040
+#define X86_CPUID_AMD_MSSE       0x00000080
+#define X86_CPUID_AMD_3DNOWPREF  0x00000100
+#define X86_CPUID_AMD_OSVM       0x00000200
+#define X86_CPUID_AMD_IBS        0x00000400
+#define X86_CPUID_AMD_SSE5A      0x00000800
+#define X86_CPUID_AMD_SKINIT     0x00001000
+#define X86_CPUID_AMD_WDT        0x00002000
+
+/* Flags returned in EDX */
+#define X86_CPUID_AMD_FPU       0x00000001
+#define X86_CPUID_AMD_VME       0x00000002
+#define X86_CPUID_AMD_DE        0x00000004
+#define X86_CPUID_AMD_PSE       0x00000008
+#define X86_CPUID_AMD_TSC       0x00000010
+#define X86_CPUID_AMD_MSR       0x00000020
+#define X86_CPUID_AMD_PAE       0x00000040
+#define X86_CPUID_AMD_MCE       0x00000080
+#define X86_CPUID_AMD_CX8       0x00000100
+#define X86_CPUID_AMD_APIC      0x00000200
+#define X86_CPUID_AMD_SEP       0x00000800
+#define X86_CPUID_AMD_MTRR      0x00001000
+#define X86_CPUID_AMD_PGE       0x00002000
+#define X86_CPUID_AMD_MCA       0x00004000
+#define X86_CPUID_AMD_CMOV      0x00008000
+#define X86_CPUID_AMD_PAT       0x00010000
+#define X86_CPUID_AMD_PSE36     0x00020000
+#define X86_CPUID_AMD_MP        0x00080000
+#define X86_CPUID_AMD_NX        0x00100000
+#define X86_CPUID_AMD_MMXEXT    0x00400000
+#define X86_CPUID_AMD_MMX       0x00800000
+#define X86_CPUID_AMD_FXSR      0x01000000
+#define X86_CPUID_AMD_FFXSR     0x02000000
+#define X86_CPUID_AMD_PG1G      0x04000000
+#define X86_CPUID_AMD_TSCP      0x08000000
+#define X86_CPUID_AMD_LM        0x20000000
+#define X86_CPUID_AMD_3DNOWEXT  0x40000000
+#define X86_CPUID_AMD_3DNOW     0x80000000
+
 #endif

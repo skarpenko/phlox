@@ -1,0 +1,24 @@
+Kern fs
+all in pages
+Item=64bytes
+types=dir,bootstrap,raw,kernel,elf
+first item reserved by fs
+
+all items is 4bytes in size
+first dir entry
+id 
+type
+page size or block size
+fs size in blocks
+
+qOS
+Phlox
+Iris
+StepOS
+Magnum
+Opus
+Rune / Runic(s)
+Iris
+IxOS  (innovative computing system)
+Phoenix/Phoinix
+Sonic/Sonus

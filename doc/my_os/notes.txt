@@ -1,0 +1,4 @@
+Basic OS Layers
+1. kernel
+2. set of services of class "Devices" (Hardware layer)
+3. other is ordinary services.

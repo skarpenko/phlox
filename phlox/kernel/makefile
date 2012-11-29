@@ -1,0 +1,18 @@
+KERNEL_SRC_DIR := $(GET_LOCAL_DIR)
+KERNEL_OUT_DIR := $(BUILD_DIR)/$(KERNEL_SRC_DIR)
+$(shell mkdir -p $(KERNEL_OUT_DIR))
+
+KERNEL := $(KERNEL_OUT_DIR)/$(KERNEL)
+
+KERNEL_O_FILES := \
+	main.o
+
+KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
+
+include $(KERNEL_SRC_DIR)/arch/$(ARCH)/makefile
+
+ALL_OBJ += $(KERNEL_O_FILES)
+
+
+$(KERNEL_OUT_DIR)/%.o: $(KERNEL_SRC_DIR)/%.c
+	$(CC) -c $< $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES) -o $@

@@ -1,0 +1,51 @@
+Основные задачи:
+1. Семафоры !!!!
+2. Модель памяти
+  0x0000 Ядро
+  1GB User code
+  data
+  uninit data
+  stack
+  ????
+  see. linux model
+  i386 system structures
+
+3. gdt
+   kernel code
+   kernel data
+   user code
+   user data
+  see. linux
+
+По kinit
+1. cpu identify
+2. mmu init
+
+Основные проблемы:
+1. Как хранить спец. структуры 
+  (gdt, idt, pde)?
+  Возможно на btfs, но не пойдёт ли
+ это против защиты т.к. сервисы
+ скорее всего тоже получат доступ 
+ к btfs. (ДОСТУП СЕРВИСАМ ЗАПРЕТИТЬ, BTFS ОТНОСИТСЯ ТОЛЬКО
+ К ЯДРУ. СЕРВИСЫ МОГУТ ПОВРЕДИТЬ ЯДРО)
+2. Общие для архитектуры функции
+ нужны не только в ядре, но и в kinit.
+3. Как мэпить страницы с btfs в виртуальное пространство. Куда?
+4. kernel.cfg содержит части специфичные для архитектуры
+   и части независимые от платформы.
+5. Разобраться с параметрами сборки ядра (Ld, gcc).
+6. cpuid flags with amd
+7. cpudata cpubits common links (arch-*.h)
+
+
+btfs > i386/gdt   i386/idt   (x not on btfs?)
+
+kinit
+1. init mmu
+2. load kernel 
+3. gdt/idt
+4. kernel args+memory maps
+5. btfs r/o? (not all)
+6. btfs must be mounted!! 'cause used
+ for params interchange

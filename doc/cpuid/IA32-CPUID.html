@@ -1,0 +1,4507 @@
+<html>
+<head>
+ <title>sandpile.org -- IA-32 architecture -- CPUID</title>
+</head>
+
+<body text="#000000" bgcolor="#FFFFFF" link="#004080" vlink="#008080" alink="#804040" background="./../pics/back.gif">
+<img src="./../pics/spacer.gif" width=1000 height=1 border=0><br>
+<table border=0 cellspacing=20 cellpadding=2>
+ <tr>
+  <td width=935>
+   <center>
+
+<font color="#008080" size=+4 face="Arial"><b>IA-32 architecture<br>CPUID</b></font><br>
+<br>
+<hr>
+<br>
+
+<font face="Arial">
+</center>
+Before trying to rely upon CPUID, a program must properly detect and sometimes
+enable the instruction. In particular, the program must detect the presence of
+a 32bit IA-32 processor, which supports the EFLAGS register. Next, if it is a
+Cyrix or a NexGen processor, the CPUID instruction may have to be enabled. Then
+the program must try to toggle the ID bit in the EFLAGS register, to determine
+whether the instruction is supported or not. Note that the program may face one
+of the early Intel P5 processors: they do neither return a vendor ID string
+nor the maximum supported standard level, when level 0000_0000h is queried.
+Finally, notice that some chips support a partially programmable CPUID
+instruction -- thanks to those idiot programmers who hard-coded "GenuineIntel"
+all over the place...<br>
+<center>
+<font>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0000h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0000h</font></td>
+  <td align=left colspan=2><font face="Arial">get maximum supported standard level and vendor ID string</font></td>
+ </tr>
+ </tr>
+ <tr>
+ <tr>
+  <td valign=top align=center rowspan=12 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=2><font face="Arial">maximum supported standard level <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=11><font face="Arial">EBX-EDX-ECX</font></td>
+  <td align=left colspan=2><font face="Arial">vendor ID string <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150><tt><b>GenuineIntel</b></tt></td>
+  <td width=500 align=left><font face="Arial">Intel processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>UMC UMC UMC </b></tt></td>
+  <td align=left><font face="Arial">UMC processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>AuthenticAMD</b></tt></td>
+  <td align=left><font face="Arial">AMD processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>CyrixInstead</b></tt></td>
+  <td align=left><font face="Arial">Cyrix processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>NexGenDriven</b></tt></td>
+  <td align=left><font face="Arial">NexGen processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>CentaurHauls</b></tt></td>
+  <td align=left><font face="Arial">Centaur processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>RiseRiseRise</b></tt></td>
+  <td align=left><font face="Arial">Rise Technology processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>SiS SiS SiS </b></tt></td>
+  <td align=left><font face="Arial">SiS processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>GenuineTMx86</b></tt></td>
+  <td align=left><font face="Arial">Transmeta processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>Geode by NSC</b></tt></td>
+  <td align=left><font face="Arial">National Semiconductor processor</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ </tr>
+ <tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">According to <a href="ftp://ftp.intel.com/pub/IAL/pentium/p5asm.mac" target="_blank">[1]</a> and <a href="ftp://ftp.intel.com/pub/IAL/pentium/p5masm.mac" target="_blank">[2]</a> the pre-B0 step Intel P5 processors return EAX=0000_05xxh.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">According to <a href="ftp://ftp.intel.com/pub/IAL/pentium/p5asm.mac" target="_blank">[1]</a> and <a href="ftp://ftp.intel.com/pub/IAL/pentium/p5masm.mac" target="_blank">[2]</a> the pre-B0 step Intel P5 processors don't return a vendor ID string.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=6 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0001h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0001h</font></td>
+  <td align=left colspan=4><font face="Arial">get processor type/family/model/stepping and feature flags</font></td>
+ </tr>
+ </tr>
+ <tr>
+ <tr>
+  <td valign=top align=center rowspan=228 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=135><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=4><font face="Arial">processor type/family/model/stepping</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4 width=150 rowspan=1 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended family<br>
+   (add)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor family is encoded in bits 27...20.</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 rowspan=3></td>
+  <td valign=top align=center width=50><font face="Arial">00<font color="#808080">+F</font></font></td>
+  <td width=294 align=left><font face="Arial">
+   Intel P4<br>
+   AMD K8<br>
+   Transmeta Efficeon
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">01<font color="#808080">+F</font></font></td>
+  <td align=left><font face="Arial">
+   AMD K8L<br>
+   Intel Itanium 2 (IA-64)
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">02<font color="#808080">+0</font></font></td>
+  <td align=left><font face="Arial">Intel Itanium 2 DC (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=10 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended model<br>
+   (concat)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor model is encoded in bits 19...16.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">AMD K8</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">130 nm Rev C</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">90 nm Rev D</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">90 nm Rev E</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">90 nm Rev F</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">90 nm Rev F</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">65 nm Rev G</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">65 nm Rev G</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">Intel Core 2</font></td>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">65 nm SC with 1 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">45 nm DC with 6 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">type</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The processor type is encoded in bit 13 and bit 12.</font></td>
+ </tr>
+ <tr>
+  <td align=center rowspan=4></td>
+  <td align=center width=50><font face="Arial">11b</font></td>
+  <td width=294 align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10b</font></td>
+  <td align=left><font face="Arial">secondary processor (for MP)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">01b</font></td>
+  <td align=left><font face="Arial">Overdrive processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00b</font></td>
+  <td align=left><font face="Arial">primary processor</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7 bgcolor="#004080"><font color="#FFFFFF" face="Arial">family</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The family is encoded in bits 11...8.</font></td>
+ </tr>
+ <tr>
+  <td align=center rowspan=6></td>
+  <td align=center valign=top><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">
+   most 80486s<br>
+   AMD 5x86<br>
+   Cyrix 5x86<br>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">
+   Intel P5, P54C, P55C, P24T<br>
+   NexGen Nx586<br>
+   Cyrix M1<br>
+   Cyrix MediaGX<br>
+   Geode<br>
+   AMD K5, K6<br>
+   Centaur C6, C2, C3<br>
+   Rise mP6<br>
+   SiS 55x<br>
+   Transmeta Crusoe<br>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">
+   Intel P6, P2, P3, PM, Core 2<br>
+   AMD K7<br>
+   Cyrix M2<br>
+   VIA C3<br>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">
+   Intel Itanium (IA-64)
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top><font face="Arial">F</font></td>
+  <td align=left><font face="Arial">
+   refer to extended family
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">
+   refer to extended family
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=106 bgcolor="#004080"><font color="#FFFFFF" face="Arial">model</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The model is encoded in bits 7...4.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=9><font face="Arial">Intel 80486</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">i80486DX-25/33</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">i80486DX-50</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">i80486SX</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">i80486DX2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">i80486SL</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">i80486SX2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">i80486DX2WB</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">i80486DX4</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">i80486DX4WB</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">UMC 80486</font></td>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">U5D</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">U5S</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">AMD 80486</font></td>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">80486DX2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">80486DX2WB</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">80486DX4</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">80486DX4WB</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">A</font></td>
+  <td align=left><font face="Arial">Elan SC400</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">E</font></td>
+  <td align=left><font face="Arial">5x86</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">F</font></td>
+  <td align=left><font face="Arial">5x86WB</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Cyrix 5x86</font></td>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">5x86</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Cyrix MediaGX</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">GX, GXm</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">Intel P5-core</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">P5 A-step</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">P5</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">P54C</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">P24T Overdrive</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">P55C</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">P54C</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">P55C (0.25&micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">NexGen Nx586</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">Nx586 or Nx586FPU (only later ones)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Cyrix M1</font></td>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">6x86</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Cyrix M2</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">6x86MX</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">Geode</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">GX1, GXLV, GXm</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">GX2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">A</font></td>
+  <td align=left><font face="Arial">LX</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4><font face="Arial">AMD K5</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">SSA5 (PR75, PR90, PR100)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">5k86 (PR120, PR133)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">5k86 (PR166)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">5k86 (PR200)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5><font face="Arial">AMD K6</font></td>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">K6 (0.30 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">K6 (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">K6-2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">K6-III</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">D</font></td>
+  <td align=left><font face="Arial">K6-2+ or K6-III+ (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">Centaur</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">C6</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">C2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">C3</font></td>
+ </tr>
+ <tr>
+  <td rowspan=8 valign=top align=center><font face="Arial">VIA C3</font></td>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">Cyrix M2 core</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">WinChip C5A core</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">WinChip C5B core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">WinChip C5C core (if stepping = 8...F)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">WinChip C5N core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">WinChip C5XL core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">WinChip C5P core (if stepping = 8...F)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10</font></td>
+  <td align=left><font face="Arial">WinChip C5J core</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">Rise</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">mP6 (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">mP6 (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">SiS</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">55x</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Crusoe</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">TM3x00 and TM5x00</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=15><font face="Arial">Intel P6-core</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">P6 A-step</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">P6</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">P2 (0.28 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">P2 (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">P2 with on-die L2 cache</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">P3 (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">P3 (0.18 &micro;m) with 256 KB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">A</font></td>
+  <td align=left><font face="Arial">P3 (0.18 &micro;m) with 2 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">B</font></td>
+  <td align=left><font face="Arial">P3 (0.13 &micro;m) with 512 KB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">PM (0.13 &micro;m) with 1 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">D</font></td>
+  <td align=left><font face="Arial">PM (0.09 &micro;m) with 2 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">E</font></td>
+  <td align=left><font face="Arial">PM DC (65 nm) with 2 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">F</font></td>
+  <td align=left><font face="Arial">Core 2 DC (65 nm) with 4 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial"><font color="#808080">1</font>6</font></td>
+  <td align=left><font face="Arial">Core 2 SC (65 nm) with 1 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial"><font color="#808080">1</font>7</font></td>
+  <td align=left><font face="Arial">Core 2 DC (45 nm) with 6 MB on-die L2</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=8><font face="Arial">AMD K7</font></td>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">Athlon (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">Athlon (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">Duron (SF core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">Athlon (TB core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">Athlon (PM core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">Duron (MG core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">Athlon (TH/AP core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">A</font></td>
+  <td align=left><font face="Arial">Athlon (BT core)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=9><font face="Arial">AMD K8</font></td>
+  <td align=center><font face="Arial">xx00b</font></td>
+  <td align=left><font face="Arial">Socket 754 or Socket S1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx01b</font></td>
+  <td align=left><font face="Arial">Socket 940 or Socket F1207</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx10b</font></td>
+  <td align=left><font face="Arial">if Rev CG, then see K8 erratum #108</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx11b</font></td>
+  <td align=left><font face="Arial">Socket 939 or Socket AM2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">01xxb</font></td>
+  <td align=left><font face="Arial">SH (SC 1024 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11xxb</font></td>
+  <td align=left><font face="Arial">DH (SC 512 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10xxb</font></td>
+  <td align=left><font face="Arial">CH (SC 256 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00xxb</font></td>
+  <td align=left><font face="Arial">JH (DC 1024 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10xxb</font></td>
+  <td align=left><font face="Arial">BH (DC 512 KB)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">AMD K8L</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">Rev A (0=A0, 1=A1, 2=A2)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">Rev B (0=B0, 1=B1, A=BA, 2=B2)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">Intel P4-core</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">P4 (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">P4 (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">P4 (0.13 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">P4 (0.09 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">P4 (0.09 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">P4 (65 nm)</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=3><font face="Arial">Transmeta Efficeon</font></td>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (130 nm)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.0)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.1+)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=1><font face="Arial">Intel Itanium</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">Merced (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">Intel Itanium 2</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">McKinley (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">Madison or Deerfield (0.13 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">Madison 9M (0.13 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=1><font face="Arial">Intel Itanium 2 DC</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">Montecito (0.09 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">stepping</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The stepping is encoded in bits 3...0.</font></td>
+ </tr>
+ <tr>
+  <td align=left colspan=3><font face="Arial">The stepping values are processor-specific.</font></td>
+ </tr>
+ <tr>
+  <td rowspan=33 align=center valign=top><font face="Arial">EBX=aall_ccbbh</font></td>
+  <td rowspan=30 align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">brand ID</font></td>
+  <td colspan=3 align=left bgcolor="#004080"><font color="#FFFFFF" face="Arial">The brand ID is encoded in bits 7...0.</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00h</font></td>
+  <td colspan=2 align=left><font face="Arial">not supported</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">01h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Celeron</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">02h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Pentium III</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">03h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Pentium III Xeon</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">03h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Celeron</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">04h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium III</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">07h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Celeron mobile</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">06h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium III mobile</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Celeron 4</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">08h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Pentium 4</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">09h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium 4</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Eh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Pentium 4 Xeon</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Bh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.18 &micro;m Intel Pentium 4 Xeon MP</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Bh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium 4 Xeon</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium 4 Xeon MP</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">08h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Celeron 4 mobile (0F24h)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Fh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Celeron 4 mobile (0F27h)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Eh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium 4 mobile (production)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Fh</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium 4 mobile (samples)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11h</font></td>
+  <td colspan=2 align=left><font face="Arial">mobile Intel ??? processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">12h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Celeron M</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">12h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.09 &micro;m Intel Celeron M</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">13h</font></td>
+  <td colspan=2 align=left><font face="Arial">mobile Intel Celeron ? processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">14h</font></td>
+  <td colspan=2 align=left><font face="Arial">Intel Celeron ? processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15h</font></td>
+  <td colspan=2 align=left><font face="Arial">mobile Intel ??? processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">16h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.13 &micro;m Intel Pentium M</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">16h</font></td>
+  <td colspan=2 align=left><font face="Arial">0.09 &micro;m Intel Pentium M</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">17h</font></td>
+  <td colspan=2 align=left><font face="Arial">mobile Intel Celeron ? processr</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD</font></td>
+  <td colspan=2 align=left><font face="Arial">
+   see extended level 8000_0001h<br>
+   <font size="-2">with ID=0000_0765_0000_0000b and NN=4_3210b</font>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">CLFLUSH</font></td>
+  <td colspan=3 align=left bgcolor="#004080"><font color="#FFFFFF" face="Arial">The CLFLUSH (8-byte) chunk count is encoded in bits 15...8.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">CPU count</font></td>
+  <td colspan=3 align=left bgcolor="#004080"><font color="#FFFFFF" face="Arial">The logical processor count is encoded in bits 23...16.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">APIC ID</font></td>
+  <td colspan=3 align=left bgcolor="#004080"><font color="#FFFFFF" face="Arial">The (fixed) default APIC ID is encoded in bits 31...24.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=26><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=center bgcolor="#004080"><a name="level_flags"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bits 31...24</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 23 (POPCNT)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">POPCNT</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 22</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 21 (x2APIC)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   x2APIC, <a href="msr.htm">APIC_BASE.EXTD</a>, MSRs 0000_0800h...0000_0BFFh<br>
+   64-bit ICR (+030h but not +031h), no DFR (+00Eh), SELF_IPI (+040h)<br>
+   also see standard level 0000_000Bh
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 20 (SSE4.2)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_3.htm">SSE4.2</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 19 (SSE4.1)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_3.htm">SSE4.1</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 18 (DCA)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   Direct Cache Access (that is, the ability to prefetch data from MMIO)<br>
+   also see standard level 0000_0009h
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 17</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 16</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 15 (PDCM)</font></td>
+  <td align=left colspan=3><font face="Arial">Performance Debug Capability MSR</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 14 (ETPRD)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MISC_ENABLE.ETPRD</a></font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#B0D0D0"><font face="Arial">bit 13 (CX16)</font></td>
+  <td align=left colspan=3 bgcolor="#B0D0D0"><font face="Arial">CMPXCHG16B</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 12</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 11</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 10 (CID)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   context ID: the L1 data cache can be set to adaptive or shared mode<br>
+   <a href="msr.htm">MISC_ENABLE.L1DCCM</a>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 9 (SSSE3)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_3.htm">SSSE3</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 8 (TM2)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   <a href="msr.htm">MISC_ENABLE.TM2E</a><br>
+   THERM_INTERRUPT and THERM_STATUS MSRs<br>
+   xAPIC thermal LVT entry<br>
+   THERM2_CONTROL MSR
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 7 (EST)</font></td>
+  <td align=left colspan=3><font face="Arial">Enhanced SpeedStep Technology</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 6 (SMX)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.SMXE</a>, <a href="opc_2.htm">GETSEC</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 5 (VMX)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.VMXE</a>, <a href="opc_grp.htm">VM*</a> and <a href="opc_2.htm">VM*</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 4 (DSCPL)</font></td>
+  <td align=left colspan=3><font face="Arial">CPL-qualified Debug Store</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 3 (MON)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   <a href="opc_grp.htm">MONITOR/MWAIT</a>, <a href="msr.htm">MISC_ENABLE.MONE</a>, <a href="msr.htm">MISC_ENABLE.LCMV</a><br>
+   MONITOR_FILTER_LINE_SIZE MSR<br>
+   also see standard level 0000_0005h<br>
+   setting MISC_ENABLE.MONE=0 causes MON=0
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 2</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 0 (SSE3)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SSE3</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a>, if FPU=1 then also <a href="opc_fpu.htm">FISTTP</a></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=33><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=center bgcolor="#004080"><a name="level_flags"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 31 (PBE)</font></td>
+  <td align=left colspan=3><font face="Arial">Pending Break Event, <a href="inter.htm">STPCLK</a>, <a href="legacy.htm">FERR#</a>, <a href="msr.htm">MISC_ENABLE.PBE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 30 (IA-64)</font></td>
+  <td align=left colspan=3><font face="Arial">IA-64, <a href="opc_2.htm">JMPE Jv</a>, <a href="opc_grp.htm">JMPE Ev</a></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 29 (TM1)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   <a href="msr.htm">MISC_ENABLE.TM1E</a><br>
+   THERM_INTERRUPT and THERM_STATUS MSRs<br>
+   xAPIC thermal LVT entry
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 28 (HTT)</font></td>
+  <td align=left colspan=3><font face="Arial">Hyper-Threading Technology, <a href="opc_1.htm">PAUSE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 27 (SS)</font></td>
+  <td align=left colspan=3><font face="Arial">selfsnoop</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 26 (SSE2)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SSE2</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 25 (SSE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SSE</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 24 (FXSR)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_grp.htm">FXSAVE/FXRSTOR</a>, <a href="crx.htm">CR4.OSFXSR</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 23 (MMX)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">MMX</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 22 (ACPI)</font></td>
+  <td align=left colspan=3><font face="Arial">THERM_CONTROL MSR</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 21 (DTES)</font></td>
+  <td align=left colspan=3><font face="Arial">Debug Trace and EMON Store MSRs</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 20</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 19 (CLFL)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_grp.htm">CLFLUSH</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 18 (PSN)</font></td>
+  <td align=left colspan=3><font face="Arial">PSN (see standard level 0000_0003h), <a href="msr.htm">MISC_CTL.PSND</a> <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 17 (PSE36)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">4 MB PDE bits 16...13</a>, <a href="crx.htm">CR4.PSE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 16 (PAT)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">PAT MSR</a>, <a href="paging.htm">PDE/PTE.PAT</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 15 (CMOV)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">CMOVcc</a>, if FPU=1 then also <a href="opc_fpu.htm">FCMOVcc/F(U)COMI(P)</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 14 (MCA)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MCG_*/MCn_* MSRs</a>, <a href="crx.htm">CR4.MCE</a>, <a href="except.htm">#MC</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 13 (PGE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">PDE/PTE.G</a>, <a href="crx.htm">CR4.PGE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 12 (MTRR)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MTRR* MSRs</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 11 (SEP)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SYSENTER/SYSEXIT</a>, <a href="msr.htm">SEP_* MSRs</a> <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 10</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 9 (APIC)</font></td>
+  <td align=left colspan=3><font face="Arial">APIC <sup>#3, #4</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 8 (CX8)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_grp.htm">CMPXCHG8B</a> <sup>#5</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 7 (MCE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MCAR/MCTR MSRs</a>, <a href="crx.htm">CR4.MCE</a>, <a href="except.htm">#MC</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 6 (PAE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">64bit PDPTE/PDE/PTEs</a>, <a href="crx.htm">CR4.PAE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 5 (MSR)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MSRs</a>, <a href="opc_2.htm">RDMSR/WRMSR</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 4 (TSC)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">TSC</a>, <a href="opc_2.htm">RDTSC</a>, <a href="crx.htm">CR4.TSD</a> (doesn't imply MSR=1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 3 (PSE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">PDE.PS</a>, <a href="paging.htm">PDE/PTE.res</a>, <a href="crx.htm">CR4.PSE</a>, <a href="except.htm">#PF(1xxxb)</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 2 (DE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.DE</a>, <a href="drx.htm">DR7.RW=10b</a>, <a href="except.htm">#UD</a> on MOV from/to DR4/5</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1 (VME)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.VME/PVI</a>, <a href="eflags.htm">EFLAGS.VIP/VIF</a>, <a href="tss.htm">TSS32.IRB</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 0 (FPU)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_fpu.htm">FPU</a></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=5 width=800><font face="Arial">
+   If the PSN has been disabled, then the PSN feature flag will read as 0. In
+   addition the value for the maximum supported standard level (reported by
+   standard level 0000_0000h, register EAX) will be lower.
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=5><font face="Arial">The Intel P6 processor does not support SEP, but inadvertently reports it.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#3</font></td>
+  <td align=left colspan=5><font face="Arial">If the APIC has been disabled, then the APIC feature flag will read as 0.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#4</font></td>
+  <td align=left colspan=5><font face="Arial">Early AMD K5 processors (SSA5) inadvertently used this bit to report PGE support.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#5</font></td>
+  <td align=left colspan=5><font face="Arial">Some processors do support CMPXCHG8B, but don't report it by default. This is due to a Windows NT bug.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0002h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0002h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor configuration descriptors</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=98 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">AL</font></td>
+  <td align=left colspan=2><font face="Arial">number of times this level must be queried to obtain all configuration descriptors <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=97><font face="Arial">
+   EAX.15...8<br>EAX.23...16<br>EAX.31...24<br>
+   EBX.0...7<br>EBX.15...8<br>EBX.23...16<br>EBX.31...24<br>
+   ECX.0...7<br>ECX.15...8<br>ECX.23...16<br>ECX.31...24<br>
+   EDX.0...7<br>EDX.15...8<br>EDX.23...16<br>EDX.31...24<br>
+  </font></td>
+  <td align=left colspan=2><font face="Arial">configuration descriptors <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">value</font></td>
+  <td align=center width=502 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00h</font></td>
+  <td align=left><font face="Arial">null descriptor (=unused descriptor)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">01h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K pages, 4 ways, 32 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">02h</font></td>
+  <td align=left><font face="Arial">code TLB, 4M pages, fully, 2 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">03h</font></td>
+  <td align=left><font face="Arial">data TLB, 4K pages, 4 ways, 64 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">04h</font></td>
+  <td align=left><font face="Arial">data TLB, 4M pages, 4 ways, 8 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">05h</font></td>
+  <td align=left><font face="Arial">data TLB, 4M pages, 4 ways, 32 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">06h</font></td>
+  <td align=left><font face="Arial">code L1 cache, 8 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">08h</font></td>
+  <td align=left><font face="Arial">code L1 cache, 16 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ah</font></td>
+  <td align=left><font face="Arial">data L1 cache, 8 KB, 2 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Bh</font></td>
+  <td align=left><font face="Arial">code TLB, 4M pages, 4 ways, 4 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ch</font></td>
+  <td align=left><font face="Arial">data L1 cache, 16 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10h</font></td>
+  <td align=left><font face="Arial">data L1 cache, 16 KB, 4 ways, 32 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15h</font></td>
+  <td align=left><font face="Arial">code L1 cache, 16 KB, 4 ways, 32 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1Ah</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 96 KB, 6 ways, 64 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">22h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 512 KB, 4 ways (!), 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 1024 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">25h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 2048 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">29h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 4096 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Ch</font></td>
+  <td align=left><font face="Arial">data L1 cache, 32 KB, 8 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">30h</font></td>
+  <td align=left><font face="Arial">code L1 cache, 32 KB, 8 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">39h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 128 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Ah</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 192 KB, 6 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Bh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 128 KB, 2 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Ch</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 256 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Dh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 384 KB, 6 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Eh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">40h</font></td>
+  <td align=left><font face="Arial">no integrated L2 cache (P6 core) or L3 cache (P4 core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">41h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 128 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">42h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 256 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">43h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">44h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 1024 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">45h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 2048 KB, 4 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">46h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 4096 KB, 4 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">47h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 8192 KB, 8 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">48h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 3072 KB, 12 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">49h</font></td>
+  <td align=left><font face="Arial">
+   code and data L3 cache, 4096 KB, 16 ways, 64 byte lines (P4) or<br>
+   code and data L2 cache, 4096 KB, 16 ways, 64 byte lines (Core 2)
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4Ah</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 6144 KB, 12 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4Bh</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 8192 KB, 16 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4Ch</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 12288 KB, 12 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4Dh</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 16384 KB, 16 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4Eh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 6144 KB, 24 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">50h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K/4M/2M pages, fully, 64 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">51h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K/4M/2M pages, fully, 128 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">52h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K/4M/2M pages, fully, 256 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">56h</font></td>
+  <td align=left><font face="Arial">L0 data TLB, 4M pages, 4 ways, 16 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">57h</font></td>
+  <td align=left><font face="Arial">L0 data TLB, 4K pages, 4 ways, 16 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5Bh</font></td>
+  <td align=left><font face="Arial">data TLB, 4K/4M pages, fully, 64 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5Ch</font></td>
+  <td align=left><font face="Arial">data TLB, 4K/4M pages, fully, 128 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5Dh</font></td>
+  <td align=left><font face="Arial">data TLB, 4K/4M pages, fully, 256 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">60h</font></td>
+  <td align=left><font face="Arial">data L1 cache, 16 KB, 8 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">66h</font></td>
+  <td align=left><font face="Arial">data L1 cache, 8 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">67h</font></td>
+  <td align=left><font face="Arial">data L1 cache, 16 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">68h</font></td>
+  <td align=left><font face="Arial">data L1 cache, 32 KB, 4 ways, 64 byte lines, sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">70h</font></td>
+  <td align=left><font face="Arial">trace L1 cache, 12 K&micro;OPs, 8 ways</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">71h</font></td>
+  <td align=left><font face="Arial">trace L1 cache, 16 K&micro;OPs, 8 ways</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">72h</font></td>
+  <td align=left><font face="Arial">trace L1 cache, 32 K&micro;OPs, 8 ways</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">73h</font></td>
+  <td align=left><font face="Arial">trace L1 cache, 64 K&micro;OPs, 8 ways</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">77h</font></td>
+  <td align=left><font face="Arial">code L1 cache, 16 KB, 4 ways, 64 byte lines, sectored (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">78h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 1024 KB, 4 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">79h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 128 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Ah</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 256 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Bh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Ch</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 1024 KB, 8 ways, 64 byte lines, dual-sectored</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Dh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 2048 KB, 8 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Eh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 256 KB, 8 ways, 128 byte lines, sect. (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7Fh</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 2 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">81h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 128 KB, 8 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">82h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 256 KB, 8 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">83h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 8 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">84h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 1024 KB, 8 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">85h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 2048 KB, 8 ways, 32 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">86h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 512 KB, 4 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">87h</font></td>
+  <td align=left><font face="Arial">code and data L2 cache, 1024 KB, 8 ways, 64 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">88h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 2048 KB, 4 ways, 64 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">89h</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 4096 KB, 4 ways, 64 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8Ah</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 8192 KB, 4 ways, 64 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8Dh</font></td>
+  <td align=left><font face="Arial">code and data L3 cache, 3072 KB, 12 ways, 128 byte lines (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">90h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K...256M pages, fully, 64 entries (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">96h</font></td>
+  <td align=left><font face="Arial">data L1 TLB, 4K...256M pages, fully, 32 entries (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9Bh</font></td>
+  <td align=left><font face="Arial">data L2 TLB, 4K...256M pages, fully, 96 entries (IA-64)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">B0h</font></td>
+  <td align=left><font face="Arial">code TLB, 4K pages, 4 ways, 128 entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">B1h</font></td>
+  <td align=left><font face="Arial">
+   code TLB, 4M pages, 4 ways, 4 entries and<br>
+   code TLB, 2M pages, 4 ways, 8 entries
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">B3h</font></td>
+  <td align=left><font face="Arial">data TLB, 4K pages, 4 ways, 128 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">B4h</font></td>
+  <td align=left><font face="Arial">data TLB, 4K pages, 4 ways, 256 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">F0h</font></td>
+  <td align=left><font face="Arial">64 byte prefetching</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">F1h</font></td>
+  <td align=left><font face="Arial">128 byte prefetching</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">value</font></td>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">70h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: code and data TLB, 4K pages, 4 ways, 32 entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">74h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: ???</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">77h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: ???</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">80h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: code and data L1 cache, 16 KB, 4 ways, 16 byte lines</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">82h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: ???</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">84h</font></td>
+  <td align=left><font face="Arial">Cyrix specific: ???</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">value</font></td>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">others</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center colspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">example<br>(here: P6)</font></td>
+  <td align=center><font face="Arial">
+   EAX=0302_0101h<br>
+   EBX=0000_0000h<br>
+   ECX=0000_0000h<br>
+   EDX=0604_0A43h<br>
+  </font></td>
+  <td width=502 align=left><font face="Arial">
+   Because AL is 01h, one invocation of the level is enough to obtain all the
+   configuration descriptors. All of them are valid because their highest bits
+   are 0. This P6 processor includes a 4K/M code/data TLB, an 8+8 KB code/data
+   L1 cache and an integrated 512 KB code and data L2 cache.
+  </font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3 width=800><font face="Arial">
+   In a MP system special precautions must be taken when executing standard
+   level 0000_0002h more than once. In particular it must be ensured that the
+   same CPU is used during that entire process.
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">Programs must no expect any particular order for the reported configuration descriptors.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=3 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0003h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0003h</font></td>
+  <td align=left width=656><font face="Arial">get processor serial number <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">processor serial number (Transmeta Efficeon processors only)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EBX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">processor serial number (Transmeta Crusoe and Efficeon processors only)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">processor serial number</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">processor serial number</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=2 width=800><font face="Arial">
+   This level is only supported and enabled if the PSN feature flag is set. The
+   reported processor serial number should be combined with the vendor ID string
+   and the processor type/family/model/stepping value, to distinguish cases in
+   which two processors from different vendors happen to have the same serial
+   number. Finally, it should be noted that most vendors can not guarantee that
+   their serial numbers are truely unique.
+  </font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0004h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0004h</font></td>
+  <td align=left colspan=2><font face="Arial">get cache configuration descriptors <sup>#1, #2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=left colspan=2><font face="Arial">cache level to query (e.g. 0=L1D, 1=L2, or 0=L1D, 1=L1I, 2=L2)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=19 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=10><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...26</font></td>
+  <td align=left><font face="Arial">cores per die - 1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">25...14</font></td>
+  <td align=left><font face="Arial">threads per cache - 1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">13...12</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11</font></td>
+  <td align=left><font face="Arial">inclusive of lower levels?</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10</font></td>
+  <td align=left><font face="Arial">write-back invalidate?</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">fully associative?</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">self-initializing?</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...5</font></td>
+  <td align=left><font face="Arial">cache level (starts at 1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4...0</font></td>
+  <td align=left><font face="Arial">cache type (0=null, 1=data, 2=code, 3=unified, 4...31=reserved)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4><font face="Arial">EBX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...22</font></td>
+  <td align=left><font face="Arial">ways of associativity - 1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">21...12</font></td>
+  <td align=left><font face="Arial">physical line partitions - 1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...0</font></td>
+  <td align=left><font face="Arial">system coherency line size - 1</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">ECX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...0</font></td>
+  <td align=left><font face="Arial">sets - 1</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">EDX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...10</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9...0</font></td>
+  <td align=left><font face="Arial">prefetch stride (64 bytes if 0)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3 width=800><font face="Arial">
+   In a MP system special precautions must be taken when executing standard
+   level 0000_0004h more than once. In particular it must be ensured that the
+   same CPU is used during that entire process.
+  </font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0005h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0005h</font></td>
+  <td align=left colspan=2><font face="Arial">get MON information <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=17 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=3><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...0</font></td>
+  <td align=left><font face="Arial">smallest monitor line size in bytes</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">EBX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...0</font></td>
+  <td align=left><font face="Arial">largest monitor line size in bytes</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4><font face="Arial">ECX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...2</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">treat interrupts as break events, even when interrupts are disabled</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">enumeration of MWAIT extensions (beyond EAX and EBX)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">EDX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...20</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">19...16</font></td>
+  <td align=left><font face="Arial">number of C4 sub C-states for MWAIT</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">number of C3 sub C-states for MWAIT</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...8</font></td>
+  <td align=left><font face="Arial">number of C2 sub C-states for MWAIT</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...4</font></td>
+  <td align=left><font face="Arial">number of C1 sub C-states for MWAIT</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3...0</font></td>
+  <td align=left><font face="Arial">number of C0 sub C-states for MWAIT</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0006h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0006h</font></td>
+  <td align=left colspan=2><font face="Arial">get power management information <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=11 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=5><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...3</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">operating point protection (protect CPU's ratio/VID points) <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">dynamic acceleration enabled (<a href="msr.htm">MISC.ENABLE.DAD=0</a>)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">digital thermometer</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">EBX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...4</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3...0</font></td>
+  <td align=left><font face="Arial">number of programmable digital thermometer interrupt thresholds</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">ECX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...1</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">ACNT/MCNT</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3 width=800><font face="Arial">
+   The implementation of OPP is processor and stepping specific.<br>
+   On certain Pentium 4 processors, the protection mechanism is Snap-to-VID and it is enabled if the bit is set.
+  </font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_0009h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_0009h</font></td>
+  <td align=left colspan=2><font face="Arial">get DCA parameters <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=3><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...0</font></td>
+  <td align=left><font face="Arial">value of PLATFORM_DCA_CAP MSR (0000_01F8h, bits 31...0)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_000Ah</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_000Ah</font></td>
+  <td align=left colspan=2><font face="Arial">get architectural PeMo information <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=18 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=5><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...24</font></td>
+  <td align=left><font face="Arial">length of EBX bit vector</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23...16</font></td>
+  <td align=left><font face="Arial">bit width of PeMo counter(s)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">number of PeMo counters per logical processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">revision</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=9><font face="Arial">EBX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...7</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">branch mispredicts retired event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">branch instructions retired event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">last level cache misses event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">last level cache references event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">reference cycles event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">instructions retired event unavailable</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">core cycles event unavailable</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4><font face="Arial">EDX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...13</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">12...5</font></td>
+  <td align=left><font face="Arial">bit width of fixed-function PeMo counters (if revision &gt; 1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4...0</font></td>
+  <td align=left><font face="Arial">number of fixed-function PeMo counters (if revision &gt; 1)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">standard level 0000_000Bh</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td rowspan=2 align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=0000_000Bh</font></td>
+  <td align=left colspan=2><font face="Arial">get topology enumeration information <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX=0000_00xxh</font></td>
+  <td align=left colspan=2><font face="Arial">level to query (00h=SMT)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=12 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=3><font face="Arial">EAX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...5</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">4...0</font></td>
+  <td align=left><font face="Arial" size="-1">
+   number of bits to shift x2APIC ID right to get unique topology ID of next level type<br>
+   all logical processors with same next level ID share current level
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">EBX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...0</font></td>
+  <td align=left><font face="Arial">number of enabled logical processors at this level</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4><font face="Arial">ECX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">level type (00h=invalid, 01h=SMT, 02h=core, 03h...FFh=reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">level number (same as input)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">EDX</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...0</font></td>
+  <td align=left><font face="Arial">x2APIC ID of current logical processor</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center valign=top bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only enabled if <a href="msr.htm">MISC_ENABLE.LCMV</a> is set to 0. This is due to a Windows NT bug.</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0000h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0000h</font></td>
+  <td align=left colspan=2><font face="Arial">get maximum supported extended level and vendor ID string</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=9 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=2><font face="Arial">maximum supported extended level</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=8><font face="Arial">EBX-EDX-ECX</font></td>
+  <td align=left colspan=2><font face="Arial">vendor ID string</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150><tt><b>AuthenticAMD</b></tt></td>
+  <td width=500 align=left><font face="Arial">AMD processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">reserved</font></td>
+  <td align=left><font face="Arial">Cyrix processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">reserved</font></td>
+  <td align=left><font face="Arial">Centaur processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">reserved</font></td>
+  <td align=left><font face="Arial">Intel processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>TransmetaCPU</b></tt></td>
+  <td align=left><font face="Arial">Transmeta processor</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">reserved</font></td>
+  <td align=left><font face="Arial">National Semiconductor processor (GX1, GXLV, GXm)</font></td>
+ </tr>
+ <tr>
+  <td align=center><tt><b>Geode by NSC</b></tt></td>
+  <td align=left><font face="Arial">National Semiconductor processor (GX2)</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=6 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0001h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0001h</font></td>
+  <td align=left colspan=4><font face="Arial">get processor family/model/stepping and features flags</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=200 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=64><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=4><font face="Arial">processor family/model/stepping</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=150 rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended family<br>
+   (add)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor family is encoded in bits 27...20.</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 rowspan=2></td>
+  <td valign=top align=center width=50><font face="Arial">00<font color="#808080">+F</font></font></td>
+  <td width=294 align=left><font face="Arial">
+   AMD K8<br>
+   Transmeta Efficeon
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">01<font color="#808080">+F</font></font></td>
+  <td width=294 align=left><font face="Arial">AMD K8L</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=8 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended model<br>
+   (concat)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor model is encoded in bits 19...16.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">AMD K8</font></td>
+  <td valign=top align=center width=50><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">130 nm Rev C</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">90 nm Rev D</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">90 nm Rev E</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">90 nm Rev F</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">90 nm Rev F</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">65 nm Rev G</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">65 nm Rev G</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">family</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The family is encoded in bits 11...8.</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 rowspan=4></td>
+  <td valign=top align=center width=50><font face="Arial">5</font></td>
+  <td width=294 align=left><font face="Arial">
+   AMD K5<br>
+   Geode<br>
+   Centaur C2 and C3<br>
+   Transmeta Crusoe
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">
+   AMD K6<br>
+   VIA C3
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">AMD K7</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">F</font></td>
+  <td align=left><font face="Arial">refer to extended family</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=45 bgcolor="#004080"><font color="#FFFFFF" face="Arial">model</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The model is encoded in bits 7...4.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">AMD K5</font></td>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">5k86 (PR120 or PR133)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">5k86 (PR166)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">5k86 (PR200)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5><font face="Arial">AMD K6</font></td>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">K6 (0.30 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">K6 (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">K6-2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">K6-III</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">D</font></td>
+  <td align=left><font face="Arial">K6-2+ or K6-III+ (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=8><font face="Arial">AMD K7</font></td>
+  <td align=center><font face="Arial">1</font></td>
+  <td align=left><font face="Arial">Athlon (0.25 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">Athlon (0.18 &micro;m)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">Duron (SF core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">Athlon (TB core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">Athlon (PM core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">Duron (MG core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">Athlon (TH/AP core)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">A</font></td>
+  <td align=left><font face="Arial">Athlon (BT core)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=9><font face="Arial">AMD K8</font></td>
+  <td align=center><font face="Arial">xx00b</font></td>
+  <td align=left><font face="Arial">Socket 754 or Socket S1</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx01b</font></td>
+  <td align=left><font face="Arial">Socket 940 or Socket F1207</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx10b</font></td>
+  <td align=left><font face="Arial">if Rev CG, then see K8 erratum #108</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">xx11b</font></td>
+  <td align=left><font face="Arial">Socket 939 or Socket AM2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">01xxb</font></td>
+  <td align=left><font face="Arial">SH (SC 1024 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11xxb</font></td>
+  <td align=left><font face="Arial">DH (SC 512 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10xxb</font></td>
+  <td align=left><font face="Arial">CH (SC 256 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00xxb</font></td>
+  <td align=left><font face="Arial">JH (DC 1024 KB)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10xxb</font></td>
+  <td align=left><font face="Arial">BH (DC 512 KB)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">AMD K8L</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">Rev A (0=A0, 1=A1, 2=A2)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">Rev B (0=B0, 1=B1, A=BA, 2=B2)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">Geode</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">GX1, GXLV, GXm</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">GX2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">LX</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">Centaur</font></td>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">C2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">C3</font></td>
+ </tr>
+ <tr>
+  <td rowspan=8 valign=top align=center><font face="Arial">VIA C3</font></td>
+  <td align=center><font face="Arial">5</font></td>
+  <td align=left><font face="Arial">Cyrix M2 core</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6</font></td>
+  <td align=left><font face="Arial">WinChip C5A core</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">WinChip C5B core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7</font></td>
+  <td align=left><font face="Arial">WinChip C5C core (if stepping = 8...F)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">WinChip C5N core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">WinChip C5XL core (if stepping = 0...7)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">9</font></td>
+  <td align=left><font face="Arial">WinChip C5P core (if stepping = 8...F)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10</font></td>
+  <td align=left><font face="Arial">WinChip C5J core</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Crusoe</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">TM3x00 and TM5x00</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=3><font face="Arial">Transmeta Efficeon</font></td>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (130 nm)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.0)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.1+)</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">stepping</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The stepping is encoded in bits 3...0.</font></td>
+ </tr>
+ <tr>
+  <td align=left colspan=3><font face="Arial">The stepping values are processor-specific.</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=87><font face="Arial">EBX=x000_xxxxh</font></td>
+  <td align=center valign=top rowspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">package type</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The package type is encoded in bits 31...28.</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=4><font face="Arial">AMD K8L</font></td>
+  <td align=center><font face="Arial">0000b</font></td>
+  <td align=left><font face="Arial">Socket F1207</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0001b</font></td>
+  <td align=left><font face="Arial">Socket AM2</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0011b</font></td>
+  <td align=left><font face="Arial">Socket G3</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">other</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=82 bgcolor="#004080"><font color="#FFFFFF" face="Arial">brand ID</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The brand ID is encoded in bits 15...0.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K8 DDR1</font></td>
+  <td colspan=2 align=left><font face="Arial">
+   ID = bits 15...6 = (value >> 6) & 3FFh<br>
+   NN = bits 5...0 = value & 3Fh<br>
+   &nbsp;<br>
+   for NN=1...63: <b>XX</b> = 22 + NN<br>
+   for NN=1...30: <b>YY</b> = 38 + (2 * NN)<br>
+   for NN=1...63: <b>ZZ</b> = 24 + NN<br>
+   for NN=1...63: <b>TT</b> = 24 + NN<br>
+   for NN=1...11: <b>RR</b> = 45 + (5 * NN)<br>
+   for NN=1...31: <b>EE</b> = 9 + NN
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">00h</font></td>
+  <td colspan=2 align=left><font face="Arial">engineering sample</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">04h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>XX</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">05h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 X2 <b>XX</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">08h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>XX</b>00+ mobile</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">09h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>XX</b>00+ mobile, low power</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Turion 64 ML-<b>XX</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Bh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Turion 64 MT-<b>XX</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 1<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Dh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 1<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Eh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 1<b>YY</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0Fh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 1<b>YY</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">10h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 2<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 2<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">12h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 2<b>YY</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">13h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 2<b>YY</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">14h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 8<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 8<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">16h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 8<b>YY</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">17h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron 8<b>YY</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">18h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>EE</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1Dh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon XP-M <b>XX</b>00+ mobile</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1Eh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon XP-M <b>XX</b>00+ mobile, low power</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">20h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon XP <b>XX</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">21h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+ mobile, 32-bit</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+ mobile, 32-bit, low power</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">22h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+, 32-bit</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">26h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+, 64-bit</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">24h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 FX-<b>ZZ</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">29h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Bh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Dh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Eh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2Fh</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">30h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">32h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">33h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">34h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">35h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">36h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">37h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b> EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">38h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 1<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">39h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 2<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 8<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">other</font></td>
+  <td colspan=2 align=left><font face="Arial">unknown</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K8 DDR2</font></td>
+  <td colspan=2 align=left><font face="Arial">
+   S = socket (see CPUID model bits 1...0)<br>
+   CC = core count - 1 (see NB capabilities register)<br>
+   ID = bits 13...9<br>
+   PL = bits 8...6 and 14<br>
+   NN = bits 15 and 5...0<br>
+   &nbsp;<br>
+   <b>RR</b> = -1 + NN<sup>*</sup><br>
+   <b>PP</b> = 26 + NN<br>
+   <b>TT</b> = 15 + (CC * 10) + NN<br>
+   <b>ZZ</b> = 57 + NN<br>
+   <b>YY</b> = 29 + NN<br>
+   <font size="-2">* 000001b...000010b/100010b...111111b = 1...2/34...63 are reserved</font>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=any CC=? ID=00h PL=0h</font></td>
+  <td colspan=2 align=left><font face="Arial">engineering sample</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=0 ID=06h PL=4h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=0 ID=06h PL=8h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Sempron <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=0 ID=04h PL=4h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=0 ID=04h PL=8h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=04h PL=2h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 X2 <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=04h PL=6h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 X2 <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=04h PL=8h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 X2 <b>TT</b>00+</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=05h PL=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Athlon 64 DC FX-<b>ZZ</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=S1 CC=1 ID=02h PL=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Turion 64 X2 TL-<b>YY</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=01h PL=Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 12<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=AM2 CC=1 ID=01h PL=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 12<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=01h PL=6h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 22<b>RR</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=01h PL=Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 22<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=01h PL=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 22<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=04h PL=6h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 82<b>RR</b> HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=04h PL=Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 82<b>RR</b></font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">S=F1207 CC=1 ID=04h PL=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 82<b>RR</b> SE</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K8L</font></td>
+  <td colspan=2 align=left><font face="Arial">
+   PT = package type (se EBX bits 31...28)<br>
+   NC = number of cores (see level 8000_0008h)<br>
+   &nbsp;<br>
+   PG = bit 15<br>
+   S1 = bits 14...11<br>
+   M = bits 10...4<br>
+   S2 = bits 3...0
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">M=0 PG=0</font></td>
+  <td colspan=2 align=left><font face="Arial">engineering sample</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">M=0 PG=1</font></td>
+  <td colspan=2 align=left><font face="Arial">thermal testing kit</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=1 S1=0h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 83xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=1 S1=1h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron DC 23xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=3 S1=0h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron QC 83xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=3 S1=1h</font></td>
+  <td colspan=2 align=left><font face="Arial">AMD Opteron QC 23xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=3 S1=2h</font></td>
+  <td colspan=2 align=left><font face="Arial">embedded AMD Opteron QC 83xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=3 S1=3h</font></td>
+  <td colspan=2 align=left><font face="Arial">embedded AMD Opteron QC 23xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 NC=3 S1=4h</font></td>
+  <td colspan=2 align=left><font face="Arial">embedded AMD Opteron QC 13xx</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 S2=Ah</font></td>
+  <td colspan=2 align=left><font face="Arial">SE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 S2=Bh</font></td>
+  <td colspan=2 align=left><font face="Arial">HE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 S2=Ch</font></td>
+  <td colspan=2 align=left><font face="Arial">EE</font></td>
+ </tr>
+ <tr>
+  <td align=center><font size="-2" face="Arial">PT=0 PG=0 S2=Fh</font></td>
+  <td colspan=2 align=left><font face="Arial">normal (not SE, HE, or EE)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=16><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description of indicated feature</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bits 31...14</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 13 (WDT)</font></td>
+  <td align=left colspan=3><font face="Arial">watchdog timer</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 12 (SKINIT)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_grp.htm">SKINIT</a>, <a href="opc_grp.htm">STGI</a>, DEV</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 11 (SSE5A)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_3a.htm">SSE5A</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 10 (IBS)</font></td>
+  <td align=left colspan=3><font face="Arial">instruction based sampling</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 9 (OSVW)</font></td>
+  <td align=left colspan=3><font face="Arial">OS-visible workaround</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 8 (3DNow!-)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_k3d.htm">PREFETCH</a> and <a href="opc_k3d.htm">PREFETCHW</a> (K8 Rev G and K8L)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 7 (MSSE)</font></td>
+  <td align=left colspan=3><font face="Arial">misaligned SSE, <a href="fp_new.htm">MXCSR.MM</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 6 (SSE4A)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SSE4A</a>, <a href="fp_new.htm">MXCSR</a>, <a href="crx.htm">CR4.OSXMMEXCPT</a>, <a href="except.htm">#XF</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 5 (LZCNT)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">LZCNT</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 4 (CR8D)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">MOV from/to CR8D</a> by means of LOCK-prefixed MOV from/to CR0</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 3 (EAS)</font></td>
+  <td align=left colspan=3><font face="Arial">extended APIC space (APIC_VER.EAS, EXT_APIC_FEAT, etc.)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">bit 2 (SVM)</font></td>
+  <td align=left colspan=3><font face="Arial">
+   <a href="msr.htm">EFER.SVME</a><br>
+   <a href="opc_grp.htm">VMRUN, VMMCALL, VMLOAD and VMSAVE, STGI and CLGI,<br>
+   SKINIT, INVLPGA<a>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1 (CMP)</font></td>
+  <td align=left colspan=3><font face="Arial">HTT=1 indicates HTT (0) or CMP (1)</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#B0D0D0"><font face="Arial">bit 0 (AHF64)</font></td>
+  <td align=left colspan=3 bgcolor="#B0D0D0"><font face="Arial"><a href="../aa64/opc_1.htm">LAHF</a> and <a href="../aa64/opc_1.htm">SAHF</a> in <a href="../aa64/mode.htm">PM64</a></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=33><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description of indicated feature</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 31 (3DNow!)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_k3d.htm">3DNow!</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 30 (3DNow!+)</font></td>
+  <td align=left colspan=3><font face="Arial">extended <a href="opc_k3d.htm">3DNow!</a></font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#B0D0D0"><font face="Arial">bit 29 (LM)</font></td>
+  <td align=left colspan=3 bgcolor="#B0D0D0"><font face="Arial"><a href="./../aa64/index.htm">AA-64</a>, Long Mode</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 28</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 27 (TSCP)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">TSC</a>, <a href="msr.htm">TSC_AUX</a>, <a href="opc_grp.htm">RDTSCP</a>, <a href="crx.htm">CR4.TSD</a></font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#B0D0D0"><font face="Arial">bit 26 (PG1G)</font></td>
+  <td align=left colspan=3 bgcolor="#B0D0D0"><font face="Arial"><a href="./../aa64/paging.htm">PML3E.PS</a></font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#B0D0D0"><font face="Arial">bit 25 (FFXSR)</font></td>
+  <td align=left colspan=3 bgcolor="#B0D0D)"><font face="Arial"><a href="./../aa64/msr.htm">EFER.FFXSR</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">
+   bit 24 (MMX+)<br>
+   bit 24 (FXSR)
+  </font></td>
+  <td align=left colspan=3><font face="Arial">
+   Cyrix specific: <a href="opc_2.htm">extended MMX</a><br>
+   AMD K7: <a href="opc_grp.htm">FXSAVE/FXRSTOR</a>, <a href="crx.htm">CR4.OSFXSR</a>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 23 (MMX)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">MMX</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 22 (MMX+)</font></td>
+  <td align=left colspan=3><font face="Arial">AMD specific: <a href="opc_2.htm">MMX-SSE and SSE-MEM</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 21</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 20 (NX)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="./../ia32/msr.htm">EFER.NXE</a>, <a href="./../ia32/paging.htm">P?E.NX</a>, <a href="./../ia32/paging.htm">#PF(1xxxx)</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 19 (MP)</font></td>
+  <td align=left colspan=3><font face="Arial">MP-capable <sup>#3</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 18</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 17 (PSE36)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">4 MB PDE bits 16...13</a>, <a href="crx.htm">CR4.PSE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">
+   bit 16 (FCMOV)<br>
+   bit 16 (PAT)
+  </font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_fpu.htm">
+   FCMOVcc/F(U)COMI(P)</a> (implies FPU=1)<br>
+   AMD K7: <a href="msr.htm">PAT MSR</a>, <a href="paging.htm">PDE/PTE.PAT</a>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 15 (CMOV)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">CMOVcc</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 14 (MCA)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MCG_*/MCn_* MSRs</a>, <a href="crx.htm">CR4.MCE</a>, <a href="except.htm">#MC</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 13 (PGE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">PDE/PTE.G</a>, <a href="crx.htm">CR4.PGE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 12 (MTRR)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MTRR* MSRs</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 11 (SEP)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_2.htm">SYSCALL/SYSRET</a>, <a href="msr.htm">EFER/STAR MSRs</a> <sup>#1</sup></a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 10</font></td>
+  <td align=left colspan=3><font face="Arial">reserved <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 9 (APIC)</font></td>
+  <td align=left colspan=3><font face="Arial">APIC <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 8 (CX8)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_grp.htm">CMPXCHG8B</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 7 (MCE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MCAR/MCTR MSRs</a>, <a href="crx.htm">CR4.MCE</a>, <a href="except.htm">#MC</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 6 (PAE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">64bit PDPTE/PDE/PTEs</a>, <a href="crx.htm">CR4.PAE</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 5 (MSR)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">MSRs</a>, <a href="opc_2.htm">RDMSR/WRMSR</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 4 (TSC)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="msr.htm">TSC</a>, <a href="opc_2.htm">RDTSC</a>, <a href="crx.htm">CR4.TSD</a> (doesn't imply MSR=1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 3 (PSE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="paging.htm">PDE.PS</a>, <a href="paging.htm">PDE/PTE.res</a>, <a href="crx.htm">CR4.PSE</a>, <a href="except.htm">#PF(1xxxb)</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 2 (DE)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.DE</a>, <a href="drx.htm">DR7.RW=10b</a>, <a href="except.htm">#UD</a> on MOV from/to DR4/5</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1 (VME)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="crx.htm">CR4.VME/PVI</a>, <a href="eflags.htm">EFLAGS.VIP/VIF</a>, <a href="tss.htm">TSS32.IRB</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 0 (FPU)</font></td>
+  <td align=left colspan=3><font face="Arial"><a href="opc_fpu.htm">FPU</a></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=5><font face="Arial">The AMD K6 processor, model 6, uses bit 10 to indicate SEP. Beginning with model 7, bit 11 is used instead.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=5><font face="Arial">If the APIC has been disabled, then the APIC feature flag will read as 0.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#3</font></td>
+  <td align=left colspan=5><font face="Arial">AMD K7 processors prior to CPUID=0662h may report 0 even if they are MP-capable.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended levels 8000_0002h, 8000_0003h, and 8000_0004h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50 rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0002h</font></td>
+  <td align=left width=align=left colspan=2><font face="Arial">get processor name string (part 1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EAX=8000_0003h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor name string (part 2)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EAX=8000_0004h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor name string (part 3)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=19 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=19><font face="Arial">
+   EAX<br>
+   EBX<br>
+   ECX<br>
+   EDX<br>
+  </font></td>
+  <td align=left colspan=2><font face="Arial">processor name string <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150><font face="Arial">AMD K5</font></td>
+  <td width=494 align=left><tt><b>AMD-K5(tm) Processor</b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">AMD K6</font></td>
+  <td align=left><tt><b>AMD-K6tm w/ multimedia extensions</b></tt></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K6-2</font></td>
+  <td align=left>
+   <tt><b>AMD-K6(tm) 3D processor</b></tt><br>
+   <tt><b>AMD-K6(tm)-2 Processor</b></tt><br>
+  </td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K6-III</font></td>
+  <td align=left>
+   <tt><b>AMD-K6(tm) 3D+ Processor</b></tt><br>
+   <tt><b>AMD-K6(tm)-III Processor</b></tt><br>
+  </td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">AMD K6-2+</font></td>
+  <td align=left><tt><b>AMD-K6(tm)-III Processor</b></tt> (?)</td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">AMD K6-III+</font></td>
+  <td align=left><tt><b>AMD-K6(tm)-III Processor</b></tt> (?)</td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">AMD K7</font></td>
+  <td align=left>
+   <tt><b>AMD-K7(tm) Processor</b></tt> (model 1)<br>
+   <tt><b>AMD Athlon(tm) Processor</b></tt> (model 2)<br>
+   newer models: programmable
+  </td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">AMD K8</font></td>
+  <td align=left>programmable via MSRs C001_0030h...C001_0035h, default is 48x 00h</td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">Geode GX2</font></td>
+  <td align=left>
+   <tt><b>Geode(TM) Integrated Processor by National Semi</b></tt><br>
+   programmable via MSRs 0000_300Ah...0000_300Fh
+  </td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">Geode LX</font></td>
+  <td align=left>
+   <tt><b>Geode(TM) Integrated Processor by AMD PCS</b></tt><br>
+   programmable via MSRs 0000_300Ah...0000_300Fh
+  </td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">Centaur C2 <sup>#2</sup></font></td>
+  <td align=left>
+   <tt><b>IDT WinChip 2</b></tt><br>
+   <tt><b>IDT WinChip 2-3D</b></tt><br>
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Centaur C3</font></td>
+  <td align=left><tt><b>IDT WinChip 3</b></tt></font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">VIA C3</font></td>
+  <td align=left>
+   <tt><b>CYRIX III(tm)</b></tt> (?)<br>
+   <tt><b>VIA Samuel</b></tt> (?)<br>
+   <tt><b>VIA Ezra</b></tt> (?)<br>
+   <tt><b>VIA C3 Nehemiah</b></tt> (?)<br>
+  </td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Intel PM <sup>#3</sup></font></td>
+  <td align=left><tt><b>Intel(R) Pentium(R) M processor xxxxMHz</b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Intel P4 <sup>#3</sup></font></td>
+  <td align=left><tt><b>Intel(R) Pentium(R) 4 CPU xxxxMHz</b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Intel Core 2</font></td>
+  <td align=left><tt><b>Intel(R) Xeon(R) CPU &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; xxxx &nbsp;@ x.xxGHz</b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Crusoe</font></td>
+  <td align=left><tt><b>Transmeta(tm) Crusoe(tm) Processor TMxxxx</b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Efficeon</font></td>
+  <td align=left><tt><b>Transmeta Efficeon(tm) Processor TM8000</b></tt></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">Unused characters at the end of the string are filled with 00h.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">The string depends on whether 3DNow! is disabled or enabled.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#3</font></td>
+  <td align=left colspan=3><font face="Arial">The string is right-justified, with leading whitespaces.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0005h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0005h</font></td>
+  <td align=left colspan=2><font face="Arial">get L1 cache and L1 TLB configuration descriptors <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=24 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=6><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">4/2 MB L1 TLB configuration descriptor</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...24</font></td>
+  <td align=left><font face="Arial">data TLB associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">code TLB associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">EBX</font></td>
+  <td align=left colspan=2><font face="Arial">4 KB L1 TLB configuration descriptor <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...24</font></td>
+  <td align=left><font face="Arial">data TLB associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">code TLB associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">ECX</font></td>
+  <td align=left colspan=2><font face="Arial">data L1 cache configuration descriptor</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...24</font></td>
+  <td align=left><font face="Arial">data L1 cache size in KBs</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23...16</font></td>
+  <td align=left><font face="Arial">data L1 cache associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">data L1 cache lines per tag</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">data L1 cache line size in bytes</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">EDX</font></td>
+  <td align=left colspan=2><font face="Arial">code L1 cache configuration descriptor</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...24</font></td>
+  <td align=left><font face="Arial">code L1 cache size in KBs</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">23...16</font></td>
+  <td align=left><font face="Arial">code L1 cache associativity (FFh=full)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">code L1 cache lines per tag</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">code L1 cache line size in bytes</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">Cyrix processors return CPUID level 0000_0002h-like descriptors instead. (Though the NS Geode GX2 does not.)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">
+   While Transmeta Crusoe processors have 256 entries, the CPUID definition constrains them to reporting only 255.<br>
+   For compatibility reasons they report their unified TLB twice: once for the code TLB, and once for the data TLB.
+  </font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0006h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0006h</font></td>
+  <td align=left colspan=2><font face="Arial">get L2/L3 cache and L2 TLB configuration descriptors</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=25 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=6><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">4/2 MB L2 TLB configuration descriptor <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...28</font></td>
+  <td align=left><font face="Arial">data TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">27...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">code TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">EBX</font></td>
+  <td align=left colspan=2><font face="Arial">4 KB L2 TLB configuration descriptor <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...28</font></td>
+  <td align=left><font face="Arial">data TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">27...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">code TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">ECX</font></td>
+  <td align=left colspan=2><font face="Arial">unified L2 cache configuration descriptor <sup>#3</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16 <sup>#5</sup></font></td>
+  <td align=left><font face="Arial">unified L2 cache size in KBs <sup>#4</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12 <sup>#5</sup></font></td>
+  <td align=left><font face="Arial">unified L2 cache associativity <sup>#2, #6</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...8 <sup>#5</sup></font></td>
+  <td align=left><font face="Arial">unified L2 cache lines per tag</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">unified L2 cache line size in bytes</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">EDX</font></td>
+  <td align=left colspan=2><font face="Arial">unified L3 cache configuration descriptor</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...18</font></td>
+  <td align=left><font face="Arial">unified L3 cache size in 512 KB chunks</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">17...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">unified L3 cache associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...8</font></td>
+  <td align=left><font face="Arial">unified L3 cache lines per tag</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">unified L3 cache line size in bytes</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">A unified L2 TLB is indicated by a value of 0000h in the upper 16 bits.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">
+   0000b=disabled, 0001b=1-way, 0010b=2-way, 0100b=4-way, 0110b=8-way, 1000b=16-way,<br>
+   1010b=32-way, 1011b=48-way, 1100b=64-way, 1101b=96-way, 1110b=128-way, 1111b=full
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#3</font></td>
+  <td align=left colspan=3><font face="Arial">The AMD K7 processor's L2 cache must be configured prior to relying upon this information, if the model is 1 or 2.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#4</font></td>
+  <td align=left colspan=3><font face="Arial">AMD K7 processors with CPUID=0630h (Duron) inadvertently report 1 KB instead of 64 KB.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#5</font></td>
+  <td align=left colspan=3><font face="Arial">VIA C3 processors with CPUID=0670...068Fh (C5B/C5C) inadvertently use bits 31...24, 23...16, and 15...8 instead.</font></td>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#6</font></td>
+  <td align=left colspan=3><font face="Arial">VIA C3 processors with CPUID=069x (C5XL) and stepping 1 inadvertently report 0 ways instead of 16 ways.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0007h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0007h</font></td>
+  <td align=left colspan=2><font face="Arial">get enhanced power management (EPM) information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=12 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=12><font face="Arial">EDX</font></td>
+  <td align=left colspan=2><font face="Arial">EPM flags</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...9</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8 (ITSC)</font></td>
+  <td align=left><font face="Arial">invariant TSC</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7 (HWPS)</font></td>
+  <td align=left><font face="Arial">hardware P-state support</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">6 (MUL100)</font></td>
+  <td align=left><font face="Arial">100 MHz multiplier steps</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">5 (STC)</font></td>
+  <td align=left><font face="Arial">software thermal control</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">4 (TM)</font></td>
+  <td align=left><font face="Arial">thermal monitoring</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3 (TTP)</font></td>
+  <td align=left><font face="Arial">thermal trip</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2 (VID)</font></td>
+  <td align=left><font face="Arial">voltage ID control</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1 (FID)</font></td>
+  <td align=left><font face="Arial">frequency ID control</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0 (TS)</font></td>
+  <td align=left><font face="Arial">temperature sensor</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0008h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0008h</font></td>
+  <td align=left colspan=2><font face="Arial">get miscellaneous information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=11 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=5><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">address size information</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...8</font></td>
+  <td align=left><font face="Arial">virtual address bits</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">physical address bits</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">ECX</font></td>
+  <td align=left colspan=2><font face="Arial">processor count information</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...16</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">number of LSBs in APIC ID that indicate core ID</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...8</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">cores per die - 1</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_000Ah</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_000Ah</font></td>
+  <td align=left colspan=2><font face="Arial">get SVM information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=15 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=5><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">revision and presence information</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...9</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">8</font></td>
+  <td align=left><font face="Arial">Hypervisor present (and intercepting this bit, to advertise its presence)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">7...0</font></td>
+  <td align=left><font face="Arial">revision, starting at 1</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3><font face="Arial">EBX</font></td>
+  <td align=left colspan=2><font face="Arial">address space information</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...0</font></td>
+  <td align=left><font face="Arial">number of ASIDs</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=7><font face="Arial">EDX</font></td>
+  <td align=left colspan=2><font face="Arial">sub-feature information</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...4</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3 (NRIPS)</font></td>
+  <td align=left><font face="Arial">NRIP save on #VMEXIT</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2 (SVML)</font></td>
+  <td align=left><font face="Arial">SVM lock</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1 (LBRV)</font></td>
+  <td align=left><font face="Arial">LBR virtualization</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0 (NP)</font></td>
+  <td align=left><font face="Arial">nested paging</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_0019h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_0019h</font></td>
+  <td align=left colspan=2><font face="Arial">get TLB configuration descriptors</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=12 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=6><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">1 GB L1 TLB configuration descriptor <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...28</font></td>
+  <td align=left><font face="Arial">data TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">27...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">code TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">EBX</font></td>
+  <td align=left colspan=2><font face="Arial">1 GB L2 TLB configuration descriptor <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...28</font></td>
+  <td align=left><font face="Arial">data TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">27...16</font></td>
+  <td align=left><font face="Arial">data TLB entries</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">15...12</font></td>
+  <td align=left><font face="Arial">code TLB associativity <sup>#2</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">11...0</font></td>
+  <td align=left><font face="Arial">code TLB entries</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">A unified TLB is indicated by a value of 0000h in the upper 16 bits.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#2</font></td>
+  <td align=left colspan=3><font face="Arial">
+   0000b=disabled, 0001b=1-way, 0010b=2-way, 0100b=4-way, 0110b=8-way, 1000b=16-way,<br>
+   1010b=32-way, 1011b=48-way, 1100b=64-way, 1101b=96-way, 1110b=128-way, 1111b=full
+  </font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">extended level 8000_001Ah</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8000_001Ah</font></td>
+  <td align=left colspan=2><font face="Arial">get performance optimization identifiers</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=5><font face="Arial">EAX</font></td>
+  <td align=left colspan=2><font face="Arial">performance optimization identifiers</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">bits</font></td>
+  <td align=center width=494 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">31...2</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">1 (MOVU)</font></td>
+  <td align=left><font face="Arial">prefer unaligned MOV over MOVL/MOVH</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">0 (FP128)</font></td>
+  <td align=left><font face="Arial">1x 128-bit instead of 2x 64-bit processing</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Transmeta level 8086_0000h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8086_0000h</font></td>
+  <td align=left colspan=2><font face="Arial">get maximum supported level and vendor ID string</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=2><font face="Arial">maximum supported level</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2><font face="Arial">EBX-EDX-ECX</font></td>
+  <td align=left colspan=2><font face="Arial">vendor ID string</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150><tt><b>TransmetaCPU</b></tt></td>
+  <td width=500 align=left><font face="Arial">Transmeta processor</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=6 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Transmeta level 8086_0001h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8086_0001h</font></td>
+  <td align=left colspan=4><font face="Arial">get processor information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=25 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=16><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left colspan=4><font face="Arial">processor family/model/stepping</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=150 rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended family<br>
+   (add)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor family is encoded in bits 27...20.</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150></td>
+  <td valign=top align=center width=50><font face="Arial">00<font color="#808080">+0</font></font></td>
+  <td width=294 align=left><font face="Arial">Transmeta Efficeon</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">
+   extended model<br>
+   (concat)
+  </font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The extended processor model is encoded in bits 19...16.</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Crusoe</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">TM3x00 and TM5x00</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Efficeon</font></td>
+  <td align=center><font face="Arial">0</font></td>
+  <td align=left><font face="Arial">TM8000</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center width=150 rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">family</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The family is encoded in bits 11...8.</font></td>
+ </tr>
+ <tr>
+  <td align=center width=150 rowspan=2></td>
+  <td align=center width=50><font face="Arial">5</font></td>
+  <td width=294 align=left><font face="Arial">Transmeta Crusoe</font></td>
+ </tr>
+ <tr>
+  <td align=center width=50><font face="Arial">F</font></td>
+  <td width=294 align=left><font face="Arial">refer to extended family</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=5 bgcolor="#004080"><font color="#FFFFFF" face="Arial">model</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The model is encoded in bits 7...4.</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">Transmeta Crusoe</font></td>
+  <td align=center><font face="Arial">4</font></td>
+  <td align=left><font face="Arial">TM3x00 and TM5x00</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=3><font face="Arial">Transmeta Efficeon</font></td>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (130 nm)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">2</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.0)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">3</font></td>
+  <td align=left><font face="Arial">TM8000 (90 nm CMS 6.1+)</font></td>
+ </tr>
+ <tr>
+  <td align=center valign=top rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">stepping</font></td>
+  <td align=left colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">The stepping is encoded in bits 3...0.</font></td>
+ </tr>
+ <tr>
+  <td align=left colspan=3><font face="Arial">The stepping values are processor-specific.</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">EBX=aabb_ccddh</font></td>
+  <td valign=top align=left colspan=4><font face="Arial">
+   hardware revision (a.b-c.d)<br>
+   0101_xxyyh = TM3200<br>
+   0102_xxyyh = TM5400<br>
+   0103_xxyyh = TM5400 or TM5600<br>
+   0103_00yyh = TM5500 or TM5800<br>
+   0104_xxyyh = TM5500 or TM5800<br>
+   0105_xxyyh = TM5500 or TM5800<br>
+   0200_0000h = see level 8086_0002h register EAX
+  </font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=left colspan=4><font face="Arial">nominal core clock frequency (MHz)</font></td>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=6><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description of indicated feature</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bits 31...4</font></td>
+  <td align=left colspan=3><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 3 (LRTI)</font></td>
+  <td align=left colspan=3><font face="Arial">LongRun Table Interface</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 2 (???)</font></td>
+  <td align=left colspan=3><font face="Arial">unknown</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1 (LR)</font></td>
+  <td align=left colspan=3><font face="Arial">LongRun</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 0 (BAD)</font></td>
+  <td align=left colspan=3><font face="Arial">recovery CMS active (due to a failed upgrade)</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Transmeta level 8086_0002h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8086_0002h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center><font face="Arial">EAX</font></td>
+  <td valign=top align=center width=150><font face="Arial">xxxx_xxxxh</font></td>
+  <td width=494 align=left><font face="Arial">
+   reserved or hardware revision (xxxxxxxxh)<br>
+   see level 8086_0001h register EBX
+  </font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EBX</font></td>
+  <td align=center><font face="Arial">aabb_ccddh</font></td>
+  <td align=left><font face="Arial">software revision, part 1/2 (a.b.c-d-x)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX</font></td>
+  <td align=center><font face="Arial">xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">software revision, part 2/2 (a.b.c-d-x)</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Transmeta levels 8086_0003h, 8086_0004h, 8086_0005h, and 8086_0006h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center width=50 rowspan=4 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8086_0003h</font></td>
+  <td align=left width=align=left colspan=2><font face="Arial">get information string (part 1)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EAX=8086_0004h</font></td>
+  <td align=left colspan=2><font face="Arial">get information string (part 2)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EAX=8086_0005h</font></td>
+  <td align=left colspan=2><font face="Arial">get information string (part 3)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EAX=8086_0006h</font></td>
+  <td align=left colspan=2><font face="Arial">get information string (part 4)</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=2 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=2><font face="Arial">
+   EAX-EBX-ECX-EDX
+  </font></td>
+  <td align=left colspan=2><font face="Arial">information string <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td width=150 align=center><font face="Arial">Transmeta</font></td>
+  <td width=494 align=left><tt><b>20000805 23:30 official release 4.1.4#2</b></tt> (example)</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">notes</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">Unused characters at the end of the string are filled with 00h.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Transmeta level 8086_0007h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8086_0007h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX</font></td>
+  <td align=center width=150><font face="Arial">xxxx_xxxxh</font></td>
+  <td width=494 align=left><font face="Arial">current core clock frequency (MHz)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EBX</font></td>
+  <td align=center><font face="Arial">xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">current core clock voltage (mV)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX</font></td>
+  <td align=center><font face="Arial">xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">current (LongRun) performance level (0...100%)</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EDX</font></td>
+  <td align=center><font face="Arial">xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">current gate delay (fs)</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=3 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Centaur level C000_0000h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=C000_0000h</font></td>
+  <td align=left width=650><font face="Arial">get maximum supported level</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">maximum supported level</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">Centaur level C000_0001h</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=C000_0001h</font></td>
+  <td align=left colspan=2><font face="Arial">get processor information</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=12 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td valign=top align=center rowspan=12><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=center width=150 bgcolor="#004080"><font color="#FFFFFF" face="Arial">feature flags</font></td>
+  <td align=center width=500 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description of indicated feature</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bits 31...10</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 9 (MM/HE-E)</font></td>
+  <td align=left><font face="Arial">Montgomery Multiplier and Hash Engine enabled</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 8 (MM/HE)</font></td>
+  <td align=left><font face="Arial">Montgomery Multiplier and Hash Engine</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 7 (ACE-E)</font></td>
+  <td align=left><font face="Arial">Advanced Cryptography Engine enabled</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 6 (ACE)</font></td>
+  <td align=left><font face="Arial">Advanced Cryptography Engine</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 5 (FEMMS)</font></td>
+  <td align=left><font face="Arial"><a href="opc_k3d.htm">FEMMS</a></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 4 (LH)</font></td>
+  <td align=left><font face="Arial">LongHaul MSR 0000_110Ah</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 3 (RNG-E)</font></td>
+  <td align=left><font face="Arial">Random Number Generator enabled</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 2 (RNG)</font></td>
+  <td align=left><font face="Arial">Random Number Generator</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 1 (AIS-E)</font></td>
+  <td align=left><font face="Arial">Alternate Instruction Set enabled</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">bit 0 (AIS)</font></td>
+  <td align=left><font face="Arial">Alternate Instruction Set</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">mystery level 8FFF_FFFEh</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8FFF_FFFEh</font></td>
+  <td align=left colspan=2><font face="Arial">unknown <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center rowspan=4 bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX</font></td>
+  <td align=center width=150><font face="Arial">0049_4544h</font></td>
+  <td width=494 align=left><tt><b><a href="http://www.ucolick.org/~sla/dei/" target="_blank">DEI</a></b></tt></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EBX</font></td>
+  <td align=center><font face="Arial">0000_0000h</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX</font></td>
+  <td align=center><font face="Arial">0000_0000h</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EDX</font></td>
+  <td align=center><font face="Arial">0000_0000h</font></td>
+  <td align=left><font face="Arial">reserved</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only supported by the AMD K6 processor family.</font></td>
+ </tr>
+</table>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">mystery level 8FFF_FFFFh</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=8FFF_FFFFh</font></td>
+  <td align=left colspan=2><font face="Arial">unknown <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">
+   EAX<br>
+   EBX<br>
+   ECX<br>
+   EDX<br>
+  </font></td>
+  <td valign=top align=center width=150><font face="Arial">string</font></td>
+  <td valign=top width=494 align=left>
+   <tt><b>NexGenerationAMD</b></tt> (K6)<br>
+   <tt><b>IT'S HAMMER TIME</b></tt> (K8)
+  </td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">note</font></td>
+  <td align=center colspan=3 bgcolor="#004080"><font color="#FFFFFF" face="Arial">description</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=3><font face="Arial">This level is only supported by the AMD K6 and K8 processor families.</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=4 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">AMD SimNow! level BACC_D00Ah</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top rowspan=5 align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=BACC_D00Ah</font></td>
+  <td align=left width=650><font face="Arial">backdoor call <sup>#1</sup></font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EDI=CA11_xxxxh</font></td>
+  <td align=left><font face="Arial">function number</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EBX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">1st argument</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">ECX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">2nd argument</font></td>
+ </tr>
+ <tr>
+  <td align=center><font face="Arial">EDX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">3rd argument</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left><font face="Arial">return value</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">#1</font></td>
+  <td align=left colspan=2><font face="Arial">This level is only supported by the AMD SimNow! simulator.</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+
+<table border=1 cellspacing=0 cellpadding=2>
+ <tr>
+  <td align=center colspan=3 bgcolor="#004080">&nbsp;<br><font size=+2 color="#FFFFFF" face="Arial">all other levels</font><br>&nbsp;</td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td align=center width=50 bgcolor="#004080"><font color="#FFFFFF" face="Arial">input</font></td>
+  <td align=center width=150><font face="Arial">EAX=xxxx_xxxxh</font></td>
+  <td align=left width=656><font face="Arial">desired CPUID level</font></td>
+ </tr>
+ <tr>
+ </tr>
+ <tr>
+  <td valign=top align=center bgcolor="#004080"><font color="#FFFFFF" face="Arial">output</font></td>
+  <td align=center><font face="Arial">
+   EAX=xxxx_xxxxh<br>
+   EBX=xxxx_xxxxh<br>
+   ECX=xxxx_xxxxh<br>
+   EDX=xxxx_xxxxh<br>
+  </font></td>
+  <td valign=top align=left><font face="Arial">undefined</font></td>
+ </tr>
+</table>
+<br>
+
+<hr>
+<br>
+<a href="./../index.htm"><img width=55 height=55 border=0 src="./../pics/logo_ani.gif" alt="main page"></a>
+
+   </center>
+  </td>
+ </tr>
+</table>
+</body>
+</html>

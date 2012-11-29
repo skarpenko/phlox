@@ -70,4 +70,15 @@ status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint
  */
 status_t vm_tmap_quick_query(addr_t vaddr, addr_t *out_paddr);
 
+/*
+ * Create translation map object for kernel address space.
+ * This routine used only during system start up. Do not use after.
+ */
+status_t vm_tmap_kernel_create(vm_translation_map_t *kernel_tmap);
+
+/*
+ * Create translation map object for user-space.
+ */
+status_t vm_tmap_create(vm_translation_map_t *new_tmap);
+
 #endif

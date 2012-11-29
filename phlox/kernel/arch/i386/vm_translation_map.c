@@ -110,7 +110,7 @@ static void update_all_pgdirs(uint index, mmu_pde pdentry)
         le = le->next; /* next item */
     }
 
-    /* release lock*/
+    /* release lock */
     spin_unlock_irqrstor(&tmap_list_lock, irqs_state);
 }
 
@@ -573,6 +573,46 @@ static status_t map_pool_chunk(addr_t pa, addr_t va)
     return NO_ERROR;
 }
 
+/* Common (for kernel and user) translation map creation routine */
+static status_t vm_tmap_common_create(vm_translation_map_t *new_tmap, mmu_pde *pgdir_virt,
+                                      mmu_pde *pgdir_phys)
+{
+    unsigned long irqs_state;
+
+    /* init new tmap object structure */
+    new_tmap->ops = &ops_tmap;
+    new_tmap->map_count = 0;
+    new_tmap->arch.num_invalidate_pages = 0;
+
+    /* init spinlock */
+    spin_init(&new_tmap->lock);
+    /* NOTE: In future spinlock must be replaced with more complex lock! */
+
+    /* assign specified page directory */
+    new_tmap->arch.pgdir_virt = pgdir_virt;
+    new_tmap->arch.pgdir_phys = pgdir_phys;
+    
+    /* zero out the bottom portion of the new page directory */
+    memset(new_tmap->arch.pgdir_virt + FIRST_USER_PGDIR_ENTRY, 0,
+           NUM_USER_PGDIR_ENTRIES * sizeof(mmu_pde));
+
+    /* acquire lock before list touching */
+    irqs_state = spin_lock_irqsave(&tmap_list_lock);
+
+    /* copy the top portion of the kernel page directory into new one */
+    memcpy(new_tmap->arch.pgdir_virt + FIRST_KERNEL_PGDIR_ENTRY,
+           kernel_pgdir_virt + FIRST_KERNEL_PGDIR_ENTRY,
+           NUM_KERNEL_PGDIR_ENTRIES * sizeof(mmu_pde));
+
+    /* insert this new map into the map list */
+    xlist_add_first(&tmap_list, &new_tmap->list_node);
+
+    /* release lock */
+    spin_unlock_irqrstor(&tmap_list_lock, irqs_state);
+
+    return NO_ERROR;
+}
+
 
 /* init translation map module */
 status_t vm_translation_map_init(kernel_args_t *kargs)
@@ -819,6 +859,27 @@ status_t vm_tmap_quick_query(addr_t vaddr, addr_t *out_paddr)
 
     /* store result */
     *out_paddr = ADDR_REVERSE_SHIFT(pt_entry->stru.base);
+
+    return NO_ERROR;
+}
+
+/* Create translation map for kernel address space */
+status_t vm_tmap_kernel_create(vm_translation_map_t *kernel_tmap)
+{
+    if(kernel_tmap == NULL)
+        return ERR_INVALID_ARGS;
+
+    /* call with known kernel page directory mapping */
+    return vm_tmap_common_create(kernel_tmap, kernel_pgdir_virt, kernel_pgdir_phys);
+}
+
+/* Create translation map for user-space */
+status_t vm_tmap_create(vm_translation_map_t *new_tmap)
+{
+    if(new_tmap == NULL)
+        return ERR_INVALID_ARGS;
+
+    panic("vm_tmap_create: not implemented!");
 
     return NO_ERROR;
 }

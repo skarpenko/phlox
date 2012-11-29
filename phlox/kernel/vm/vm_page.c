@@ -5,20 +5,171 @@
 #include <phlox/kernel.h>
 #include <phlox/list.h>
 #include <phlox/arch/vm_transmap.h>
+#include <phlox/processor.h>
+#include <phlox/spinlock.h>
+#include <phlox/errors.h>
 #include <phlox/vm.h>
 #include <phlox/vm_page.h>
 
+/* type redefinition for convenience */
+typedef xlist_t page_list_t;
+
 /* Lists of pages */
-static xlist_t  free_pages;    /* List of free pages   */
-static xlist_t  active_pages;  /* List of active pages */
+static page_list_t  free_pages_list;    /* List of free pages   */
+static page_list_t  active_pages_list;  /* List of active pages */
 
 /* Array of all available pages */
 static vm_page_t *all_pages;
+
+/* spinlock for operations with pages */
+static spinlock_t page_lock;
+
 /* Offset of first available physical page */
 static addr_t physical_page_offset;
 /* Total number of pages */
 static uint32 total_pages_count;
 
+
+/**
+ ** Locally used operations with page lists.
+ ** (Note: No locks used!)
+ **/
+/* put page to end of the list */
+static void put_page_to_list(page_list_t *list, vm_page_t *page) {
+    xlist_add_last(list, &page->list_node);
+}
+
+/* extract first page from list */
+static vm_page_t *get_page_from_list(page_list_t *list) {
+    list_elem_t *tmp = xlist_extract_first(list);
+    return containerof(tmp, vm_page_t, list_node);
+}
+
+/* remove page from list */
+static void remove_page_from_list(page_list_t *list, vm_page_t *page) {
+    xlist_remove(list, &page->list_node);
+}
+
+/* move page from first list to end of second list */
+static void move_page_to_list(page_list_t *list_from, page_list_t *list_to, vm_page_t *page) {
+    if(list_from != list_to) {
+        xlist_remove(list_from, &page->list_node);
+        xlist_add_last(list_to, &page->list_node);
+    }
+}
+
+/**
+ ** Locally used operations with pages.
+ ** (Note: No locks used!)
+ **/
+static uint32 set_page_state(vm_page_t *page, uint32 page_state) {
+    page_list_t *from_list = NULL;
+    page_list_t *to_list   = NULL;
+
+    /* if page state and requested state is equal */
+    if(page->state == page_state)
+      return 0;
+
+    /* get source page list */
+    switch(page->state) {
+        case VM_PAGE_STATE_ACTIVE:
+           VM_State.active_pages--;
+           from_list = &active_pages_list;
+           break;
+        case VM_PAGE_STATE_FREE:
+           VM_State.free_pages--;
+           from_list = &free_pages_list;
+           break;
+        case VM_PAGE_STATE_UNUSED:
+           VM_State.unused_pages--;
+           from_list = &active_pages_list;
+           break;
+        default:
+            panic("vm_page_set_state: vm_page %p in invalid state %d\n", page, page->state);
+    }
+
+    /* get destination page list */
+    switch(page_state) {
+        case VM_PAGE_STATE_ACTIVE:
+           VM_State.active_pages++;
+           to_list = &active_pages_list;
+           break;
+        case VM_PAGE_STATE_FREE:
+           VM_State.free_pages++;
+           to_list = &free_pages_list;
+           break;
+        case VM_PAGE_STATE_UNUSED:
+           VM_State.unused_pages++;
+           to_list = &active_pages_list;
+           break;
+        default:
+            panic("vm_page_set_state: invalid target state %d\n", page_state);
+    }
+
+    /* move page to new list */
+    move_page_to_list(from_list, to_list, page);
+
+    /* set new state */
+    page->state = page_state;
+
+    return 0;
+}
+
+
+/* pre initialization routine */
+uint32 vm_page_preinit(kernel_args_t *kargs) {
+    uint32 i, last_phys_page = 0;
+
+    /* init lists */
+    xlist_init(&free_pages_list);
+    xlist_init(&active_pages_list);
+
+    /* init spinlock */
+    spin_init(&page_lock);
+
+    /*** Calculate the size of memory by looking at the phys_mem_range array ***/
+    /* first available physical page */
+    physical_page_offset = kargs->phys_mem_range[0].start / PAGE_SIZE;
+    /* search for last available physical page */
+    for(i=0; i < kargs->num_phys_mem_ranges; i++) {
+       last_phys_page = (kargs->phys_mem_range[i].start +
+                         kargs->phys_mem_range[i].size) / PAGE_SIZE - 1;
+    }
+    /* number of available physical pages */
+    total_pages_count = last_phys_page - physical_page_offset + 1;
+
+    /* set up the global info structure about physical memory */
+    VM_State.physical_page_size   = PAGE_SIZE;
+    VM_State.total_physical_pages = total_pages_count;
+
+    return 0;
+}
+
+/* module initialization routine */
+uint32 vm_page_init(kernel_args_t *kargs) {
+    uint32 i;
+
+    /* allocate area for pages structures */
+    all_pages = (vm_page_t *)vm_alloc_from_kargs(kargs, total_pages_count*sizeof(vm_page_t),
+                                                   VM_LOCK_KERNEL|VM_LOCK_RW);
+    /* init pages */
+    for(i = 0; i < total_pages_count; i++) {
+       all_pages[i].ppn       = physical_page_offset;
+       all_pages[i].type      = VM_PAGE_TYPE_PHYS;
+       all_pages[i].state     = VM_PAGE_STATE_FREE;
+       all_pages[i].ref_count = 0;
+       VM_State.free_pages++;
+       put_page_to_list(&free_pages_list, &all_pages[i]);
+    }
+
+    /* mark some physically allocated ranges of pages as used */
+    for(i = 0; i < kargs->num_phys_alloc_ranges; i++) {
+        vm_page_mark_range_inuse(kargs->phys_alloc_range[i].start / PAGE_SIZE,
+                                 kargs->phys_alloc_range[i].size / PAGE_SIZE);
+    }
+
+    return 0;
+}
 
 /* allocate virtual space from kernel args */
 addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
@@ -84,38 +235,6 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
     return 0;
 }
 
-/* pre initialization routine */
-uint32 vm_page_preinit(kernel_args_t *kargs) {
-    uint32 i, last_phys_page = 0;
-
-    /* init lists */
-    xlist_init(&free_pages);
-    xlist_init(&active_pages);
-
-    /*** Calculate the size of memory by looking at the phys_mem_range array ***/
-    /* first available physical page */
-    physical_page_offset = kargs->phys_mem_range[0].start / PAGE_SIZE;
-    /* search for last available physical page */
-    for(i=0; i < kargs->num_phys_mem_ranges; i++) {
-       last_phys_page = (kargs->phys_mem_range[i].start +
-                         kargs->phys_mem_range[i].size) / PAGE_SIZE - 1;
-    }
-    /* number of available physical pages */
-    total_pages_count = last_phys_page - physical_page_offset + 1;
-
-    /* set up the global info structure about physical memory */
-    VM_State.physical_page_size   = PAGE_SIZE;
-    VM_State.total_physical_pages = total_pages_count;
-
-    return 0;
-}
-
-/* module initialization routine */
-uint32 vm_page_init(kernel_args_t *kargs) {
-    /* do something */
-    return 0;
-}
-
 /* allocate physical page from kernel args */
 addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
     uint32 i;
@@ -162,4 +281,51 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
 
     /* return start address of allocated block */
     return vspot;
+}
+
+/* mark physical page as used */
+uint32 vm_page_mark_page_inuse(addr_t page) {
+   return vm_page_mark_range_inuse(page, 1);
+}
+
+/* mark range of physical pages as used */
+uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages) {
+    vm_page_t *page;
+    addr_t i;
+
+    /* check arguments */
+    if(physical_page_offset > start_page) {
+        kprint("vm_page_mark_range_inuse: start page %ld is before free list\n", start_page);
+        return ERR_INVALID_ARGS;
+    }
+    start_page -= physical_page_offset;
+    if(start_page + len_pages >= total_pages_count) {
+        kprint("vm_page_mark_range_inuse: range would extend past free list\n");
+        return ERR_INVALID_ARGS;
+    }
+
+/*    local_irqs_disable(); */
+#warning Interrupts must be disabled
+    spin_lock(&page_lock);
+
+    /* process pages */
+    for(i = 0; i < len_pages; i++) {
+       page = &all_pages[start_page + i];
+       switch(page->state) {
+         case VM_PAGE_STATE_FREE:
+           set_page_state(page, VM_PAGE_STATE_UNUSED);
+           break;
+         case VM_PAGE_STATE_ACTIVE:
+         case VM_PAGE_STATE_UNUSED:
+         default:
+           kprint("vm_page_mark_range_inuse: page 0x%lx in non-free state %d!\n",
+                        start_page + i, page->state);
+       }
+    }
+
+    spin_unlock(&page_lock);
+#warning Interrupts must be correctly enabled
+/*    local_irqs_enable(); */
+
+    return NO_ERROR;
 }

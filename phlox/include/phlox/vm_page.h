@@ -61,4 +61,18 @@ addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs);
 */
 addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes);
 
+/*
+ * Mark given physical page as in use, but stil not
+ * used by VM
+ *
+*/
+uint32 vm_page_mark_page_inuse(addr_t page);
+
+/*
+ * Mark given range of physical pages as in use, but stil not
+ * used by VM
+ *
+*/
+uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages);
+
 #endif

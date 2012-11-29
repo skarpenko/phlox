@@ -29,6 +29,7 @@ typedef struct {
     /*** Page lists ***/
     uint32  active_pages;
     uint32  free_pages;
+    uint32  unused_pages;
 } vm_stat_t;
 
 

@@ -49,6 +49,10 @@ uint32 vm_init(kernel_args_t *kargs) {
    if(err)
       panic("vm_page_init: failed!\n");
 
+/*** Important note: After this point vm_alloc_from_kargs must not be used
+ *** because physical pages bookkeping is turned on.
+ ***/
+
    return 0;
 }
 

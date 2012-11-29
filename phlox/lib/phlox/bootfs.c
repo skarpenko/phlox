@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -54,7 +54,7 @@ static void *_memncpy(void *dst, void *src, unsigned int n) {
 static unsigned int _path_itms_count(char *path) {
     unsigned int cnt = 1;
     unsigned int n;
-    int i;
+    unsigned int i;
 
     if(path[0] == '/') path = &path[1];
     n = _str_len(path);
@@ -70,7 +70,7 @@ static unsigned int _path_itms_count(char *path) {
 static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsigned int size) {
     unsigned int cnt = 0;
     unsigned int n;
-    int i, j;
+    unsigned int i, j;
 
     if(path[0] == '/') path = &path[1];
     n = _str_len(path);
@@ -148,7 +148,7 @@ int btfs_set_cur_fs(bootfs_t *fs) {
 
 btfs_dir_entry *btfs_locate(char *path) {
     unsigned int page, npages;
-    btfs_dir_entry *first, *en;
+    btfs_dir_entry *first = NULL, *en = NULL;
     unsigned int entries;
     char name[BOOTFS_NAMELEN];
     unsigned int npi;
@@ -194,7 +194,7 @@ btfs_dir_entry *btfs_locate(char *path) {
 }
 
 int btfs_chdir(char *path) {
-    btfs_dir_entry *en;
+    btfs_dir_entry *en = NULL;
 
     /* if root specified */
     if(_str_len(path) == 1 && path[0] =='/') {
@@ -227,7 +227,7 @@ int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e) {
 }
 
 int btfs_open_p(bootfs_fh_t *fh, char *path) {
-    btfs_dir_entry *e;
+    btfs_dir_entry *e = NULL;
 
     if( (e=btfs_locate(path)) == NULL )
         return 1;

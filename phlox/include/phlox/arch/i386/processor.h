@@ -6,8 +6,9 @@
 #define _PHLOX_ARCH_I386_PROCESSOR_H_
 
 /*
- * NOTE: Names with prefix "arch_" redefined in upper level processor.h
- * as common for all architectures without this prefix.
+ * NOTE: Names with prefix "arch_" may be redefined in upper level processor.h
+ * as common for all architectures without this prefix. Or used by routines
+ * of common layer.
  */
 
 
@@ -57,16 +58,22 @@ enum i386_features {
 
 /* architectue specific processor set structure */
 typedef struct {
+    /* architecture specific data for processor set */
 } arch_processor_set_t;
 
 /* architectue specific processor structure */
 typedef struct {
-    enum i386_vendors vendor; /* processor vendor */
-    uint32 family;            /* instruction family */
-    uint32 model;             /* model */
-    uint32 stepping;          /* stepping id */
-    uint32 cpuid;             /* CPUID instruction support */
-    uint32 rdtsc;             /* RDTSC instruction support */
+    enum i386_vendors vendor;  /* processor vendor */
+    /* processor features */
+    enum i386_features  features[I386_FEATURES_COUNT];
+    char vendor_str[13];       /* vendor's string */
+    const char *vendor_name;   /* vendor's name */
+    char model_name[49];       /* processor's name */
+    uint8 family;              /* instruction family */
+    uint8 model;               /* model */
+    uint8 stepping;            /* stepping id */
+    uint8 cpuid;               /* CPUID instruction support */
+    uint8 rdtsc;               /* RDTSC instruction support */
 } arch_processor_t;
 
 

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <arch/cpu.h>
+#include <phlox/kargs.h>
 #include "arch/kernel.h"
 
 /* macro definitions */
@@ -31,8 +32,13 @@
 extern "C" {
 #endif
 
+extern kernel_args_t globalKargs; /* global kernel arguments variable */
+
 int vsprintf(char *str, char const *format, va_list ap);
 int sprintf(char * buf, const char *fmt, ...);
+
+int kprint(const char *fmt, ...);
+int panic(const char *fmt, ...);
 
 #ifdef __cplusplus
 } /* "C" */

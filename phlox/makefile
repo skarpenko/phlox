@@ -32,3 +32,20 @@ allclean:
 
 mrproper:
 	rm -rf build/
+
+help:
+	@echo
+	@echo "Phlox Makefile options"
+	@echo
+	@echo "example: make <command> CPU=<cpu type>"
+	@echo
+	@echo "Commands:"
+	@echo "  help     - this help message;"
+	@echo "  final    - build Phlox boot image;"
+	@echo "  clean    - remove results of compilation;"
+	@echo "  allclean - remove target dir;"
+	@echo "  mrproper - clean up Phlox source tree."
+	@echo
+	@echo "Additional options:"
+	@echo "  CPU=<cpu type>  - specifies CPU type to optimize for."
+	@echo

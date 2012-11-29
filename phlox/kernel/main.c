@@ -7,11 +7,16 @@
 #include <arch/cpu.h>
 #include <phlox/types.h>
 #include <phlox/kernel.h>
+#include <phlox/processor.h>
 #include <phlox/kargs.h>
 #include <boot/bootfs.h>
 
 #define SCREEN_HEIGHT 25
 #define SCREEN_WIDTH 80
+#define kprintf kprint
+
+/* Global kernel args */
+kernel_args_t globalKargs;
 
 /* need for console stuff */
 static unsigned short *screenBase = (unsigned short *) 0xb8000;
@@ -39,6 +44,14 @@ static void recursion(uint32 init) {
 
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
+    /* if we are bootstrap processor,
+     *  store kernel args to global variable.
+     */
+    if(num_cpu==0)
+      memcpy(&globalKargs, kargs, sizeof(kernel_args_t));
+
+    /* processor set initialization */
+    processor_set_init(&globalKargs, num_cpu);
 
     line = kargs->cons_line;
     screenOffset = SCREEN_WIDTH * line;
@@ -106,7 +119,7 @@ int puts(const char *str) {
     return 0;
 }
 
-int kprintf(const char *fmt, ...) {
+int kprint(const char *fmt, ...) {
     int ret;
     va_list args;
     char temp[256];
@@ -128,7 +141,7 @@ int panic(const char *fmt, ...) {
     ret = vsprintf(temp,fmt,args);
     va_end(args);
 
-    puts("\nKINIT PANIC: ");
+    puts("\nKERNEL PANIC: ");
     puts(temp);
     puts("\n");
 

@@ -8,17 +8,6 @@
 #include <phlox/compiler.h>
 #include <phlox/types.h>
 
-/* Max. limit of Global Descriptor Table */
-#define MAX_GDT_LIMIT  0x800
-/*
-* NOTE: Global Descroptor Table limit can be up to 0x10000 bytes,
-* but Phlox uses only 0x800 (256 entries).
-*/
-
-/* Max. limit of Interrupt Descriptor Table */
-#define MAX_IDT_LIMIT  0x800
-
-
 /*
 * General-Segment Descriptor Format
 *

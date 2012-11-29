@@ -203,7 +203,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
         kargs->fb.enabled = 0;
     }
 
-    /** Prepare memory map to pass into kernel (this section completely taken from NewOS's Stage2)**/
+    /** Prepare memory map to pass into kernel (this section completely taken from NewOS's Stage2) **/
     /* mark memory that we know is used */
     kargs->phys_alloc_range[0].start = (uint32)BTFS_IMAGE;
     kargs->phys_alloc_range[0].size = next_physaddr - (uint32)BTFS_IMAGE;

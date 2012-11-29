@@ -8,7 +8,8 @@
 #include <phlox/platform/pc/pit.h>
 
 /* PC-specific machine init */
-uint32 platform_machine_init(kernel_args_t *kargs) {
+uint32 platform_machine_init(kernel_args_t *kargs)
+{
     /* init Programmable Interrupt Controllers */
     pic_init();
     /* init Programmable Interval Timer */

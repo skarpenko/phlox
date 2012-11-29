@@ -342,7 +342,8 @@ typedef struct {
  * Invalidate all entries in Translation Lookaside Buffer of MMU
  * by reloading CR3
  */
-static inline void arch_invalidate_TLB() {
+static inline void arch_invalidate_TLB()
+{
     __asm__ __volatile__ (
        " movl %cr3, %eax; "  /* read CR3 */
        " movl %eax, %cr3; "  /* write CR3 */
@@ -358,7 +359,8 @@ static inline void arch_invalidate_TLB() {
 #if CPU_i386
 void arch_invalidate_TLB_entry(addr_t virt_addr);
 #else
-static inline void arch_invalidate_TLB_entry(addr_t virt_addr) {
+static inline void arch_invalidate_TLB_entry(addr_t virt_addr)
+{
     __asm__ __volatile__ (
        " invlpg (%0); "
        : :"r" (virt_addr));

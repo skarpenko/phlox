@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/types.h>
@@ -50,7 +50,8 @@ int cpu_i486_atomic_xor_ret(atomic_t *a, int v);
 
 /* atomic module init routine */
 void arch_atomic_mod_init(arch_processor_t *bsp); /* keep compiler happy */
-void arch_atomic_mod_init(arch_processor_t *bsp) {
+void arch_atomic_mod_init(arch_processor_t *bsp)
+{
 #if CPU_i386
     if(bsp->family<4) {
        /* init links for i386 CPU */

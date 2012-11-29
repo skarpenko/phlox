@@ -6,7 +6,8 @@
 #include <phlox/machine.h>
 
 /* machine init */
-uint32 machine_init(kernel_args_t *kargs) {
+uint32 machine_init(kernel_args_t *kargs)
+{
     uint32 err;
 
     /* platform specific machine init */

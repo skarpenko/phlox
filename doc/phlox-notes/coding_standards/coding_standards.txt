@@ -1,0 +1,134 @@
+Phlox Coding Standards
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. Keep the 80 char boundary (this is almost universally accepted).
+
+------------------------------------------------------------------------------
+
+2. Indentation
+
+Example:
+
+type function (params)
+{
+--A--> int i, i;
+ ...
+--A--> if (i > j) {
+--A--> --B--> i = j;
+--A--> }
+ ...
+--A--> if (i == 100)
+--A--> {
+--A--> --B--> if(j != 10) {
+--A--> --B--> --B--> j = i;
+--A--> --B--> }
+--A--> }
+}
+
+A = 4 spaces
+B = 2 - 4 spaces
+
+------------------------------------------------------------------------------
+
+3. Function definitions
+
+Examples:
+
+type function (params)
+{
+ ....
+}
+
+or
+
+type
+function (params)
+{
+ ....
+}
+
+If the arguments don't fit nicely on one line, split it like this: 
+
+int lots_of_args (int an_integer, long a_long, short a_short,
+                  double a_double, float a_float)
+
+Note: Space after function name can be skipped.
+
+------------------------------------------------------------------------------
+
+4. Conditions
+
+Examples:
+
+if (condition) do_this;
+
+if (condition) {
+ ...
+}
+
+or
+
+if (condition)
+{
+ ...
+}
+
+if (condition) {
+ ...
+} else {
+ ...
+}
+
+if (condition) {
+ ...
+} else if (condition} {
+ ...
+} else {
+ ...
+}
+
+Note: Space after "if" can be skipped
+
+------------------------------------------------------------------------------
+
+5. Loops
+
+Examples:
+
+for (conditions) {
+ ...
+}
+
+or
+
+for (conditions)
+{
+ ...
+}
+
+do {
+ ...
+} while (condition);
+
+or
+
+do
+{
+ ...
+} while (condition);
+
+while (condition) {
+ ...
+}
+
+or
+
+while (condition)
+{
+ ...
+}
+
+Note: Space after loop keywords can be skipped
+
+------------------------------------------------------------------------------
+

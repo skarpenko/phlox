@@ -12,7 +12,8 @@ spinlock_t pit_lock;
 
 
 /* PIT initialization */
-uint32 pit_init(void) {
+uint32 pit_init(void)
+{
     uint16 cntr_value = SYS_CLOCK_RATE / HZ;
 
     spin_init(&pit_lock); /* init spin lock */
@@ -24,7 +25,8 @@ uint32 pit_init(void) {
 }
 
 /* sets counter */
-uint32 pit_set_counter(uint8 counter, uint8 mode, uint16 value) {
+uint32 pit_set_counter(uint8 counter, uint8 mode, uint16 value)
+{
     uint32 irq_state;
     uint16 dport; /* data port */
 
@@ -90,7 +92,8 @@ uint32 pit_set_counter(uint8 counter, uint8 mode, uint16 value) {
 }
 
 /* plug/unplug counter 2 to/from PC speaker */
-void pit_to_spkr(bool v) {
+void pit_to_spkr(bool v)
+{
     uint32 irq_state;
     uint8 data;
 

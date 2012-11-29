@@ -35,23 +35,27 @@ static uint32 total_pages_count;
  ** (Note: No locks used!)
  **/
 /* put page to end of the list */
-static void put_page_to_list(page_list_t *list, vm_page_t *page) {
+static void put_page_to_list(page_list_t *list, vm_page_t *page)
+{
     xlist_add_last(list, &page->list_node);
 }
 
 /* extract first page from list */
-static vm_page_t *get_page_from_list(page_list_t *list) {
+static vm_page_t *get_page_from_list(page_list_t *list)
+{
     list_elem_t *tmp = xlist_extract_first(list);
     return containerof(tmp, vm_page_t, list_node);
 }
 
 /* remove page from list */
-static void remove_page_from_list(page_list_t *list, vm_page_t *page) {
+static void remove_page_from_list(page_list_t *list, vm_page_t *page)
+{
     xlist_remove(list, &page->list_node);
 }
 
 /* move page from first list to end of second list */
-static void move_page_to_list(page_list_t *list_from, page_list_t *list_to, vm_page_t *page) {
+static void move_page_to_list(page_list_t *list_from, page_list_t *list_to, vm_page_t *page)
+{
     if(list_from != list_to) {
         xlist_remove(list_from, &page->list_node);
         xlist_add_last(list_to, &page->list_node);
@@ -62,7 +66,8 @@ static void move_page_to_list(page_list_t *list_from, page_list_t *list_to, vm_p
  ** Locally used operations with pages.
  ** (Note: No locks used!)
  **/
-static uint32 set_page_state(vm_page_t *page, uint32 page_state) {
+static uint32 set_page_state(vm_page_t *page, uint32 page_state)
+{
     page_list_t *from_list = NULL;
     page_list_t *to_list   = NULL;
 
@@ -117,7 +122,8 @@ static uint32 set_page_state(vm_page_t *page, uint32 page_state) {
 
 
 /* pre initialization routine */
-uint32 vm_page_preinit(kernel_args_t *kargs) {
+uint32 vm_page_preinit(kernel_args_t *kargs)
+{
     uint32 i, last_phys_page = 0;
 
     /* init lists */
@@ -146,7 +152,8 @@ uint32 vm_page_preinit(kernel_args_t *kargs) {
 }
 
 /* module initialization routine */
-uint32 vm_page_init(kernel_args_t *kargs) {
+uint32 vm_page_init(kernel_args_t *kargs)
+{
     uint32 i;
 
     /* allocate area for pages structures */
@@ -172,7 +179,8 @@ uint32 vm_page_init(kernel_args_t *kargs) {
 }
 
 /* allocate virtual space from kernel args */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size)
+{
     addr_t spot = 0;
     uint32 i;
     int last_valloc_entry = 0;
@@ -218,7 +226,8 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
 }
 
 /* horrible brute-force method of determining if the page can be allocated */
-static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
+static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr)
+{
     uint32 i;
 
     for(i=0; i < kargs->num_phys_mem_ranges; i++) {
@@ -236,7 +245,8 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
 }
 
 /* allocate physical page from kernel args */
-addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
+addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs)
+{
     uint32 i;
     addr_t next_page;
 
@@ -263,7 +273,8 @@ addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
 }
 
 /* allocates memory block of given size form kernel args */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes) {
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
+{
     addr_t vspot;
     addr_t pspot;
     uint32 i;
@@ -284,12 +295,14 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
 }
 
 /* mark physical page as used */
-uint32 vm_page_mark_page_inuse(addr_t page) {
+uint32 vm_page_mark_page_inuse(addr_t page)
+{
    return vm_page_mark_range_inuse(page, 1);
 }
 
 /* mark range of physical pages as used */
-uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages) {
+uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages)
+{
     unsigned long irqs_state;
     vm_page_t *page;
     addr_t i;

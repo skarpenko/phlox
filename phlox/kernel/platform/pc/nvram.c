@@ -9,7 +9,8 @@ spinlock_t nvram_lock;
 
 
 /* read byte */
-void nvram_rd_byte(uint8 addr, uint8 *byte) {
+void nvram_rd_byte(uint8 addr, uint8 *byte)
+{
     uint32 irqs_state;
 
     /* acquire lock */
@@ -21,7 +22,8 @@ void nvram_rd_byte(uint8 addr, uint8 *byte) {
 }
 
 /* write byte */
-void nvram_wr_byte(uint8 addr, uint8 byte) {
+void nvram_wr_byte(uint8 addr, uint8 byte)
+{
     uint32 irqs_state;
 
     /* acquire lock */
@@ -33,7 +35,8 @@ void nvram_wr_byte(uint8 addr, uint8 byte) {
 }
 
 /* read sequence of bytes */
-void nvram_rd_bytes(uint8 addr, uint8 *bytes, uint8 count) {
+void nvram_rd_bytes(uint8 addr, uint8 *bytes, uint8 count)
+{
     uint32 irqs_state;
     uint8 i;
 
@@ -49,7 +52,8 @@ void nvram_rd_bytes(uint8 addr, uint8 *bytes, uint8 count) {
 }
 
 /* write sequence of bytes */
-void nvram_wr_bytes(uint8 addr, uint8 *bytes, uint8 count) {
+void nvram_wr_bytes(uint8 addr, uint8 *bytes, uint8 count)
+{
     uint32 irqs_state;
     uint8 i;
 

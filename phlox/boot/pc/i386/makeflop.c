@@ -1,8 +1,7 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,11 +11,13 @@
 #define LOBYTE(x)  (x & 0x00ff)
 #define HIBYTE(x) ((x & 0xff00) >> 8)
 
-void usage(char const *progname) {
+void usage(char const *progname)
+{
     printf("usage: %s [-b <block size for align>] [-v (enable vesa)] [-w xres] [-h yres] [-d bit_depth] [-t (disable vesa)] [-r <retry count on disk read error>] bootblock payload outfile\n", progname);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
    FILE *btbl, *pld, *outf;
    int use_vesa;
    int vesa_width;

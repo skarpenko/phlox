@@ -14,17 +14,20 @@
 #include <phlox/vm.h>
 
 /* init page directory entry */
-static inline void init_pdentry(mmu_pde *pdentry) {
+static inline void init_pdentry(mmu_pde *pdentry)
+{
    pdentry->raw.dword0 = 0;
 }
 
 /* init page table entry */
-static inline void init_ptentry(mmu_pte *ptentry) {
+static inline void init_ptentry(mmu_pte *ptentry)
+{
    ptentry->raw.dword0 = 0;
 }
 
 /* put page table into page directory entry */
-static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 attributes) {
+static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 attributes)
+{
     /* put it in the page directory */
     init_pdentry(pdentry);
     pdentry->stru.base = ADDR_SHIFT(pgtable_phys);
@@ -42,7 +45,8 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 a
  * Set inv_ar = true if TLB invalidation required for page hole
  * address range.
  */
-static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool inv_ar) {
+static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool inv_ar)
+{
     uint32 i;
     uint32 res = 0; /* zero returns on fail */
 
@@ -73,7 +77,8 @@ static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool in
 }
 
 /* Dellocate previously allocated page hole. */
-static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar) {
+static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar)
+{
     /* remove entry from page directory */
     pgdir[pde_idx].raw.dword0 = 0;
     /* invalidate page hole address range if requested */
@@ -82,7 +87,8 @@ static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar) {
 }
 
 /* init translation map module */
-uint32 arch_vm_transmap_init(kernel_args_t *kargs) {
+uint32 arch_vm_transmap_init(kernel_args_t *kargs)
+{
     uint32 pghole_pde_idx;
     mmu_pte *pghole;
     mmu_pde *pghole_pgdir;
@@ -163,7 +169,8 @@ uint32 arch_vm_transmap_init(kernel_args_t *kargs) {
  * 4Mb of page tables into a 4Mb region.
  * This routine used only during system start up. Do not use after.
  */
-uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint32 attributes) {
+uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint32 attributes)
+{
     mmu_pte *pgentry;
     uint32 pghole_pde_idx;
     mmu_pte *page_hole;

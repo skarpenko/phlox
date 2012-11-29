@@ -5,27 +5,31 @@
 #include <phlox/list.h>
 
 
-uint32 xlist_init(xlist_t *list) {
+uint32 xlist_init(xlist_t *list)
+{
     /* set list to initial state */
     list->first = list->last = NULL;
     list->count = 0;
     return 1;
 }
 
-uint32 xlist_elem_init(list_elem_t *e) {
+uint32 xlist_elem_init(list_elem_t *e)
+{
     /* set list item to initial state */
     e->prev = e->next = NULL;
     return 1;
 }
 
-uint32 xlist_isempty(xlist_t *list) {
+uint32 xlist_isempty(xlist_t *list)
+{
     if(!list->count)
       return 1;
     else
       return 0;
 }
 
-uint32 xlist_remove(xlist_t *list, list_elem_t *e) {
+uint32 xlist_remove(xlist_t *list, list_elem_t *e)
+{
     list_elem_t *temp;
 
     /* search list for given item */
@@ -55,7 +59,8 @@ uint32 xlist_remove(xlist_t *list, list_elem_t *e) {
     return 0;
 }
 
-uint32 xlist_add_first(xlist_t *list, list_elem_t *e) {
+uint32 xlist_add_first(xlist_t *list, list_elem_t *e)
+{
     if(!list->first) {
         /* if list is empty */
         e->prev = e->next = NULL;
@@ -72,7 +77,8 @@ uint32 xlist_add_first(xlist_t *list, list_elem_t *e) {
     return 1;
 }
 
-uint32 xlist_add_last(xlist_t *list, list_elem_t *e) {
+uint32 xlist_add_last(xlist_t *list, list_elem_t *e)
+{
     if(!list->last) {
         /* if list is empty */
         e->prev = e->next = NULL;
@@ -89,7 +95,8 @@ uint32 xlist_add_last(xlist_t *list, list_elem_t *e) {
     return 1;
 }
 
-list_elem_t *xlist_extract_first(xlist_t *list) {
+list_elem_t *xlist_extract_first(xlist_t *list)
+{
     list_elem_t *e;
 
     e = list->first;
@@ -108,7 +115,8 @@ list_elem_t *xlist_extract_first(xlist_t *list) {
     return e;
 }
 
-list_elem_t *xlist_extract_last(xlist_t *list) {
+list_elem_t *xlist_extract_last(xlist_t *list)
+{
     list_elem_t *e;
 
     e = list->last;
@@ -127,7 +135,8 @@ list_elem_t *xlist_extract_last(xlist_t *list) {
     return e;
 }
 
-uint32 xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e) {
+uint32 xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e)
+{
     list_elem_t *temp;
 
     /* locate given item */
@@ -149,7 +158,8 @@ uint32 xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e) {
     return 0; /* return false */
 }
 
-uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e) {
+uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e)
+{
     list_elem_t *temp;
 
     /* locate given item */
@@ -171,15 +181,18 @@ uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e) {
     return 0; /* return false */
 }
 
-list_elem_t *xlist_peek_first(xlist_t *list) {
+list_elem_t *xlist_peek_first(xlist_t *list)
+{
     return list->first;
 }
 
-list_elem_t *xlist_peek_last(xlist_t *list) {
+list_elem_t *xlist_peek_last(xlist_t *list)
+{
     return list->last;
 }
 
-uint32 xlist_dump_elements(xlist_t *list, list_elem_t **elements) {
+uint32 xlist_dump_elements(xlist_t *list, list_elem_t **elements)
+{
     list_elem_t *temp;
     uint32 i;
 

@@ -27,7 +27,8 @@ static mod_init_t mod_inits[] = {
 };
 
 
-void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu) {
+void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu)
+{
     uint32 i;
     
     if(curr_cpu == 0) { /* we are bootstrap processor */
@@ -51,7 +52,8 @@ void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu) {
     }
 }
 
-void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu) {
+void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu)
+{
     /* execute architecture specific inits */
     arch_processor_init(&p->arch, kargs, curr_cpu);
 }

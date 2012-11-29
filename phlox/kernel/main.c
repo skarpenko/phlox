@@ -25,7 +25,8 @@ static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
 
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
-void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
+void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
+{
     /* if we are bootstrap processor,
      *  store kernel args to global variable.
      */
@@ -73,7 +74,8 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     for(;;);
 }
 
-void clearscreen() {
+void clearscreen()
+{
     int i;
 
     for(i=0; i< SCREEN_WIDTH*SCREEN_HEIGHT*2; i++) {
@@ -92,7 +94,8 @@ static void screenup()
     line = SCREEN_HEIGHT - 1;
 }
 
-int puts(const char *str) {
+int puts(const char *str)
+{
     while (*str) {
         if (*str == '\n') {
             line++;
@@ -111,7 +114,8 @@ int puts(const char *str) {
     return 0;
 }
 
-int kprint(const char *fmt, ...) {
+int kprint(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];
@@ -124,7 +128,8 @@ int kprint(const char *fmt, ...) {
     return ret;
 }
 
-int panic(const char *fmt, ...) {
+int panic(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -13,7 +13,7 @@
 /* need for console stuff */
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
-static unsigned short *screenBase = (unsigned short *) 0xb8000;
+static unsigned short *screenBase = (unsigned short *)0xb8000;
 static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
 
@@ -23,7 +23,9 @@ static unsigned char *heap_ptr = (unsigned char *)0x400000;
 #define TARGET ((void *)0x100000)
 extern void *_compressed_image;
 
-void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, unsigned int vesa_ptr) {
+void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count,
+            int in_vesa, unsigned int vesa_ptr)
+{
     unsigned long len;
     bootfs_t btfs;
     btfs_dir_entry *en;
@@ -51,14 +53,18 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
     kinit(mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr, screenOffset);
 }
 
-void *dmalloc(unsigned int size) {
+void *dmalloc(unsigned int size)
+{
     return (heap_ptr -= size);
 }
 
-void dfree(void *ptr) {
+void dfree(void *ptr)
+{
+  /* not used */
 }
 
-void clearscreen() {
+void clearscreen()
+{
     int i;
 
     for(i=0; i< SCREEN_WIDTH*SCREEN_HEIGHT*2; i++) {
@@ -77,7 +83,8 @@ static void screenup()
     line = SCREEN_HEIGHT - 1;
 }
 
-int puts(const char *str) {
+int puts(const char *str)
+{
     while (*str) {
         if (*str == '\n') {
             line++;
@@ -96,7 +103,8 @@ int puts(const char *str) {
     return 0;
 }
 
-int dprintf(const char *fmt, ...) {
+int dprintf(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];
@@ -109,7 +117,8 @@ int dprintf(const char *fmt, ...) {
     return ret;
 }
 
-int panic(const char *fmt, ...) {
+int panic(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];

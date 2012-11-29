@@ -106,7 +106,8 @@ extern spinlock_t nvram_lock;
 /*
  * Read byte from NVRAM without acquiring nvram_lock before
  */
-static inline void nvram_rd_byte_nl(uint8 addr, uint8 *byte) {
+static inline void nvram_rd_byte_nl(uint8 addr, uint8 *byte)
+{
     out8_p(NVRAM_ADDR, addr);
     *byte = in8_p(NVRAM_DATA);
 }
@@ -114,7 +115,8 @@ static inline void nvram_rd_byte_nl(uint8 addr, uint8 *byte) {
 /*
  * Write byte to NVRAM without acquiring nvram_lock before
  */
-static inline void nvram_wr_byte_nl(uint8 addr, uint8 byte) {
+static inline void nvram_wr_byte_nl(uint8 addr, uint8 byte)
+{
     out8_p(NVRAM_ADDR, addr);
     out8_p(NVRAM_DATA, byte);
 }

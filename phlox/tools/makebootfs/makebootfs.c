@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 *
 * Portions Copyright 2001-2004, Travis Geiselbrecht.
 * Portions Copyright 1998 Brian J. Swetland.
@@ -203,7 +203,8 @@ Elf64_Off elf64_find_entry(void *buf, int size);
 
 /**********************************************/
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     char *script = NULL;
     char *image  = NULL;
     char *module = argv[0];
@@ -243,12 +244,14 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void usage(char *module_name) {
+void usage(char *module_name)
+{
     fprintf(stderr, "usage: %s [--littleendian (default)] [--bigendian] <scriptfile> <outfile>\n", module_name);
     exit(1);
 }
 
-void error(char *fmt, ...) {
+void error(char *fmt, ...)
+{
     va_list args;
 
     fprintf(stderr, "error: ");
@@ -262,7 +265,8 @@ void error(char *fmt, ...) {
     exit(1);
 }
 
-void *loadfile(char *file, int *size, int *npages) {
+void *loadfile(char *file, int *size, int *npages)
+{
     FILE *fh;
     char *data;
     int nread;
@@ -300,7 +304,8 @@ void *loadfile(char *file, int *size, int *npages) {
     return data;
 }
 
-scr_section *loadscript(char *file) {
+scr_section *loadscript(char *file)
+{
 #define stNEWLINE 0
 #define stSKIPLINE 1
 #define stHEADER 2
@@ -393,7 +398,8 @@ scr_section *loadscript(char *file) {
     return scr_first;
 }
 
-char *scr_getval(scr_section *s, char *name) {
+char *scr_getval(scr_section *s, char *name)
+{
     scr_param *p;
     for(p = s->plist; p; p = p->next) {
         if(!strcmp(p->name,name)) return p->value;
@@ -401,7 +407,8 @@ char *scr_getval(scr_section *s, char *name) {
     return NULL;
 }
 
-char *scr_getvaldef(scr_section *s, char *name, char *def) {
+char *scr_getvaldef(scr_section *s, char *name, char *def)
+{
     scr_param *p;
     for(p = s->plist; p; p = p->next) {
         if(!strcmp(p->name,name)) return p->value;
@@ -410,7 +417,9 @@ char *scr_getvaldef(scr_section *s, char *name, char *def) {
 }
 
 void extract_params(scr_section *section, char **name, unsigned int *reserv,
-           unsigned int *type, char **file, unsigned int *vaddr, unsigned int *ventry) {
+                    unsigned int *type, char **file, unsigned int *vaddr,
+                    unsigned int *ventry)
+{
     char *res, *typ, *fil;
 
     *name = section->name;
@@ -446,7 +455,8 @@ void extract_params(scr_section *section, char **name, unsigned int *reserv,
     else error("section [%s]: object type is unknown!", *name);
 }
 
-void free_sections() {
+void free_sections()
+{
     scr_section *p, *pb;
     scr_param   *p2, *pb2;
     
@@ -466,7 +476,8 @@ void free_sections() {
     }
 }
 
-dir_page *alloc_dir_page(unsigned int num, unsigned int parent) {
+dir_page *alloc_dir_page(unsigned int num, unsigned int parent)
+{
     dir_page *page;
     btfs_dir_entry *en;
     
@@ -502,7 +513,8 @@ dir_page *alloc_dir_page(unsigned int num, unsigned int parent) {
     return page;
 }
 
-dir_page *dir_page_by_num(unsigned int num) {
+dir_page *dir_page_by_num(unsigned int num)
+{
     dir_page *p;
     
     for(p = dir_first; p; p = p->next)
@@ -511,7 +523,8 @@ dir_page *dir_page_by_num(unsigned int num) {
     return NULL;
 }
 
-void free_pages() {
+void free_pages()
+{
     dir_page *p, *pb;
     
     for(p = dir_first; p; p = pb) {
@@ -521,7 +534,8 @@ void free_pages() {
     dir_first = dir_last = NULL;
 }
 
-void *alloc_buf(int size, int *newsize) {
+void *alloc_buf(int size, int *newsize)
+{
     char *data;
 
     /* set newsize multiple by page size */
@@ -536,7 +550,8 @@ void *alloc_buf(int size, int *newsize) {
     return data;
 }
 
-unsigned int path_itms_count(char *path) {
+unsigned int path_itms_count(char *path)
+{
     unsigned int cnt = 1;
     unsigned int n;
     int i;
@@ -551,7 +566,8 @@ unsigned int path_itms_count(char *path) {
     return cnt;
 }
 
-unsigned int path_get_item(char *path, unsigned int idx, char *out, unsigned int size) {
+unsigned int path_get_item(char *path, unsigned int idx, char *out, unsigned int size)
+{
     unsigned int cnt = 0;
     unsigned int n;
     int i, j;
@@ -576,7 +592,8 @@ unsigned int path_get_item(char *path, unsigned int idx, char *out, unsigned int
     return 0;
 }
 
-btfs_dir_entry *fs_alloc_file_entry(char *path, unsigned int *page_counter) {
+btfs_dir_entry *fs_alloc_file_entry(char *path, unsigned int *page_counter)
+{
     btfs_dir_entry *en;
     dir_page *page;
     char name[BOOTFS_NAMELEN];
@@ -614,7 +631,8 @@ btfs_dir_entry *fs_alloc_file_entry(char *path, unsigned int *page_counter) {
     error("fatal error!");
 }
 
-btfs_dir_entry *dir_alloc_entry(char *name, dir_page *page) {
+btfs_dir_entry *dir_alloc_entry(char *name, dir_page *page)
+{
     btfs_dir_entry *dir;
     int i, n;
 
@@ -643,7 +661,8 @@ btfs_dir_entry *dir_alloc_entry(char *name, dir_page *page) {
     error("no free entries for \"%s\"!", name);
 }
 
-void mkbootfs(char *image) {
+void mkbootfs(char *image)
+{
     FILE *fh;
     char *data;
     unsigned int size;
@@ -821,4 +840,3 @@ Elf64_Off elf64_find_entry(void *buf, int size)
     return SWAPIT(pheader->p_offset);
 #undef SWAPIT
 }
-

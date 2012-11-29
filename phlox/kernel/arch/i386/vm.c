@@ -12,7 +12,8 @@
 #include <phlox/vm.h>
 
 /* architecture-specific init for virtual memory manager */
-uint32 arch_vm_init(kernel_args_t *kargs) {
+uint32 arch_vm_init(kernel_args_t *kargs)
+{
     uint32 err;
     /* do something */
     uint32 i, n=PAGE_SIZE*MAX_PTENTS;

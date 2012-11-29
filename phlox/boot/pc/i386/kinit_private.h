@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _KERNEL_INIT_PVT_H_
@@ -28,7 +28,8 @@ struct ext_mem_struct {
     uint64 filler;
 } _PACKED;
 
-extern void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_vesa, uint32 vesa_ptr, uint32 console_ptr);
+extern void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
+                   int in_vesa, uint32 vesa_ptr, uint32 console_ptr);
 extern void clearscreen(void);
 extern int puts(const char *str);
 extern int dprintf(const char *fmt, ...);

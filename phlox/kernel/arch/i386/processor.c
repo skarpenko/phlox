@@ -58,7 +58,8 @@ extern uint32 __i386_fpu_context_swap_link;
 
 
 /* architecture specific processor module init */
-void arch_processor_mod_init(arch_processor_t *bsp) {
+void arch_processor_mod_init(arch_processor_t *bsp)
+{
 #if CPU_i386
     /* init MMU routines */
     if(bsp->family<4) {
@@ -89,12 +90,14 @@ void arch_processor_mod_init(arch_processor_t *bsp) {
 }
 
 /* architecture specific processor set init */
-void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu) {
+void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu)
+{
     /* do nothing for now */
 }
 
 /* architecture specific processor init */
-void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr_cpu) {
+void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr_cpu)
+{
     uint32 cpu, fpu;
     uint16 fpu_tmp;
     uint32 a, b, c, d;
@@ -304,7 +307,8 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
 }
 
 /* build cpu features string */
-void i386_cpu_feature_str(arch_processor_t *p, char *str) {
+void i386_cpu_feature_str(arch_processor_t *p, char *str)
+{
     str[0] = 0;
 
     /* standard features from edx */
@@ -456,10 +460,11 @@ void i386_cpu_feature_str(arch_processor_t *p, char *str) {
 
 /* invalidate TLB entries refered to given address range */
 #if CPU_i386
-void cpu_i486_arch_invalidate_TLB_range(addr_t start, size_t size) {
+void cpu_i486_arch_invalidate_TLB_range(addr_t start, size_t size)
 #else
-void arch_invalidate_TLB_range(addr_t start, size_t size) {
+void arch_invalidate_TLB_range(addr_t start, size_t size)
 #endif
+{
     int32 num_pages = (start+size)/PAGE_SIZE - start/PAGE_SIZE;
 
     while(num_pages-- >= 0) {
@@ -470,10 +475,11 @@ void arch_invalidate_TLB_range(addr_t start, size_t size) {
 
 /* invalidate list of TLB entries */
 #if CPU_i386
-void cpu_i486_arch_invalidate_TLB_list(addr_t pages[], size_t count) {
+void cpu_i486_arch_invalidate_TLB_list(addr_t pages[], size_t count)
 #else
-void arch_invalidate_TLB_list(addr_t pages[], size_t count) {
+void arch_invalidate_TLB_list(addr_t pages[], size_t count)
 #endif
+{
     uint32 i;
 
     for(i=0; i<count; i++)

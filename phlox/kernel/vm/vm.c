@@ -11,7 +11,8 @@ vm_stat_t VM_State;
 
 
 /* init virtual memory */
-uint32 vm_init(kernel_args_t *kargs) {
+uint32 vm_init(kernel_args_t *kargs)
+{
    uint32 err;
    
    /* execute architecture-specific init */
@@ -57,6 +58,7 @@ uint32 vm_init(kernel_args_t *kargs) {
 }
 
 /* return available physical memory size */
-size_t vm_phys_mem_size(void) {
+size_t vm_phys_mem_size(void)
+{
     return VM_State.total_physical_pages * VM_State.physical_page_size;
 }

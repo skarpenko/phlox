@@ -103,7 +103,8 @@ static mutex_t heap_lock;
 /* called from vm_init. The heap should already be mapped in at this point,
  * we just do a little housekeeping to set up the data structure.
 */
-uint32 heap_init(addr_t new_heap_base, size_t new_heap_size) {
+uint32 heap_init(addr_t new_heap_base, size_t new_heap_size)
+{
     const uint32 page_entries = PAGE_SIZE / sizeof(struct heap_page);
     /* set some global pointers */
     heap_alloc_table = (struct heap_page *)new_heap_base;
@@ -127,7 +128,8 @@ uint32 heap_init(addr_t new_heap_base, size_t new_heap_size) {
     return 0;
 }
 
-uint32 heap_init_postsem(kernel_args_t *ka) {
+uint32 heap_init_postsem(kernel_args_t *ka)
+{
     if(mutex_init(&heap_lock, "heap_mutex")) {
         panic("error creating heap mutex\n");
     }
@@ -135,7 +137,8 @@ uint32 heap_init_postsem(kernel_args_t *ka) {
     return 0;
 }
 
-static char *raw_alloc(uint32 size, int bin_index) {
+static char *raw_alloc(uint32 size, int bin_index)
+{
     uint32 new_heap_ptr;
     char *retval;
     struct heap_page *page;
@@ -166,7 +169,8 @@ static char *raw_alloc(uint32 size, int bin_index) {
     return retval;
 }
 
-void *kmalloc(size_t size) {
+void *kmalloc(size_t size)
+{
     void *address = NULL;
     int bin_index;
     uint32 i;
@@ -232,7 +236,8 @@ out:
     return address;
 }
 
-void kfree(void *address) {
+void kfree(void *address)
+{
     struct heap_page *page;
     struct heap_bin *bin;
     uint32 i;

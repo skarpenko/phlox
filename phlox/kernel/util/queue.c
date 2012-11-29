@@ -5,20 +5,23 @@
 #include <phlox/queue.h>
 
 
-uint32 queue_init(queue_t *q) {
+uint32 queue_init(queue_t *q)
+{
     /* set initial state of queue */
     q->head = q->tail = NULL;
     q->count = 0;
     return 1;
 }
 
-uint32 queue_elem_init(queue_elem_t *e) {
+uint32 queue_elem_init(queue_elem_t *e)
+{
     /* set initial state of queue element */
     e->next = NULL;
     return 1;
 }
 
-uint32 queue_remove(queue_t *q, queue_elem_t *e) {
+uint32 queue_remove(queue_t *q, queue_elem_t *e)
+{
     queue_elem_t *temp, *last = NULL;
 
     /* locate element */
@@ -45,7 +48,8 @@ uint32 queue_remove(queue_t *q, queue_elem_t *e) {
     return 0;
 }
 
-uint32 queue_enqueue(queue_t *q, queue_elem_t *e) {
+uint32 queue_enqueue(queue_t *q, queue_elem_t *e)
+{
     if(q->tail == NULL) {
         /* if queue empty */
         q->tail = e;
@@ -60,7 +64,8 @@ uint32 queue_enqueue(queue_t *q, queue_elem_t *e) {
     return 1;
 }
 
-queue_elem_t *queue_dequeue(queue_t *q) {
+queue_elem_t *queue_dequeue(queue_t *q)
+{
     queue_elem_t *e;
 
     /* extract element from queue */
@@ -79,11 +84,13 @@ queue_elem_t *queue_dequeue(queue_t *q) {
     return e;
 }
 
-queue_elem_t *queue_peek(queue_t *q) {
+queue_elem_t *queue_peek(queue_t *q)
+{
     return q->head;
 }
 
-bool queue_isempty(queue_t *q) {
+bool queue_isempty(queue_t *q)
+{
    if(!q->count)
      return true;
    else

@@ -15,7 +15,8 @@ static bootfs_t *_cur_fs = NULL;   /* current FS */
 
 #ifndef USE_STRING
 /* returns string length */
-static unsigned int _str_len(char *str) {
+static unsigned int _str_len(char *str)
+{
     unsigned int i = 0;
 
     while(str[i]) i++;
@@ -24,7 +25,8 @@ static unsigned int _str_len(char *str) {
 }
 
 /* string compare. returns 0 if equal */
-static unsigned int _str_cmp(char *s1, char *s2) {
+static unsigned int _str_cmp(char *s1, char *s2)
+{
     unsigned int i = 0;
 
     while(s1[i] || s2[i]) {
@@ -37,7 +39,8 @@ static unsigned int _str_cmp(char *s1, char *s2) {
 }
 
 /* memory copy */
-static void *_memncpy(void *dst, void *src, unsigned int n) {
+static void *_memncpy(void *dst, void *src, unsigned int n)
+{
     unsigned int i;
 
     for(i=0; i<n; i++)
@@ -51,7 +54,8 @@ static void *_memncpy(void *dst, void *src, unsigned int n) {
 #endif
 
 /* returns items count in path */
-static unsigned int _path_itms_count(char *path) {
+static unsigned int _path_itms_count(char *path)
+{
     unsigned int cnt = 1;
     unsigned int n;
     unsigned int i;
@@ -67,7 +71,8 @@ static unsigned int _path_itms_count(char *path) {
 }
 
 /* returns path item by its index */
-static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsigned int size) {
+static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsigned int size)
+{
     unsigned int cnt = 0;
     unsigned int n;
     unsigned int i, j;
@@ -93,7 +98,8 @@ static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsi
 }
 
 /* locate directory entry by name */
-static btfs_dir_entry *_ent_locate(btfs_dir_entry *first, unsigned int count, char *name) {
+static btfs_dir_entry *_ent_locate(btfs_dir_entry *first, unsigned int count, char *name)
+{
     unsigned int i;
 
     for(i=0; i<count; i++)
@@ -104,7 +110,8 @@ static btfs_dir_entry *_ent_locate(btfs_dir_entry *first, unsigned int count, ch
 }
 
 
-int btfs_mount(void *addr, bootfs_t *fsinfo) {
+int btfs_mount(void *addr, bootfs_t *fsinfo)
+{
     btfs_id *id = (btfs_id *)addr;
     char *magic = BOOTFS_MAGIC;
     unsigned int i;
@@ -129,7 +136,8 @@ int btfs_mount(void *addr, bootfs_t *fsinfo) {
     return 0;
 }
 
-int btfs_umount(bootfs_t *fsinfo) {
+int btfs_umount(bootfs_t *fsinfo)
+{
     fsinfo->addr = NULL;
     fsinfo->hdr  = NULL;
     fsinfo->cwd  = 0;
@@ -138,7 +146,8 @@ int btfs_umount(bootfs_t *fsinfo) {
     return 0;
 }
 
-int btfs_set_cur_fs(bootfs_t *fs) {
+int btfs_set_cur_fs(bootfs_t *fs)
+{
     if(fs->addr) {
        _cur_fs = fs;
        return 0;
@@ -146,7 +155,8 @@ int btfs_set_cur_fs(bootfs_t *fs) {
     return 1;
 }
 
-btfs_dir_entry *btfs_locate(char *path) {
+btfs_dir_entry *btfs_locate(char *path)
+{
     unsigned int page, npages;
     btfs_dir_entry *first = NULL, *en = NULL;
     unsigned int entries;
@@ -193,7 +203,8 @@ btfs_dir_entry *btfs_locate(char *path) {
     return en;
 }
 
-int btfs_chdir(char *path) {
+int btfs_chdir(char *path)
+{
     btfs_dir_entry *en = NULL;
 
     /* if root specified */
@@ -218,7 +229,8 @@ int btfs_chdir(char *path) {
     return 0;
 }
 
-int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e) {
+int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e)
+{
     fh->fs  = _cur_fs;
     fh->ent = e;
     fh->pos = 0;
@@ -226,7 +238,8 @@ int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e) {
     return 0;
 }
 
-int btfs_open_p(bootfs_fh_t *fh, char *path) {
+int btfs_open_p(bootfs_fh_t *fh, char *path)
+{
     btfs_dir_entry *e = NULL;
 
     if( (e=btfs_locate(path)) == NULL )
@@ -239,7 +252,8 @@ int btfs_open_p(bootfs_fh_t *fh, char *path) {
     return 0;
 }
 
-int btfs_close(bootfs_fh_t *fh) {
+int btfs_close(bootfs_fh_t *fh)
+{
     fh->fs  = NULL;
     fh->ent = NULL;
     fh->pos = -1;
@@ -247,7 +261,8 @@ int btfs_close(bootfs_fh_t *fh) {
     return 0;
 }
 
-int btfs_seek(bootfs_fh_t *fh, int offs, unsigned int whence) {
+int btfs_seek(bootfs_fh_t *fh, int offs, unsigned int whence)
+{
     int base;
 
     switch(whence) {
@@ -275,7 +290,8 @@ int btfs_seek(bootfs_fh_t *fh, int offs, unsigned int whence) {
     return base;
 }
 
-unsigned int btfs_read(void *buf, unsigned int rsize, unsigned int cnt, bootfs_fh_t *fh) {
+unsigned int btfs_read(void *buf, unsigned int rsize, unsigned int cnt, bootfs_fh_t *fh)
+{
     unsigned int n = rsize * cnt;
     unsigned int pos = fh->pos;
     unsigned int fsize = fh->ent->vsize;
@@ -289,7 +305,8 @@ unsigned int btfs_read(void *buf, unsigned int rsize, unsigned int cnt, bootfs_f
     return n;
 }
 
-unsigned int btfs_write(void *buf, unsigned int rsize, unsigned int cnt, bootfs_fh_t *fh) {
+unsigned int btfs_write(void *buf, unsigned int rsize, unsigned int cnt, bootfs_fh_t *fh)
+{
     unsigned int n = rsize * cnt;
     unsigned int pos = fh->pos;
     unsigned int fsize = fh->ent->vsize;
@@ -303,7 +320,8 @@ unsigned int btfs_write(void *buf, unsigned int rsize, unsigned int cnt, bootfs_
     return n;
 }
 
-void *btfs_posaddr(bootfs_fh_t *fh, unsigned int pos) {
+void *btfs_posaddr(bootfs_fh_t *fh, unsigned int pos)
+{
 
     /* pos must be inside of the file */
     if(pos > fh->ent->vsize-1) return NULL;
@@ -311,6 +329,7 @@ void *btfs_posaddr(bootfs_fh_t *fh, unsigned int pos) {
     return (void *)(_cur_fs->addr + (fh->ent->offset * _cur_fs->hdr->psize) + pos);
 }
 
-void *btfs_objaddr(btfs_dir_entry *en) {
+void *btfs_objaddr(btfs_dir_entry *en)
+{
     return (void *)(_cur_fs->addr + (en->offset * _cur_fs->hdr->psize));
 }

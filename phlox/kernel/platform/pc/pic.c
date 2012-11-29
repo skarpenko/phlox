@@ -19,7 +19,8 @@ static uint16 cached_int_mask = 0xffff;
 
 
 /* PICs initialization */
-uint32 pic_init(void) {
+uint32 pic_init(void)
+{
     spin_init(&pic_lock); /* init spin lock */
 
     /* Init interrupt controllers */
@@ -44,7 +45,8 @@ uint32 pic_init(void) {
 }
 
 /* send EOI command */
-void pic_int_eoi(uint32 int_num) {
+void pic_int_eoi(uint32 int_num)
+{
     uint32 irq_state;
     uint32 irq_num = int_num - PIC_IRQBASE;
 
@@ -66,7 +68,8 @@ void pic_int_eoi(uint32 int_num) {
 }
 
 /* mask interrupt */
-void pic_int_mask(uint32 int_num) {
+void pic_int_mask(uint32 int_num)
+{
     uint32 irq_state;
     uint32 irq_num = int_num - PIC_IRQBASE;
 
@@ -88,7 +91,8 @@ void pic_int_mask(uint32 int_num) {
 }
 
 /* unmask interrupt */
-void pic_int_unmask(uint32 int_num) {
+void pic_int_unmask(uint32 int_num)
+{
     uint32 irq_state;
     uint32 irq_num = int_num - PIC_IRQBASE;
 
@@ -116,7 +120,8 @@ void pic_int_unmask(uint32 int_num) {
 }
 
 /* mask all hardware interrupts */
-void pic_int_maskall(void) {
+void pic_int_maskall(void)
+{
     uint32 irq_state;
 
     /* set lock */
@@ -134,7 +139,8 @@ void pic_int_maskall(void) {
 }
 
 /* unmask all hardware interrupts */
-void pic_int_unmaskall(void) {
+void pic_int_unmaskall(void)
+{
     uint32 irq_state;
 
     /* set lock */

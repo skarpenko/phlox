@@ -54,7 +54,9 @@ static void sort_addr_ranges(addr_range_t *ranges, uint32 count);
  * Paging disabled
  *
 */
-void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_vesa, uint32 vesa_ptr, uint32 console_ptr) {
+void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
+            int in_vesa, uint32 vesa_ptr, uint32 console_ptr)
+{
     bootfs_t btfs;
     btfs_dir_entry *en;
     uint32 next_physaddr;
@@ -348,7 +350,8 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
         :: "g" (kargs), "g" (kentry) );
 }
 
-void clearscreen() {
+void clearscreen()
+{
     int i;
 
     for(i=0; i< SCREEN_WIDTH*SCREEN_HEIGHT*2; i++) {
@@ -367,7 +370,8 @@ static void screenup()
     line = SCREEN_HEIGHT - 1;
 }
 
-int puts(const char *str) {
+int puts(const char *str)
+{
     while (*str) {
         if (*str == '\n') {
             line++;
@@ -386,7 +390,8 @@ int puts(const char *str) {
     return 0;
 }
 
-int dprintf(const char *fmt, ...) {
+int dprintf(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];
@@ -399,7 +404,8 @@ int dprintf(const char *fmt, ...) {
     return ret;
 }
 
-int panic(const char *fmt, ...) {
+int panic(const char *fmt, ...)
+{
     int ret;
     va_list args;
     char temp[256];
@@ -421,7 +427,8 @@ int panic(const char *fmt, ...) {
  * pages to the 0xC0000000 - 0xC0400000 region.
  * also identity maps the first 8MB of memory
 */
-static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr) {
+static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr)
+{
     int i;
 
     /* allocate a new pgdir */
@@ -485,7 +492,8 @@ static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr) {
 /* can only map the 4 meg region right after KERNEL_BASE, may fix this later
  * if need arises.
 */
-static void mmu_map_page(uint32 virt_addr, uint32 phys_addr) {
+static void mmu_map_page(uint32 virt_addr, uint32 phys_addr)
+{
     if(virt_addr < KERNEL_BASE || virt_addr >= (KERNEL_BASE + 4096*1024))
         panic("mmu_map_page: asked to map invalid page!\n");
 
@@ -496,7 +504,8 @@ static void mmu_map_page(uint32 virt_addr, uint32 phys_addr) {
 /* loads ELF image to next_physaddr and returns occupied virtual addresses range and
  * entry point address
  */
-static void load_elf_image(void *elf_data, uint32 *next_physaddr, addr_range_t *range, uint32 *entry_addr) {
+static void load_elf_image(void *elf_data, uint32 *next_physaddr, addr_range_t *range, uint32 *entry_addr)
+{
     Elf32_Ehdr_t *imageHeader = (Elf32_Ehdr_t *)elf_data;
     Elf32_Phdr_t *segments = (Elf32_Phdr_t *)(imageHeader->e_phoff + (unsigned)imageHeader);
     int segmentIndex;
@@ -565,7 +574,8 @@ static void load_elf_image(void *elf_data, uint32 *next_physaddr, addr_range_t *
 }
 
 /* sorts array of address ranges by start address */
-static void sort_addr_ranges(addr_range_t *ranges, uint32 count) {
+static void sort_addr_ranges(addr_range_t *ranges, uint32 count)
+{
     addr_range_t temp_range;
     uint32 i;
     bool done;

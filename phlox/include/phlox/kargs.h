@@ -18,7 +18,8 @@ typedef struct {
     addr_range_t btfs_image_addr;   /* Physical address range of BootFS image */
     addr_range_t phys_kernel_addr;  /* Physical address range of kernel image */
     addr_range_t virt_kernel_addr;  /* Virtual address range of kernel image */
-    /* Ranges of free physical memory */
+    addr_t memsize;                 /* Total memory size */
+    /* Ranges of physical memory */
     uint32       num_phys_mem_ranges;
     addr_range_t phys_mem_range[MAX_PHYS_MEM_ADDR_RANGE];
     /* Ranges of allocated physical memory */

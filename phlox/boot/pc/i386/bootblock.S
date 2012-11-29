@@ -131,7 +131,7 @@ unreal:
     je      no_vesa
     in      $0x60, %al        /* read data from keyboard */
     and     $0x7f, %al
-    cmp     $42, %al          /* try to set VESA mode iff left shift key was pressed */
+    cmp     $42, %al          /* try to set VESA mode if left shift key was pressed */
     mov     $0, %al
     jne     no_vesa
     call    enable_vesa

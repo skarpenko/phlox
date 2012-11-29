@@ -16,6 +16,10 @@
 #include "vesa_vbe.h"
 #include "kinit_private.h"
 
+/* controls additional info output */
+#define PRINT_BIOS_MEM_MAP  1
+#define PRINT_KINIT_SUMMARY 1
+
 /* need for console stuff */
 static unsigned short *screenBase = (unsigned short *) 0xb8000;
 static unsigned int    screenOffset = 0;
@@ -169,6 +173,11 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
     asm("lgdt   %0; "
         : : "m" (gdt_desc));
 
+    /* map page directory into virtual space */
+    mmu_map_page(next_virtaddr, (uint32)pgdir);
+    kargs->arch_args.virt_pgdir = next_virtaddr;
+    next_virtaddr += PAGE_SIZE;
+
     /* store VESA VBE params in kargs (for more details refer to VBE standard) */
     if(in_vesa) {
         ModeInfoBlock_t *mode_info = (ModeInfoBlock_t *)(vesa_ptr + 0x200);
@@ -204,6 +213,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
     if(ext_mem_count > 0) {
         struct ext_mem_struct *buf = (struct ext_mem_struct *)ext_mem_block;
 
+      #if PRINT_BIOS_MEM_MAP
         /* print RAM map provided by BIOS */
         dprintf("BIOS-provided physical RAM map:\n");
         for(i = 0; i < ext_mem_count; i++) {
@@ -214,6 +224,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
             dprintf(" (reserved)\n");
         }
         dprintf("===\n");
+      #endif
 
         kargs->num_phys_mem_ranges = 0;
 
@@ -269,17 +280,57 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
     sort_addr_ranges(kargs->phys_alloc_range, kargs->num_phys_alloc_ranges);
     sort_addr_ranges(kargs->virt_alloc_range, kargs->num_virt_alloc_ranges);
 
+    /* write total memory count into kernel args */
+    kargs->memsize = kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].size;
+
+  #if PRINT_KINIT_SUMMARY
     /* print out kinit summary */
     dprintf("\nkinit summary:\n");
-    dprintf(" Kernel physical range: 0x%08X - 0x%08X\n", kargs->phys_kernel_addr.start,
-                                                         kargs->phys_kernel_addr.start +
-                                                         kargs->phys_kernel_addr.size);
-    dprintf(" Kernel virtual range:  0x%08X - 0x%08X\n", kargs->virt_kernel_addr.start,
-                                                         kargs->virt_kernel_addr.start +
-                                                         kargs->virt_kernel_addr.size);
+    dprintf(" BootFS image phys.addr.: 0x%08X - 0x%08X\n", kargs->btfs_image_addr.start,
+                                                           kargs->btfs_image_addr.start +
+                                                           kargs->btfs_image_addr.size - 1);
+    dprintf(" Kernel image phys.addr.: 0x%08X - 0x%08X\n", kargs->phys_kernel_addr.start,
+                                                           kargs->phys_kernel_addr.start +
+                                                           kargs->phys_kernel_addr.size - 1);
+    dprintf(" Kernel image virt.addr.: 0x%08X - 0x%08X\n", kargs->virt_kernel_addr.start,
+                                                           kargs->virt_kernel_addr.start +
+                                                           kargs->virt_kernel_addr.size - 1);
+    dprintf(" Kernel stack phys.addr.: 0x%08X - 0x%08X\n", kargs->phys_cpu_kstack[0].start,
+                                                           kargs->phys_cpu_kstack[0].start +
+                                                           kargs->phys_cpu_kstack[0].size - 1);
+    dprintf(" Kernel stack virt.addr.: 0x%08X - 0x%08X\n", kargs->virt_cpu_kstack[0].start,
+                                                           kargs->virt_cpu_kstack[0].start +
+                                                           kargs->virt_cpu_kstack[0].size - 1);
+    dprintf(" IDT phys.addr.: 0x%08X\n", kargs->arch_args.phys_idt);
+    dprintf(" IDT virt.addr.: 0x%08X\n", kargs->arch_args.virt_idt);
+    dprintf(" GDT phys.addr.: 0x%08X\n", kargs->arch_args.phys_gdt);
+    dprintf(" GDT virt.addr.: 0x%08X\n", kargs->arch_args.virt_gdt);
+    dprintf(" Page Directory phys.addr.: 0x%08X\n", kargs->arch_args.phys_pgdir);
+    dprintf(" Page Directory virt.addr.: 0x%08X\n", kargs->arch_args.virt_pgdir);
+    dprintf(" VESA: ");
+    if(kargs->fb.enabled)
+       dprintf("%dx%dx%d\n", kargs->fb.x_size, kargs->fb.y_size, kargs->fb.bit_depth);
+    else dprintf("not enabled\n");
+    dprintf(" RAM Size: %dMB\n", kargs->memsize/1024/1024);
+    dprintf(" Zones of physical memory:\n");
+    for(i=0; i < kargs->num_phys_mem_ranges; i++)
+      dprintf("   0x%08X - 0x%08X\n", kargs->phys_mem_range[i].start,
+                                      kargs->phys_mem_range[i].start +
+                                      kargs->phys_mem_range[i].size - 1);
+    dprintf(" Zones of allocated physical memory:\n");
+    for(i=0; i < kargs->num_phys_alloc_ranges; i++)
+      dprintf("   0x%08X - 0x%08X\n", kargs->phys_alloc_range[i].start,
+                                      kargs->phys_alloc_range[i].start +
+                                      kargs->phys_alloc_range[i].size - 1);
+    dprintf(" Zones of allocated virtual memory:\n");
+    for(i=0; i < kargs->num_virt_alloc_ranges; i++)
+      dprintf("   0x%08X - 0x%08X\n", kargs->virt_alloc_range[i].start,
+                                      kargs->virt_alloc_range[i].start +
+                                      kargs->virt_alloc_range[i].size - 1);
     dprintf("===\n");
+  #endif
 
-    /* save remaining the kernel args */
+    /* save remaining kernel args */
     kargs->num_cpus = 1;
     kargs->cons_line = screenOffset / SCREEN_WIDTH;
 
@@ -288,7 +339,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
         " movl %%eax, %%esp; "
         :: "m" (kstack_start+kstack_size) );
     /* jump to kernel */
-    asm(" pushl $0x0; " /* we are BSP CPU (0) */
+    asm(" pushl $0x0; " /* we are bootstrap CPU (0) */
         " pushl %0;   " /* kernel args */
         " pushl $0x0; " /* dummy return value for call to kernel main() */
         " pushl %1;   " /* push return address */

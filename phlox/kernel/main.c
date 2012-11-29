@@ -16,7 +16,7 @@
 /* need for console stuff */
 static unsigned short *screenBase = (unsigned short *) 0xb8000;
 static unsigned int    screenOffset = 0;
-static unsigned int    line = 24;
+static unsigned int    line = 0;
 
 /* temporary for tests */
 #define SIZE 500000
@@ -41,25 +41,28 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compile
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     asm("fninit"); /* init FPU */
 
+    line = kargs->cons_line;
+    screenOffset = SCREEN_WIDTH * line;
+
     kprintf("\nWelcome to Phlox Kernel!\n");
 
-    kprintf("\nKernel Args test...");
+    kprintf("Kernel Args test...");
     kprintf("btfs_base = %x, size = %d\n", kargs->btfs_image_addr.start,
                                            kargs->btfs_image_addr.size);
 
-    kprintf("\nTouching uninit data...");
+    kprintf("Touching uninit data...");
     for(i=0; i<SIZE; i++) uninit[i] = 1;
     kprintf("Ok.\n");
     
-    kprintf("\nTouching init data...");
+    kprintf("Touching init data...");
     for(i=0; i<SIZE; i++) init[i] = 1;
     kprintf("Ok.\n");
 
-    kprintf("\nRecursion test...");
+    kprintf("Recursion test...");
     recursion(1); recursion(0);
     kprintf("Ok.\n");
 
-    kprintf("If all tests passed - mapping is fine!\n");
+    kprintf("\nIf all tests passed - mapping is fine!\n");
 
     kprintf("\n\nexecuting infinite loop.\n");
 

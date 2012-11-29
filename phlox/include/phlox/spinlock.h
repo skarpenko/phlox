@@ -62,4 +62,17 @@ void spin_wait(spinlock_t *s);
 */
 int spin_locked(spinlock_t *s);
 
+/*
+ * SMP-specific stuff. Must only be used to control SMP effects.
+ */
+#if SYSCFG_SMP_SUPPORT
+  #define smp_spin_lock(s)    spin_lock(s)
+  #define smp_spin_unlock(s)  spin_unlock(s)
+  #define smp_spin_wait(s)    spin_wait(s)
+#else
+  #define smp_spin_lock(s)
+  #define smp_spin_unlock(s)
+  #define smp_spin_wait(s)
+#endif
+
 #endif

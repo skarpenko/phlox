@@ -22,4 +22,7 @@ void *kmalloc(size_t size);
 /* kernel free */
 void kfree(void *address);
 
+/* kfree and set to NULL */
+void kfree_and_null(void **address);
+
 #endif

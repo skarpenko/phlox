@@ -303,3 +303,10 @@ void kfree(void *address)
     /* unlock */
     mutex_unlock(&heap_lock);
 }
+
+void kfree_and_null(void **address)
+{
+    if(!address || !*address) return;
+    kfree(*address);
+    *address = NULL;
+}

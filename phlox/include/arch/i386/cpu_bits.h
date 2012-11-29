@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_CPU_BITS_H_
@@ -119,6 +119,7 @@
 #define X86_EFLAGS_IF      0x00000200
 #define X86_EFLAGS_DF      0x00000400
 #define X86_EFLAGS_OF      0x00000800
+#define X86_EFLAGS_IOPL    0x00003000
 #define X86_EFLAGS_IOPL_0  0x00000000
 #define X86_EFLAGS_IOPL_1  0x00001000
 #define X86_EFLAGS_IOPL_2  0x00002000
@@ -141,11 +142,16 @@
 #define X86_FLAGS_IF       0x0200
 #define X86_FLAGS_DF       0x0400
 #define X86_FLAGS_OF       0x0800
+#define X86_FLAGS_IOPL     0x3000
 #define X86_FLAGS_IOPL_0   0x0000
 #define X86_FLAGS_IOPL_1   0x1000
 #define X86_FLAGS_IOPL_2   0x2000
 #define X86_FLAGS_IOPL_3   0x3000
 #define X86_FLAGS_NT       0x4000
+
+/* Special macroses */
+#define X86_EFLAGS_IOPL_GET(a)  ((a & X86_EFLAGS_IOPL) >> 12)
+#define X86_FLAGS_IOPL_GET(a)   ((a & X86_FLAGS_IOPL) >> 12)
 
 /*
 * Debug registers and flags
@@ -306,28 +312,38 @@
 #define X86_DR7_GD       0x00002000
 #define X86_DR7_W0       0x00010000
 #define X86_DR7_R0       0x00020000
+#define X86_DR7_LEN0     0x000c0000
 #define X86_DR7_LEN0_00  0x00000000
 #define X86_DR7_LEN0_01  0x00040000
 #define X86_DR7_LEN0_10  0x00080000
 #define X86_DR7_LEN0_11  0x000c0000
 #define X86_DR7_W1       0x00100000
 #define X86_DR7_R1       0x00200000
+#define X86_DR7_LEN1     0x00c00000
 #define X86_DR7_LEN1_00  0x00000000
 #define X86_DR7_LEN1_01  0x00400000
 #define X86_DR7_LEN1_10  0x00800000
 #define X86_DR7_LEN1_11  0x00c00000
 #define X86_DR7_W2       0x01000000
 #define X86_DR7_R2       0x02000000
+#define X86_DR7_LEN2     0x0c000000
 #define X86_DR7_LEN2_00  0x00000000
 #define X86_DR7_LEN2_01  0x04000000
 #define X86_DR7_LEN2_10  0x08000000
 #define X86_DR7_LEN2_11  0x0c000000
 #define X86_DR7_W3       0x10000000
 #define X86_DR7_R3       0x20000000
+#define X86_DR7_LEN3     0xc0000000
 #define X86_DR7_LEN3_00  0x00000000
 #define X86_DR7_LEN3_01  0x40000000
 #define X86_DR7_LEN3_10  0x80000000
 #define X86_DR7_LEN3_11  0xc0000000
+
+/* Special macroses */
+#define X86_DR7_LEN0_GET(a)  ((a & X86_DR7_LEN0) >> 18)
+#define X86_DR7_LEN1_GET(a)  ((a & X86_DR7_LEN1) >> 22)
+#define X86_DR7_LEN2_GET(a)  ((a & X86_DR7_LEN2) >> 26)
+#define X86_DR7_LEN3_GET(a)  ((a & X86_DR7_LEN3) >> 30)
 
 /*
 * Selector format
@@ -342,6 +358,7 @@
 */
 
 /* Requestor's Privilege Level */
+#define X86_SEL_RPL   0x0003  /* RPL mask      */
 #define X86_SEL_RPL0  0x0000  /* 0(Supervisor) */
 #define X86_SEL_RPL1  0x0001  /* 1(Supervisor) */
 #define X86_SEL_RPL2  0x0002  /* 2(Supervisor) */
@@ -349,6 +366,9 @@
 
 /* Descriptor Table Type */
 #define X86_SEL_TI    0x0004  /* Table Indicator (1-local, 0-global) */
+
+/* Special macro */
+#define X86_SEL_RPL_GET(a)  (a & X86_SEL_RPL)
 
 /*
 * General-Segment Descriptor Format
@@ -382,6 +402,7 @@
 #define X86_ACB_TYP_CODE  0x00001800  /* Code descriptor */
 #define X86_ACB_TYP_DATA  0x00001000  /* Data descriptor */
 /* Descriptor Privilege Levels */
+#define X86_ACB_DPL       0x00006000  /* DPL mask      */
 #define X86_ACB_DPL0      0x00000000  /* 0(Supervisor) */
 #define X86_ACB_DPL1      0x00002000  /* 1(Supervisor) */
 #define X86_ACB_DPL2      0x00004000  /* 2(Supervisor) */
@@ -394,6 +415,8 @@
 #define X86_GRB_D         0x00400000  /* Default operation size (1-32bit, 0-16bit) */
 #define X86_GRB_AVL       0x00100000  /* For programmers use                       */
 
+/* Special macro */
+#define X86_ACB_DPL_GET(a)  ((a & X86_ACB_DPL) >> 13)
 
 /*
 * System Descriptor Format
@@ -752,7 +775,7 @@
 * MP    - MP-Capable                   TSCP    - RDTSCP Instruction
 * NX    - No-Execute Page Protection             Supported
 * MMX+  - Extensions to MMX            LM      - Long Mode
-* FFXSR - FXSAVE/FSRSTOR Instruction   3DNow!+ - Extensions to 3DNow!
+* FFXSR - FXSAVE/FXRSTOR Instruction   3DNow!+ - Extensions to 3DNow!
 *         Optimizations                3DNow!  - 3DNow! Supported
 * PG1G  - 1Gb Large Page Support
 */

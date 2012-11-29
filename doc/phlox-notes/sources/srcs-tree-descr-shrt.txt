@@ -3,9 +3,10 @@ Short sources tree description
 
 phlox/boot: Boot sources sorted by architecture.
 phlox/include: Common includes.
-phlox/include/arch: Architecture-specific includes.
+phlox/include/arch: Common architecture-specific includes.
 phlox/include/boot: Boot stage includes.
 phlox/include/phlox: Phlox kernel-specific includes.
+phlox/include/phlox/arch: Phlox kernel architecture-specific includes.
 phlox/kernel: Kernel sources.
 phlox/kernel/arch: Kernel architecture-specific sources.
 phlox/lib: Common libraries and 3rd party libraries.

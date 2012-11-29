@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -13,7 +13,6 @@
 
 #define SCREEN_HEIGHT 25
 #define SCREEN_WIDTH 80
-#define kprintf kprint
 
 /* Global kernel args */
 kernel_args_t globalKargs;
@@ -22,25 +21,6 @@ kernel_args_t globalKargs;
 static unsigned short *screenBase = (unsigned short *) 0xb8000;
 static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
-
-/* temporary for tests */
-#define SIZE 500000
-#define R 200
-char uninit[SIZE];
-char init[SIZE] = { 0 };
-uint32 i;
-uint32 rc;
-
-static void recursion(uint32 init);
-static void recursion(uint32 init) {
-  if(init) { rc = 0; return; }
-
-  if(rc>=R) return;
-
-  rc++;
-  recursion(0);
-}
-/**end of temporary**/
 
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
@@ -53,30 +33,14 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     /** will be replaced later **/
     line = kargs->cons_line;
     screenOffset = SCREEN_WIDTH * line;
-    kprintf("\nWelcome to Phlox Kernel!\n");
+    kprint("\nWelcome to Phlox Kernel!\n");
 
     /* processor set initialization */
     processor_set_init(&globalKargs, num_cpu);
 
-    kprintf("Kernel Args test...");
-    kprintf("btfs_base = %x, size = %d\n", kargs->btfs_image_addr.start,
-                                           kargs->btfs_image_addr.size);
+    kprint("\nkernel test complete. :(\n");
 
-    kprintf("Touching uninit data...");
-    for(i=0; i<SIZE; i++) uninit[i] = 1;
-    kprintf("Ok.\n");
-    
-    kprintf("Touching init data...");
-    for(i=0; i<SIZE; i++) init[i] = 1;
-    kprintf("Ok.\n");
-
-    kprintf("Recursion test...");
-    recursion(1); recursion(0);
-    kprintf("Ok.\n");
-
-    kprintf("\nIf all tests passed - mapping is fine!\n");
-
-    kprintf("\n\nexecuting infinite loop.\n");
+    kprint("executing infinite loop...");
 
     for(;;);
 }

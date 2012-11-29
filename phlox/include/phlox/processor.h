@@ -55,5 +55,7 @@ extern processor_set_t  ProcessorSet;  /* Processor Set */
 
 /* Bootup processors initialization */
 void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu);
+/* this one called by processor_set_init for each cpu */
+void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu);
 
 #endif

@@ -367,4 +367,11 @@ uint32 i386_cpuid_ebx(uint32 func);
 uint32 i386_cpuid_ecx(uint32 func);
 uint32 i386_cpuid_edx(uint32 func);
 
+/*
+ * Build CPU feature string.
+ * Maximum possible feature string length defined by I386_CPU_FEATURE_STR_MAX
+ */
+#define I386_CPU_FEATURE_STR_MAX  400
+void i386_cpu_feature_str(arch_processor_t *p, char *str);
+
 #endif

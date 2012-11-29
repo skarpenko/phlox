@@ -33,13 +33,22 @@ static const struct i386_cpu_vendor_info cpu_vendor_info[I386_VENDORS_COUNT] = {
     { "NSC",       { "Geode by NSC" } }   /* National Semiconductor */
 };
 
-void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu) {
+/* architecture specific processor module init */
+void arch_processor_mod_init(arch_processor_t *bsp) {
+    kprint("arch_processor_mod_init\n");
 }
 
+/* architecture specific processor set init */
+void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu) {
+    kprint("arch_processor_set_init\n");
+}
+
+/* architecture specific processor init */
 void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr_cpu) {
     uint32 cpu;
     uint32 a, b, c, d;
     uint32 i;
+    char feature_str[I386_CPU_FEATURE_STR_MAX];
     
     /* init FPU */
     asm("fninit");
@@ -167,4 +176,165 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
        if(ap->features[I386_FEATURE_D] & X86_CPUID_TSC)
            ap->rdtsc = 1; /* RDTSC instruction supported */
      } /* else */
+
+     /* print processor info */
+     kprint("CPU #%d info:\n", curr_cpu);
+     kprint("  CPUID support: "); (ap->cpuid)?kprint("yes\n"):kprint("no\n");
+     kprint("  Vendor: %s (%s)\n", ap->vendor_name, ap->vendor_str);
+     kprint("  CPU: Family %d, Model %d, SteppingID %d\n", ap->family, ap->model, ap->stepping);
+     kprint("  CPU model name: %s\n", ap->model_name);
+     kprint("  RDTSC support: "); (ap->rdtsc)?kprint("yes\n"):kprint("no\n");
+     i386_cpu_feature_str(ap, feature_str);
+     kprint("  CPU feature string: %s\n", feature_str);
+}
+
+/* build cpu features string */
+void i386_cpu_feature_str(arch_processor_t *p, char *str) {
+    str[0] = 0;
+
+    /* standard features from edx */
+    if(p->features[I386_FEATURE_D] & X86_CPUID_FPU)
+        strcat(str, "fpu ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_VME)
+        strcat(str, "vme ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_DE)
+        strcat(str, "de ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PSE)
+        strcat(str, "pse ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_TSC)
+        strcat(str, "tsc ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_MSR)
+        strcat(str, "msr ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PAE)
+        strcat(str, "pae ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_MCE)
+        strcat(str, "mce ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_CX8)
+        strcat(str, "cx8 ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_APIC)
+        strcat(str, "apic ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_SEP)
+        strcat(str, "sep ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_MTRR)
+        strcat(str, "mtrr ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PGE)
+        strcat(str, "pge ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_MCA)
+        strcat(str, "mca ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_CMOV)
+        strcat(str, "cmov ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PAT)
+        strcat(str, "pat ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PSE36)
+        strcat(str, "pse36 ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PSN)
+        strcat(str, "psn ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_CLFSH)
+        strcat(str, "clfsh ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_DS)
+        strcat(str, "ds ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_ACPI)
+        strcat(str, "acpi ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_MMX)
+        strcat(str, "mmx ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_FXSR)
+        strcat(str, "fxsr ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_SSE)
+        strcat(str, "sse ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_SSE2)
+        strcat(str, "sse2 ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_SS)
+        strcat(str, "ss ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_HTT)
+        strcat(str, "htt ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_TM1)
+        strcat(str, "tm1 ");
+    if(p->features[I386_FEATURE_D] & X86_CPUID_PBE)
+        strcat(str, "pbe ");
+
+    /* standard features from ecx */
+    if(p->features[I386_FEATURE_C] & X86_CPUID_SSE3)
+        strcat(str, "sse3 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_MON)
+        strcat(str, "mon ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_DSCPL)
+        strcat(str, "dscpl ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_VMX)
+        strcat(str, "vmx ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_SMX)
+        strcat(str, "smx ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_EST)
+        strcat(str, "est ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_TM2)
+        strcat(str, "tm2 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_SSSE3)
+        strcat(str, "ssse3 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_CID)
+        strcat(str, "cid ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_CX16)
+        strcat(str, "cx16 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_XTPR)
+        strcat(str, "xtpr ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_PDCM)
+        strcat(str, "pdcm ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_DCA)
+        strcat(str, "dca ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_SSE41)
+        strcat(str, "sse4.1 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_SSE42)
+        strcat(str, "sse4.2 ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_X2APIC)
+        strcat(str, "x2apic ");
+    if(p->features[I386_FEATURE_C] & X86_CPUID_POPCNT)
+        strcat(str, "popcnt ");
+    
+    /* extended AMD features from edx */
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_MP)
+        strcat(str, "mp ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_NX)
+        strcat(str, "nx ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_MMXEXT)
+        strcat(str, "mmx+ ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_FFXSR)
+        strcat(str, "ffxsr ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_PG1G)
+        strcat(str, "pg1g ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_TSCP)
+        strcat(str, "tscp ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_LM)
+        strcat(str, "lm ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_3DNOWEXT)
+        strcat(str, "3dnow!+ ");
+    if(p->features[I386_AMD_FEATURE_D] & X86_CPUID_AMD_3DNOW)
+        strcat(str, "3dnow! ");
+        
+    /* extended AMD features from ecx */
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_AHF64)
+        strcat(str, "ahf64 ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_CMP)
+        strcat(str, "cmp ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_SVM)
+        strcat(str, "svm ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_EAS)
+        strcat(str, "eas ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_CR8D)
+        strcat(str, "cr8d ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_ABM)
+        strcat(str, "abm ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_SSE4A)
+        strcat(str, "sse4a ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_MSSE)
+        strcat(str, "msse ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_3DNOWPREF)
+        strcat(str, "3dnow!- ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_OSVM)
+        strcat(str, "osvm ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_IBS)
+        strcat(str, "ibs ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_SSE5A)
+        strcat(str, "sse5a ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_SKINIT)
+        strcat(str, "skinit ");
+    if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_WDT)
+        strcat(str, "wdt ");
 }

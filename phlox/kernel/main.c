@@ -50,13 +50,13 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     if(num_cpu==0)
       memcpy(&globalKargs, kargs, sizeof(kernel_args_t));
 
-    /* processor set initialization */
-    processor_set_init(&globalKargs, num_cpu);
-
+    /** will be replaced later **/
     line = kargs->cons_line;
     screenOffset = SCREEN_WIDTH * line;
-
     kprintf("\nWelcome to Phlox Kernel!\n");
+
+    /* processor set initialization */
+    processor_set_init(&globalKargs, num_cpu);
 
     kprintf("Kernel Args test...");
     kprintf("btfs_base = %x, size = %d\n", kargs->btfs_image_addr.start,

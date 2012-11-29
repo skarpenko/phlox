@@ -22,6 +22,7 @@
 #define CHECK_BIT(a, b)  ((a) & (1 << (b)))
 #define SET_BIT(a, b)    ((a) | (1 << (b)))
 #define CLEAR_BIT(a, b)  ((a) & (~(1 << (b))))
+#define BIT(a)           (1<<a)
 
 #define TOUCH(x) ((void)(x))
 

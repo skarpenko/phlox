@@ -13,6 +13,9 @@
 /* Defines maximum kernel's heap size */
 #define SYSCFG_KERNEL_HEAP_MAX (16*1024*1024) /* 16Mbytes */
 
+/* Defines internal kernel timer frequency */
+#define SYSCFG_KERNEL_HZ  100 /* Hz */
+
 /* Compile in support for SMP or not (not supported for now) */
 #define SYSCFG_SMP_SUPPORT 0
 

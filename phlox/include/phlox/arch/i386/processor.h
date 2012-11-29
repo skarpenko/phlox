@@ -158,7 +158,7 @@ typedef struct {
  * double words respectively.
  * Macroses with suffix "_p" is a paused versions.
  */
-#define __SLOW_DOWN_IO "jmp 1f; 1: jmp 1f 1:" /* slow io by jumping */
+#define __SLOW_DOWN_IO "jmp 1f; 1: jmp 1f; 1:" /* slow io by jumping */
 
 #define in8(port) ({ \
     uint8 __dummy; \
@@ -203,9 +203,10 @@ typedef struct {
     __dummy; \
 })
 
-#define out8_p(port, value) \
-    out8(port, value) \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+#define out8_p(port, value) ({ \
+    out8(port, value); \
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
 #define in16_p(port) ({ \
     uint16 __dummy; \
@@ -214,9 +215,10 @@ typedef struct {
     __dummy; \
 })
 
-#define out16_p(port, value) \
-    out16(port, value) \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+#define out16_p(port, value) ({ \
+    out16(port, value); \
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
 #define in32_p(port) ({ \
     uint32 __dummy; \
@@ -225,9 +227,10 @@ typedef struct {
     __dummy; \
 })
 
-#define out32_p(port, value) \
-    out32(port, value) \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+#define out32_p(port, value) ({ \
+    out32(port, value); \
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
 #define ins8(port, addr, count) \
     __asm__ __volatile__ ("rep; insb" \
@@ -259,29 +262,35 @@ typedef struct {
     :"+S"(addr), "+c"(count) \
     :"d"(port))
 
-#define ins8_p(port, addr, count) \
+#define ins8_p(port, addr, count) ({ \
     ins8(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
-#define outs8_p(port, addr, count) \
+#define outs8_p(port, addr, count) ({ \
     outs8(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
-#define ins16_p(port, addr, count) \
+#define ins16_p(port, addr, count) ({ \
     ins16(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
-#define outs16_p(port, addr, count) \
+#define outs16_p(port, addr, count) ({ \
     outs16(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
-#define ins32_p(port, addr, count) \
+#define ins32_p(port, addr, count) ({ \
     ins32(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
-#define outs32_p(port, addr, count) \
+#define outs32_p(port, addr, count) {( \
     outs32(port, addr, count); \
-    __asm__ __volatile__ (__SLOW_DOWN_IO)
+    __asm__ __volatile__ (__SLOW_DOWN_IO); \
+})
 
 /*
  * Other i386 architecture specific definitions

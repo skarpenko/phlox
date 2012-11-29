@@ -71,6 +71,12 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
     return 0;
 }
 
+/* module initialization routine */
+uint32 vm_page_init(kernel_args_t *kargs) {
+    /* do something */
+    return 0;
+}
+
 /* allocate physical page from kernel args */
 addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
     uint32 i;

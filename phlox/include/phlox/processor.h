@@ -13,6 +13,9 @@
 #include <phlox/spinlock.h>
 #include <phlox/arch/processor.h>
 
+/* Bootstrap processor */
+#define BOOTSTRAP_CPU  0
+
 /* processor data */
 typedef struct {
     spinlock_t        lock;  /* lock */

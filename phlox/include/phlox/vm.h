@@ -21,6 +21,6 @@
  * This routine called during system init stage
  * for virtual memory initialization.
 */
-void init_vm(kernel_args_t *kargs);
+uint32 vm_init(kernel_args_t *kargs);
 
 #endif

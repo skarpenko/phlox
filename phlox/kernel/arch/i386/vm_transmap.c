@@ -39,8 +39,10 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 a
 
 /* Allocate page hole and return index of page directory entry.
  * This routine makes recursive page directory entry in pgdir.
+ * Set inv_ar = true if TLB invalidation required for page hole
+ * address range.
  */
-static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr) {
+static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool inv_ar) {
     uint32 i;
     uint32 res = 0; /* zero returns on fail */
 
@@ -56,8 +58,9 @@ static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr) {
            pgdir[i].stru.us = 1;
            pgdir[i].stru.rw = 1;
            pgdir[i].stru.p  = 1;
-           /* invalidate page hole address range */
-           invalidate_TLB_range(i * MAX_PDENTS * PAGE_SIZE, MAX_PDENTS * PAGE_SIZE);
+           /* invalidate page hole address range if requested */
+           if(inv_ar)
+             invalidate_TLB_range(i * MAX_PDENTS * PAGE_SIZE, MAX_PDENTS * PAGE_SIZE);
            res = i; /* set return result */
            break;
         }
@@ -70,11 +73,12 @@ static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr) {
 }
 
 /* Dellocate previously allocated page hole. */
-static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx) {
+static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar) {
     /* remove entry from page directory */
     pgdir[pde_idx].raw.dword0 = 0;
-    /* invalidate page hole address range */
-    invalidate_TLB_range(pde_idx * MAX_PDENTS * PAGE_SIZE, MAX_PDENTS * PAGE_SIZE);
+    /* invalidate page hole address range if requested */
+    if(inv_ar)
+      invalidate_TLB_range(pde_idx * MAX_PDENTS * PAGE_SIZE, MAX_PDENTS * PAGE_SIZE);
 }
 
 /* init translation map module */
@@ -84,7 +88,8 @@ uint32 arch_vm_transmap_init(kernel_args_t *kargs) {
     mmu_pde *pghole_pgdir;
 
     /* first of all, allocate page hole */
-    pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, kargs->arch_args.phys_pgdir);
+    pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
+                                      kargs->arch_args.phys_pgdir, true);
     if(!pghole_pde_idx)
         panic("arch_vm_transmap_init: page hole allocation failed. :(");
 
@@ -134,10 +139,19 @@ uint32 arch_vm_transmap_init(kernel_args_t *kargs) {
              }
          }
       }
+      /* Turn on Global bit if supported.
+       * Note that only bootstrap processor enters this section during
+       * kernel initialization stage.
+       */
+      if(ProcessorSet.processors[BOOTSTRAP_CPU].arch.features[I386_FEATURE_D] & X86_CPUID_PGE) {
+          uint32 cr4; /* temp storage for CR4 register */
+          cr4 = read_cr4();
+          write_cr4(cr4 | X86_CR4_PGE); /* Set PGE bit in CR4 */
+      }
     } /* end of Set Global Bit block */
 
     /* deallocate page hole */
-    deallocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, pghole_pde_idx);
+    deallocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, pghole_pde_idx, true);
 
     return 0;
 }
@@ -157,7 +171,8 @@ uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t
     uint32 pgtable_idx;
 
     /* allocate page hole */
-    pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, kargs->arch_args.phys_pgdir);
+    pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
+                                      kargs->arch_args.phys_pgdir, true);
     if(!pghole_pde_idx)
         panic("vm_transmap_quick_map: page hole allocation failed. :(");
 
@@ -198,7 +213,7 @@ uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t
         pgentry->stru.g = 1; /* global bit set for all kernel addresses */
 
     /* deallocate page hole */
-    deallocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, pghole_pde_idx);
+    deallocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, pghole_pde_idx, true);
 
     /* invalidate newly mapped address */
     invalidate_TLB_entry(virt_addr);

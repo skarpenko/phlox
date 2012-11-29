@@ -11,6 +11,6 @@
  * Architecture specific virtual memory initialization
  * Called during system initialization.
 */
-void arch_init_vm(kernel_args_t *kargs);
+uint32 arch_vm_init(kernel_args_t *kargs);
 
 #endif

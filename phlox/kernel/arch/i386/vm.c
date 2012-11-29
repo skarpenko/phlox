@@ -12,17 +12,20 @@
 #include <phlox/vm.h>
 
 /* architecture-specific init for virtual memory manager */
-void arch_init_vm(kernel_args_t *kargs) {
+uint32 arch_vm_init(kernel_args_t *kargs) {
     /* do something */
-    uint32 i, n=PAGE_SIZE*PAGE_SIZE;
+    uint32 i, n=PAGE_SIZE*MAX_PTENTS;
     uint8 *buf;
 
     /* translation map module init */
     arch_vm_transmap_init(kargs);
 
+    /*** do not forget remove this test! ***/
     kprint("start vm_alloc_from_kargs test....(%d bytes to allocate)\n", n);
     buf = (uint8 *)vm_alloc_from_kargs(kargs, n, VM_LOCK_KERNEL | VM_LOCK_RW);
     kprint("touching allocated memory...\n");
     for(i=0; i<n; i++) buf[i] = 0;
     kprint("tests passed...\n");
+
+    return 0;
 }

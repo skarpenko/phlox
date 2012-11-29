@@ -33,6 +33,8 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
       /* verify */
       if(globalKargs.magic != KARGS_MAGIC)
         panic("Kernel args damaged or incorrect!\n");
+    } else {
+       /* wait until BSP completes its job? */
     }
 
     /** will be replaced later **/
@@ -48,7 +50,9 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
      * others must wait for initialization complete.
      */
     if(num_cpu==0) {
-       init_vm(&globalKargs);
+       vm_init(&globalKargs);
+    } else {
+       /* wait until BSP completes? */
     }
 
     kprint("\nkernel test complete. :(\n");

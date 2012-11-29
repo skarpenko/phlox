@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="stylesheet" type="text/css" href="zhware.css">
+<link rel="made" href="">
+<title>Spinlocks: Part II</title>
+<meta name="keywords" content="osdev, Mike Rieker, scheduling, spinlock">
+</head>
+<body>
+<p class="menu" align="right">
+other formats: (
+<a class="menulink" href="spinlock_part2.xml">xml</a> |
+<a class="menulink" href="spinlock_part2.txt">txt</a>
+)
+</p>
+<p class="dochead"><h1>Spinlocks: Part II</h1></p>
+<p>
+<a class="altlink" href="mailto:mrieker@o3one.org">Mike Rieker</a>
+
+(<i>author</i>)
+
+<br>
+Homepage:
+<a class="altlink" href="http://www.o3one.org/">http://www.o3one.org/</a>
+<br><br>$Date: 2002/07/02 07:43:39 $<br>$Revision: 1.1.1.1 $<br>
+</p>
+<p class="chaphead"><h2>Executive Summary</h2></p>
+<p class="abstract">
+Now after you get into this stuff, you may find that you have to have more
+than one spinlock at a time.
+<br>
+</p>
+<p class="tochead"><h2>Contents</h2></p>
+<p>1. <a class="altlink" href="#simultaneous">Simultaneous spinlocks</a><br>2. <a class="altlink" href="#interrupts">Interrupts</a><br>3. <a class="altlink" href="#performance">Performance</a><br>4. <a class="altlink" href="#summary">Summary</a><br>
+</p>
+<p class="chaphead"><h2>
+<a name="simultaneous">1.</a>Simultaneous spinlocks</h2></p>
+
+<p>
+Now after you get into this stuff, you may find that you have to have more 
+than one spinlock at a time.  This can lead to problems.  Consider this:
+<a name="listing1"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 1</td></tr>
+<tr><td class="infotext"><pre>
+Routine A:
+
+  lock spinlock X
+  maybe do some work
+  lock spinlock Y
+  do some more work
+  unlock spinlock Y
+  unlock spinlock X
+
+
+And Routine B:
+
+  lock spinlock Y
+  maybe do some work
+  lock spinlock X
+  do some more work
+  unlock spinlock X
+  unlock spinlock Y
+</pre></td></tr>
+</table>
+</p>
+<p>
+So CPU #1 comes along and starts <font class="code">routine A</font>, while CPU #2 starts <font class="code">routine B</font>.  Well, they'll 
+never finish, because CPU #1 will be waiting for CPU #2 to release <font class="code">spinlock Y</font> and CPU #2 
+will be waiting for CPU #1 to release <font class="code">spinlock X</font>.
+</p>
+<p>
+So we have another simple rule:
+<table class="ncontent" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td class="impotext">
+<b>Important: </b>
+When locking more than one spinlock, they must always be locked in the same order.
+</td></tr></table>
+</p>
+<p>
+So for our example, both routines need to be changed so that they either both lock X then 
+Y or they both lock Y then X.  You may be thinking, 'I might not be able to do that in ALL 
+cases!'  Easy to fix, replace the two spinlocks with one, say Z.
+</p>
+<p>
+Now I am terrible at checking to make sure I do everything in order.  Computers are good 
+at that sort of thing.  So rather than just using an 'int' for my spinlocks, I use a struct 
+as follows:
+<a name="listing2"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 2</td></tr>
+<tr><td class="infotext"><pre>
+  typedef struct { char spinlock_flag;            // the usual 0=unlocked, 1=locked
+                   unsigned char spinlock_level;  // 'locking' order
+                 } Spinlock;
+</pre></td></tr>
+</table>
+</p>
+<p>
+Then I have a spinlock_wait routine that checks to make sure my new spinlock's level is .gt. 
+the last spinlock's level that was locked by this cpu.  If I try to do it out of order, the 
+routine panics/BSOD's on the spot.
+</p>
+
+<p class="chaphead"><h2>
+<a name="interrupts">2.</a>Interrupts</h2></p>
+
+<p>
+Another question you may wonder, must I always inhibit hardware interrupt delivery when I 
+have a spinlock?
+</p>
+<p>
+No.  Only if the data being worked with can also be accessed by an interrupt routine.  And 
+then, you only have to disable those interrupts that have access to it.
+</p>
+<p>
+For example, I don't allow my interrupt routines to do malloc's.  So the malloc routine can 
+run with interrupts enabled, even when it has the spinlock.  Same with pagetables, disk cache 
+pages, and other stuff like that.
+</p>
+<p>
+You must, however, block any pre-emptive scheduling while you have a any spinlock.  Or at 
+least, you will make things *very* complicated if you don't.
+</p>
+<p>
+So I ended up with several 'classes' of spinlocks:
+<ul>
+  <li>low priority - these run with all hardware interrupt delivery enabled
+  interrupt level - there is one per IRQ level.  IRQ 0 is the highest, IRQ 7 is the lowest.
+                    when one of these is set on a cpu, it inhibits that IRQ and any lower priority interrupts</li>
+  <li>high priority - these run with all hardware interrupt delivery inhibited</li>
+</ul>
+</p>
+<p>
+So if a cpu has one of the low priority spinlocks, it is running with hardware interrupt delivery 
+enabled (but the pre-emptive scheduler is disabled).
+</p>
+<p>
+There is one spinlock per interrupt level.  For example, the keyboard driver uses IRQ 1.  So whenever the 
+keyboard interrupt routine is active, I have the cpu take the <font class="code">IRQ 1 spinlock</font>.  Whenever the main keyboard 
+driver routine is accessing data that the interrupt routine would access, I take the <font class="code">IRQ 1 spinlock</font>.  So 
+it in essence acts as a 'inhibit interrupt delivery' mechanism that works across cpu's in an SMP system.
+</p>
+<p>
+The high-priority interrupts block all interrupt delivery on the cpu.  These are used for routines (like 
+wake_a_thread) that need to be callable from any interrupt level.
+</p>
+
+<p class="chaphead"><h2>
+<a name="performance">3.</a>Performance</h2></p>
+
+<p>
+This is a big thing about spinlocks.  It's easy to make your performance go to pot with 
+poor use of spinlocks.
+</p>
+<p>
+Consider that you can *theoretically* use just *one* spinlock, period.  Whenever you enter 
+kernel mode, inhibit all interrupt delivery and set your one-and-only spinlock.  When you 
+leave kernel mode, release the spinlock then enable interrupt delivery.  Great!
+</p>
+<p>
+Well, you can imagine then, that what you end up with is having just one cpu doing anything 
+useful at a time in kernel mode, while the other(s) just grind away spinning.  Really bad!
+</p>
+<p>
+So what you do is try to come up with as many spinlocks as you can.  Above I mentioned that 
+you must combine X and Y if you have a case where you must set X then Y and another case where 
+you must set Y then X.  So now you have two limits to work with:
+<ul>
+<li>Too few spinlocks and you have poor performance</li>
+<li>Too many spinlocks and you violate the ordering</li>
+</ul>
+</p>
+<p>
+Here's where the creativity comes in, working with those two limits to 
+maximize performance.  Strive to eliminate as much spinning as possible.
+</p>
+<p>
+How does one measure spinlock performance?  Make an array of counters like this:
+<a name="listing3"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 3</td></tr>
+<tr><td class="infotext"><pre>
+  static int spin_counts[256];
+</pre></td></tr>
+</table>
+</p>
+<p>
+Then increment <font class="code">spin_counts[spinlock_level]</font> each time the 'test_and_set' fails.  After a while 
+of running stuff, find which <font class="code">spinlock_level</font> has big counts (compared to the others).  Try to 
+break that smplock down into smaller ones if you can figure out how to.
+</p>
+
+<p class="chaphead"><h2>
+<a name="summary">4.</a>Summary</h2></p>
+
+<p>
+They may seem sort of nebulous to begin with.  But after you work with them, application 
+becomes very scientific.  I hope this little tutorial has helped clear up some issues and 
+gives you confidence.
+</p>
+<p>
+I have some more practical stuff at <a href="http://www.o3one.org/smplocks.html">http://www.o3one.org/smplocks.html</a> if you're still interested.
+</p>
+
+<p><div class="copyright">last updated $Date: 2002/07/02 07:43:39 $</div></p>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="stylesheet" type="text/css" href="zhware.css">
+<link rel="made" href="">
+<title>Spinlocks: Part III</title>
+<meta name="keywords" content="osdev, Mike Rieker, scheduling, spinlock">
+</head>
+<body>
+<p class="menu" align="right">
+other formats: (
+<a class="menulink" href="spinlock_part3.xml">xml</a> |
+<a class="menulink" href="spinlock_part3.txt">txt</a>
+)
+</p>
+<p class="dochead"><h1>Spinlocks: Part III</h1></p>
+<p>
+<a class="altlink" href="mailto:mrieker@o3one.org">Mike Rieker</a>
+
+(<i>author</i>)
+
+<br>
+Homepage:
+<a class="altlink" href="http://www.o3one.org/">http://www.o3one.org/</a>
+<br><br>$Date: 2002/07/02 07:43:39 $<br>$Revision: 1.1.1.1 $<br>
+</p>
+<p class="chaphead"><h2>Executive Summary</h2></p>
+<p class="abstract">
+In some cases, there are simple and effective alternatives to spinlocks.
+<br>
+</p>
+<p class="tochead"><h2>Contents</h2></p>
+<p>1. <a class="altlink" href="#intro">Introduction</a><br>2. <a class="altlink" href="#inc_dec">Increment/Decrement</a><br>3. <a class="altlink" href="#atomic">Atomic arithmetic</a><br>4. <a class="altlink" href="#stack">Atomic linked stack</a><br>5. <a class="altlink" href="#summary">Summary</a><br>
+</p>
+<p class="chaphead"><h2>
+<a name="intro">1.</a>Introduction</h2></p>
+
+<p>
+In some cases, there are simple and effective alternatives to spinlocks.
+</p>
+
+<p class="chaphead"><h2>
+<a name="inc_dec">2.</a>Increment/Decrement</h2></p>
+
+<p>
+Consider the case:
+<a name="listing1"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 1</td></tr>
+<tr><td class="infotext"><pre>
+void dec_thread_refcount (Thread *thread)
+
+{
+  int new_refcount;
+
+  acquire_spinlock (&amp;(thread -&gt; spinlock));  // lock access to thread -&gt; refcount
+  new_refcount = -- (thread -&gt; refcount);    // decrement it, save new value
+  release_spinlock (&amp;(thread -&gt; spinlock));  // unlock
+  if (new_refcount == 0) kfree (thread);     // if no one is using it anymore, free it
+}
+</pre></td></tr>
+</table>
+</p>
+<p>
+Seems like a lot of work acquiring and releasing the spinlock just to decrement the 
+refcount.  Well, remember the <font class="code">'lock' prefix instruction</font> we used to make the test_and_set 
+thing?  We can be a little fancier about it and make a <font class="code">'dec_and_testz' routine</font>:
+<a name="listing2"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 2</td></tr>
+<tr><td class="infotext"><pre>
+  int locked_dec_and_testz (int *refcount);  // decrement *refcount, return whether or not it went zero
+
+    .globl locked_dec_and_testz
+  locked_dec_and_testz:
+    xorl %eax,%eax    # clear all of %eax
+    movl 4(%esp),%edx # get pointer to refcount
+    lock              # keep other cpu's out of next instruction
+    decl (%edx)       # decrement refcount, keeping other cpu's out of refcount
+    setz %al          # set %eax=1 if result is zero, set %eax=0 otherwise
+    ret               # return %eax as the result
+</pre></td></tr>
+</table>
+</p>
+<p>
+So now we can write:
+<a name="listing3"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 3</td></tr>
+<tr><td class="infotext"><pre>
+void dec_thread_refcount (Thread *thread)
+
+{
+  if (locked_dec_and_testz (&amp;(thread -&gt; refcount)) {
+    kfree (thread);
+  }
+}
+</pre></td></tr>
+</table>
+</p>
+<p>
+Now this has a little gotcha.  <font class="code">'refcount'</font> must now be thought of as being a variable 
+not protected by a spinlock, but by 'lock instruction prefix' access only!  So any 
+modifications to refcount must be done with the lock prefix.  So we can no longer:
+<a name="listing4"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 4</td></tr>
+<tr><td class="infotext"><pre>
+  acquire_spinlock (&amp;(thread -&gt; spinlock));
+  (thread -&gt; refcount) ++;
+  release_spinlock (&amp;(thread -&gt; spinlock));
+</pre></td></tr>
+</table>
+... because the locked_dec_and_testz routine might be in progress on another cpu, and 
+our 'spinlock' won't do anything to stop it!
+</p>
+<p>
+So we have to supply a 'locked_inc' routine:
+<a name="listing5"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 5</td></tr>
+<tr><td class="infotext"><pre>
+  void locked_inc (int *refcount);
+
+    .globl locked_inc
+  locked_inc:
+    movl 4(%esp),%edx
+    lock
+    incl (%edx)
+    ret
+</pre></td></tr>
+</table>
+</p>
+<p>
+But we still come out ahead, because there is no possibility of doing any spinning in 
+any of these routines.  (The actual spinning is done at the CPU bus level, which is 
+very very fast).
+</p>
+
+<p class="chaphead"><h2>
+<a name="atomic">3.</a>Atomic arithmetic</h2></p>
+
+<p>
+Now we can generally apply increment/decrement to any single arithmetic operation on 
+a single variable.  It is possible to write routines to do add, subtract, or, and, xor, 
+etc, and have the routine return the previous value.
+</p>
+<p>
+For example, this routine or's in <font class="code">'new_bits'</font> into *value, and returns the 
+previous contents of value:
+<a name="listing6"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 6</td></tr>
+<tr><td class="infotext"><pre>
+  int atomic_or_rtnold (int new_bits, int *value);
+
+    .globl atomic_or_rtnold
+  atomic_or_rtnold:
+    movl 8(%esp),%edx    # point to value
+    movl (%edx),%eax     # sample the current contents of value
+  atomic_or_loop:
+    movl 4(%esp),%ecx    # get the new_bits
+    orl  %eax,%ecx       # or them together
+    lock                 # bus lock the next instruction
+    cmpxchgl %ecx,(%edx) # if 'value' hasn't changed, store our new value there
+    jne atomic_or_loop   # repeat if 'value' has changed
+    ret                  # return with old (sampled) contents of value
+</pre></td></tr>
+</table>
+</p>
+<p>
+Now you notice this does have a little 'spin' in it, it has a loop back.  But the 
+loop is so short, that the chances of conflicting with other modifications of the 
+*value is very slim, so it is highly unlikely that it will ever loop.
+</p>
+<p>
+If we don't want the old value, we can do this:
+<a name="listing7"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 7</td></tr>
+<tr><td class="infotext"><pre>
+  void atomic_or (int new_bits, int *value);
+
+    .globl atomic_or
+  atomic_or:
+    movl 4(%esp),%eax    # get the new_bits
+    movl 8(%esp),%edx    # point to value
+    lock                 # bus lock the next instruction
+    orl  %eax,(%edx)     # update value
+    ret
+</pre></td></tr>
+</table>
+... and not have any loop in there at all.
+</p>
+
+<p class="chaphead"><h2>
+<a name="stack">4.</a>Atomic linked stack</h2></p>
+
+<p>
+You can get 'nasty' and implement a LIFO linked stack with atomic operations.
+</p>
+<p>
+Suppose we have:
+<a name="listing8"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 8</td></tr>
+<tr><td class="infotext"><pre>
+  typedef struct Block Block;
+  struct Block { Block *next_block;
+                  ...
+               };
+
+  static Block *free_blocks = NULL;
+
+  void free_a_block (Block *block_to_free)
+
+  {
+    Block *old_top_free_block;
+
+    do {
+      old_top_free_block = free_blocks;
+      block_to_free = old_top_free_block;
+    } while (!atomic_setif_ptr (&amp;free_blocks, block_to_free, old_top_free_block));
+  }
+
+  atomic_setif_ptr says:
+
+    if (free_blocks != old_top_free_block) return (0);
+    else {
+      free_blocks = block_to_free;
+      return (1);
+    }
+
+    .globl atomic_setif_ptr
+  atomic_setif_ptr:
+    movl  4(%esp),%edx    # get pointer to free_blocks
+    movl  8(%esp),%ecx    # get block_to_free
+    movl 12(%esp),%eax    # get old_free_top_block
+    lock                  # bus lock the next instruction
+    cmpxchgl %ecx,(%edx)  # if free_blocks == old_free_top_block, then free_blocks = block_to_free
+    jne atomic_setif_failed
+    movl $1,%eax          # success, return 1
+    ret
+  atomic_setif_failed:
+    xorl %eax,%eax        # failure, return 0
+    ret
+</pre></td></tr>
+</table>
+</p>
+<p>
+  Now we can use that same routine to write the alloc routine:
+<a name="listing9"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 9</td></tr>
+<tr><td class="infotext"><pre>
+  Block *alloc_a_block (void)
+
+  {
+    Block *sample_block;
+
+    do {
+      sample_block = free_blocks;
+      if (sample_block == NULL) break;
+    } while (!atomic_setif_ptr (&amp;free_blocks, sample_block -&gt; next_block, sample_block));
+    return (sample_block);
+  }
+</pre></td></tr>
+</table>
+</p>
+<p>
+But again, the gotcha is that 'free_blocks' can only be modified with atomic operations.  
+So if you must also scan the list, you will have to use a spinlock.
+</p>
+
+<p class="chaphead"><h2>
+<a name="summary">5.</a>Summary</h2></p>
+
+<p>
+Simple spinlocked sequences can be replaced with atomic operations and can 
+result in performance improvements.  Now you have more fun stuff to play with!
+</p>
+
+<p><div class="copyright">last updated $Date: 2002/07/02 07:43:39 $</div></p>
+</body>
+</html>

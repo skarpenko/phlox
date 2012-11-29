@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="stylesheet" type="text/css" href="zhware.css">
+<link rel="made" href="">
+<title>Spinlocks: Part I</title>
+<meta name="keywords" content="osdev, Mike Rieker, scheduling, spinlock">
+</head>
+<body>
+<p class="menu" align="right">
+other formats: (
+<a class="menulink" href="spinlock_part1.xml">xml</a> |
+<a class="menulink" href="spinlock_part1.txt">txt</a>
+)
+</p>
+<p class="dochead"><h1>Spinlocks: Part I</h1></p>
+<p>
+<a class="altlink" href="mailto:mrieker@o3one.org">Mike Rieker</a>
+
+(<i>author</i>)
+
+<br>
+Homepage:
+<a class="altlink" href="http://www.o3one.org/">http://www.o3one.org/</a>
+<br><br>$Date: 2002/07/02 07:43:39 $<br>$Revision: 1.1.1.1 $<br>
+</p>
+<p class="chaphead"><h2>Executive Summary</h2></p>
+<p class="abstract">
+A method is needed in a multiprocessor system to keep the cpu's from interfering with each other.
+<br>
+</p>
+<p class="tochead"><h2>Contents</h2></p>
+<p>1. <a class="altlink" href="#intro">Introduction</a><br>2. <a class="altlink" href="#without">Getting along without them</a><br>3. <a class="altlink" href="#what">What makes it work</a><br>4. <a class="altlink" href="#interrupts">Dealing with interrupts</a><br>5. <a class="altlink" href="#multi_cpu">Interrupts on a multiprocessor</a><br>6. <a class="altlink" href="#rules">Rules to live by</a><br>7. <a class="altlink" href="#uni_cpu">Uniprocessors</a><br>
+</p>
+<p class="chaphead"><h2>
+<a name="intro">1.</a>Introduction</h2></p>
+
+<p>
+A method is needed in a multiprocessor system to keep the cpu's from interfering with each other.
+For example, let's say you have a list of threads that are ready to execute instructions, so they 
+are waiting for a cpu.  There needs to be a way to make sure that only one of the cpu's will start 
+processing that thread.
+</p>
+<p>
+Now you may say you're not writing a multiprocessor os, so you don't need these.  You're right, 
+you don't.  But you need something similar, so with little extra effort, you can make your os 
+multiprocessor from the start.  We'll delay this discussion for the end.
+</p>
+
+<p class="chaphead"><h2>
+<a name="without">2.</a>Getting along without them</h2></p>
+
+<p>
+So let's take our example started above.  We have a list of threads that are ready to be executed, 
+and we want to be sure that only one cpu will start executing the thread.  Here's the idea:
+<ul>
+  <li>lock all other cpu's out of the list of threads waiting for a cpu</li>
+  <li>unlink the first one that's waiting, if any</li>
+  <li>unlock the list</li>
+  <li>if we didn't find a thread, repeat the whole thing</li>
+  <li>else, jump to the thread</li>
+</ul>
+Now how do we do that 'lock all other cpu's...'?
+</p>
+<p>
+If we just:
+<a name="listing1"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 1</td></tr>
+<tr><td class="infotext"><pre>
+static int threads_waiting_to_run_lock = 0;
+static Thread *threads_waiting_to_run = NULL;
+static Thread **threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+
+Thread *find_a_thread_to_run (void)
+
+{
+  Thread *thread_to_start;
+
+  do {
+    while (threads_waiting_to_run_lock) {}         // repeat while some other cpu is using the queue
+    threads_waiting_to_run_lock = 1;               // tell other cpu's the queue is being used
+
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) {
+      threads_waiting_to_run = thread_to_start -&gt; next_thread;
+      if (threads_waiting_to_run == NULL) threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+    }
+
+    lock = 0;                                      // tell other cpu's the queue is no longer busy
+  } while (thread_to_start == NULL);               // repeat if I didn't get anything to do
+
+  return (thread_to_start);
+}
+</pre></td></tr>
+</table>
+</p>
+<p>
+That won't work because if two cpu's simultaneously hit the while statement, they will 
+both see lock as being zero, then they both will set it to one.  And they both will 
+dequeue the same top thread, which is no good.
+</p>
+<p>
+No simple C statements will solve this problem.
+</p>
+
+<p class="chaphead"><h2>
+<a name="what">3.</a>What makes it work</h2></p>
+
+<p>
+So, for Intel processors, there is the <font class="code">'lock' instruction prefix</font>.  This says, that for the 
+following instruction, this instruction shall be the only one that accesses that memory 
+location.  So we can make a routine like this:
+<a name="listing2"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 2</td></tr>
+<tr><td class="infotext"><pre>
+    int test_and_set (int new_value, int *lock_pointer);
+
+    .globl test_and_set
+  test_and_set:
+    movl 4(%esp),%eax  # get new_value into %eax
+    movl 8(%esp),%edx  # get lock_pointer into %edx
+    lock               # next instruction is locked
+    xchgl %eax,(%edx)  # swap %eax with what is stored in (%edx)
+                       # ... and don't let any other cpu touch that 
+                       # ... memory location while you're swapping
+    ret                # return the old value that's in %eax
+</pre></td></tr>
+</table>
+</p>
+<p>
+Now we can correctly make our routine:
+<a name="listing3"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 3</td></tr>
+<tr><td class="infotext"><pre>
+Thread *find_a_thread_to_run (void)
+
+{
+  Thread *thread_to_start;
+
+  do {
+    while (test_and_set (1, &amp;threads_waiting_to_run_lock)) {} // repeat while some other cpu is using the queue
+                                                              // ... then tell other cpu's the queue is being used
+
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) {
+      threads_waiting_to_run = thread_to_start -&gt; next_thread;
+      if (threads_waiting_to_run == NULL) threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+    }
+
+    threads_waiting_to_run_lock = 0;                          // tell other cpu's the queue is no longer busy
+  } while (thread_to_start == NULL);                          // repeat if I didn't get anything to do
+
+  return (thread_to_start);
+}
+</pre></td></tr>
+</table>
+</p>
+<p>
+So the 'while' loop can be said to be 'spinning' on that test_and_set call while 
+some other cpu is using the lock.
+</p>
+
+<p class="chaphead"><h2>
+<a name="interrupts">4.</a>Dealing with interrupts</h2></p>
+
+<p>
+Now for the complications...
+</p>
+<p>
+You may ask yourself, isn't this thing going to sit there forever in that do..while 
+loop if there is nothing in the queue?  What puts things in the queue?
+</p>
+<p>
+So some device gives an hardware interrupt while we're in the loop.  This interrupt routine 
+checks the disk or keyboard status, does it's thing, and realizes it is time to wake up a 
+thread that is waiting for the I/O.  Here is where it puts the thread in the 
+<font class="code">'threads_waiting_to_run' queue</font>.
+</p>
+<p>
+Now it can't just:
+<a name="listing4"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 4</td></tr>
+<tr><td class="infotext"><pre>
+void wake_thread (Thread *thread_to_wake)
+
+{
+  thread_to_wake -&gt; next_thread = NULL;
+  *threads_waiting_to_run_end = thread_to_wake;
+  threads_waiting_to_run_end = &amp;(thread_to_wake -&gt; next_thread);
+}
+</pre></td></tr>
+</table>
+... because the interrupt may have happened between the second and third lines of:
+<a name="listing5"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 5</td></tr>
+<tr><td class="infotext"><pre>
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) {
+      threads_waiting_to_run = thread_to_start -&gt; next_thread;
+      if (threads_waiting_to_run == NULL) threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+    }
+</pre></td></tr>
+</table>
+</p>
+<p>
+So you in essence have the following happening:
+<a name="listing6"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 6</td></tr>
+<tr><td class="infotext"><pre>
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) {
+
+      --&gt; interrupt
+        thread_to_wake -&gt; next_thread = NULL;
+        *threads_waiting_to_run_end = thread_to_wake;
+        threads_waiting_to_run_end = &amp;(thread_to_wake -&gt; next_thread);
+      &lt;-- return from interrupt
+
+      threads_waiting_to_run = thread_to_start -&gt; next_thread;
+      if (threads_waiting_to_run == NULL) threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+    }
+</pre></td></tr>
+</table>
+... and we end up possibly losing our 'thread_to_wake'.
+</p>
+<p>
+To solve this, we just inhibit hardware interrupt delivery as well as lock our spinlock:
+<a name="listing7"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 7</td></tr>
+<tr><td class="infotext"><pre>
+Thread *find_a_thread_to_run (void)
+
+{
+  Thread *thread_to_start;
+
+  do {
+    inhib_hw_int_delivery ();                                 // make sure interrupt routine doesn't interfere
+    while (test_and_set (1, &amp;threads_waiting_to_run_lock)) {} // repeat while some other cpu is using the queue
+                                                              // ... then tell other cpu's the queue is being used
+
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) {
+      threads_waiting_to_run = thread_to_start -&gt; next_thread;
+      if (threads_waiting_to_run == NULL) threads_waiting_to_run_end = &amp;threads_waiting_to_run;
+    }
+
+    threads_waiting_to_run_lock = 0;                          // tell other cpu's the queue is no longer busy
+    enable_hw_int_delivery ();                                // allow interrupts to happen now
+  } while (thread_to_start == NULL);                          // repeat if I didn't get anything to do
+
+  return (thread_to_start);
+}
+</pre></td></tr>
+</table>
+</p>
+<p class="chaphead"><h2>
+<a name="multi_cpu">5.</a>Interrupts on a multiprocessor</h2></p>
+
+<p>
+Now we're almost done.  If we are on a multiprocessor, one of the cpu's might be executing the do..while 
+that is waiting for something to work on, and another cpu might be doing the interrupt processing.  So we 
+end up with our bad situation again, where we have the four statements executing simultaneously.  Easy to 
+fix.  We just put our spinlock around the statements in our interrupt routine as well:
+<a name="listing8"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 8</td></tr>
+<tr><td class="infotext"><pre>
+void wake_thread (Thread *thread_to_wake)
+
+{
+  int hwi;
+
+  thread_to_wake -&gt; next_thread = NULL;
+
+  hwi = inhib_hw_int_delivery ();                           // make sure interrupt delivery is inhibited
+  while (test_and_set (1, &amp;threads_waiting_to_run_lock)) {} // repeat while some other cpu is using the queue
+                                                            // ... then tell other cpu's the queue is being used
+  *threads_waiting_to_run_end = thread_to_wake;
+  threads_waiting_to_run_end = &amp;(thread_to_wake -&gt; next_thread);
+  if (hwi) enable_hw_int_delivery ();                       // restore interrupt delivery state
+}
+</pre></td></tr>
+</table>
+</p>
+
+<p class="chaphead"><h2>
+<a name="rules">6.</a>Rules to live by</h2></p>
+
+<p>
+It seems very complicated from all that.  Well, if you follow a couple simple rules, it isn't!
+<table class="ncontent" width="100%" border="0" cellspacing="0" cellpadding="0"><tr><td class="impotext">
+<b>Important: </b>
+<ol>
+<li>When modifying a variable that can possibly be modified by more than one cpu at a time, then you
+   need to protect it with a spinlock.  You must *always* have this spinlock when accessing that variable.</li>
+
+<li>If the variable can also be modified by an interrupt routine, you must disable (at least that) 
+   interrupt while the spinlock is being held.</li>
+</ol>
+</td></tr></table>
+</p>
+
+<p class="chaphead"><h2>
+<a name="uni_cpu">7.</a>Uniprocessors</h2></p>
+
+<p>
+So now, you uniprocessor people wonder why all this is necessary.  For a uniprocessor, you have:
+<a name="listing9"></a><table width="90%" align="center" cellspacing="0" cellpadding="0" border="0">
+<tr><td class="infohead">
+Code listing 9</td></tr>
+<tr><td class="infotext"><pre>
+Thread *find_a_thread_to_run (void)
+
+{
+  do {
+    inhib_hw_int_delivery ();                                 // make sure interrupt routine doesn't interfere
+
+    thread_to_start = threads_waiting_to_run;
+    if (thread_to_start != NULL) threads_waiting_to_run = thread_to_start -&gt; next_thread;
+
+
+    enable_hw_int_delivery ();                                // allow interrupts to happen now
+  } while (thread_to_start == NULL);                          // repeat if I didn't get anything to do
+  return (thread_to_start);
+}
+
+
+void wake_thread (Thread *thread_to_wake)
+
+{
+  int hwi;
+
+  thread_to_wake -&gt; next_thread = NULL;
+  hwi = inhib_hw_int_delivery ();                           // make sure interrupt delivery is inhibited
+  *threads_waiting_to_run_end = thread_to_wake;
+  threads_waiting_to_run_end = &amp;(thread_to_wake -&gt; next_thread);
+  if (hwi) enable_hw_int_delivery ();                       // restore interrupt delivery state
+}
+</pre></td></tr>
+</table>
+So you can see that it takes all of 2 extra lines per routine to make it multiprocessor ready!
+</p>
+<p>
+Part 2 talks about some more practical stuff.
+</p>
+
+<p><div class="copyright">last updated $Date: 2002/07/02 07:43:39 $</div></p>
+</body>
+</html>

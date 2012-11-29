@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="keywords" content="Volatile (keyword),APIC,Spinlock,Memory barriers,Atomic operations" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="copyright" href="/wiki/OSDevWiki:License" />
+		<title>Volatile (keyword) - OSDevWiki</title>
+		<style type="text/css" media="screen,projection">/*<![CDATA[*/ @import "/mediawiki/skins/monobook/main.css?7"; /*]]>*/</style>
+		<link rel="stylesheet" type="text/css" media="print" href="/mediawiki/skins/common/commonPrint.css" />
+		<!--[if lt IE 5.5000]><style type="text/css">@import "/mediawiki/skins/monobook/IE50Fixes.css";</style><![endif]-->
+		<!--[if IE 5.5000]><style type="text/css">@import "/mediawiki/skins/monobook/IE55Fixes.css";</style><![endif]-->
+		<!--[if IE 6]><style type="text/css">@import "/mediawiki/skins/monobook/IE60Fixes.css";</style><![endif]-->
+		<!--[if IE 7]><style type="text/css">@import "/mediawiki/skins/monobook/IE70Fixes.css?1";</style><![endif]-->
+		<!--[if lt IE 7]><script type="text/javascript" src="/mediawiki/skins/common/IEFixes.js"></script>
+		<meta http-equiv="imagetoolbar" content="no" /><![endif]-->
+		<script type="text/javascript">var skin = 'monobook';var stylepath = '/mediawiki/skins';</script>
+		<script type="text/javascript" src="/mediawiki/skins/common/wikibits.js"><!-- wikibits js --></script>
+		<script type="text/javascript" src="/mediawiki/index.php?title=-&amp;action=raw&amp;gen=js"><!-- site js --></script>
+		<style type="text/css">/*<![CDATA[*/
+@import "/mediawiki/index.php?title=MediaWiki:Common.css&action=raw&ctype=text/css&smaxage=18000";
+@import "/mediawiki/index.php?title=MediaWiki:Monobook.css&action=raw&ctype=text/css&smaxage=18000";
+@import "/mediawiki/index.php?title=-&action=raw&gen=css&maxage=18000";
+/*]]>*/</style>
+		<!-- Head Scripts -->
+			</head>
+<body  class="ns-0 ltr">
+	<div id="globalWrapper">
+		<div id="column-content">
+	<div id="content">
+		<a name="top" id="top"></a>
+				<h1 class="firstHeading">Volatile (keyword)</h1>
+		<div id="bodyContent">
+			<h3 id="siteSub">From OSDevWiki</h3>
+			<div id="contentSub"></div>
+									<div id="jump-to-nav">Jump to: <a href="#column-one">navigation</a>, <a href="#searchInput">search</a></div>			<!-- start content -->
+			<table id="toc" class="toc" summary="Contents"><tr><td><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class='toclevel-1'><a href="#Definition"><span class="tocnumber">1</span> <span class="toctext">Definition</span></a></li>
+<li class='toclevel-1'><a href="#The_basics"><span class="tocnumber">2</span> <span class="toctext">The basics</span></a></li>
+<li class='toclevel-1'><a href="#Examples"><span class="tocnumber">3</span> <span class="toctext">Examples</span></a>
+<ul>
+<li class='toclevel-2'><a href="#Loops"><span class="tocnumber">3.1</span> <span class="toctext">Loops</span></a></li>
+<li class='toclevel-2'><a href="#Dereferencing_memory"><span class="tocnumber">3.2</span> <span class="toctext">Dereferencing memory</span></a></li>
+<li class='toclevel-2'><a href="#Memory_shared_by_multiple_threads"><span class="tocnumber">3.3</span> <span class="toctext">Memory shared by multiple threads</span></a></li>
+</ul>
+</li>
+</ul>
+</td></tr></table><script type="text/javascript"> if (window.showTocToggle) { var tocShowText = "show"; var tocHideText = "hide"; showTocToggle(); } </script>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=1" title="Edit section: Definition">edit</a>]</div><a name="Definition"></a><h2> Definition </h2>
+<p>The volatile keyword gives an indication to the compiler/optimizer that it should always perform a read or write to a variable or memory without caching it locally. It also ensures that the order of changes is preserved and not altered by the optimizer, and that apparently redundant code is not optimized away. The keyword however doesn't guarantee that memory access isn't reordered by the processor on runtime. To fix possible issues due to this, make sure you use <a href="/mediawiki/index.php?title=Atomic_operations&amp;action=edit" class="new" title="Atomic operations">atomic operations</a> or <a href="/mediawiki/index.php?title=Memory_barriers&amp;action=edit" class="new" title="Memory barriers">memory barriers</a> to manipulate memory.
+</p>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=2" title="Edit section: The basics">edit</a>]</div><a name="The_basics"></a><h2> The basics </h2>
+<p>The volatile keyword can be used in type definitions as well as function arguments, variable definitions and typecasts. Similar to the <b>const</b> keyword, it either makes the variable itself or the data it points to <i>volatile</i>, or both.
+</p>
+<pre>/* Ensures the changes to/reads from x are always performed */
+volatile int x;
+
+/* Ensures that changes to/reads from the data that ptr points to
+   (but not the value itself) are always performed */
+volatile int *ptr;
+int volatile *ptr;
+
+/* Ensures that changes to/reads from the pointer ptr (but not the
+   data it points to) are always performed */
+int * volatile ptr;
+
+/* Ensures that changes to/reads from the pointer ptr and also
+   the data it points to are always performed */
+volatile int * volatile ptr;
+int volatile * volatile ptr;
+</pre>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=3" title="Edit section: Examples">edit</a>]</div><a name="Examples"></a><h2> Examples </h2>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=4" title="Edit section: Loops">edit</a>]</div><a name="Loops"></a><h3> Loops </h3>
+<p>This is an example of a function that is supposed to create a very short delay, but might be optimized away by the compiler entirely because to the optimizer this code seems redundant:
+</p>
+<pre>static void some_delay(void)
+{
+    int i;
+    /* Should be declared as <b>volatile int i;</b> to prevent
+       the loop or even the entire function from being optimized
+       away */
+    
+    for (i = 0; i &lt; 100; i++)
+    {
+        /* Do nothing, just wait a little while so that
+           some hardware can respond. Using this technique
+           is rarely neccessary and should be avoided! */
+    }
+}
+</pre>
+<p>This example is supposed to poll a byte until it is 0 (e.g. waiting for a <a href="/mediawiki/index.php?title=Spinlock&amp;action=edit" class="new" title="Spinlock">Spinlock</a> to be released). Obviously another thread is supposed to change that memory, but since the compiler has no clue about this, we need to ensure that the code isn't optimized away in any case:
+</p>
+<pre>typedef unsigned char * spin_lock;
+/* Should be defined as <b>typedef volatile unsigned char * spin_lock;</b>
+   to prevent reading/writing to spin_lock variables being cached
+   in CPU registers! */
+
+static void poll_spinlock(spin_lock lock)
+{
+    while (*lock&nbsp;!= 0)
+    {
+        /* Do nothing, just poll... */
+    }
+}
+
+/* Alternatively, if spin_lock wasn't defined as a pointer to volatile data
+   you can use it in a typecast instead: */
+static void poll_spinlock(spin_lock lock)
+{
+    while (*(volatile unsigned char *)lock&nbsp;!= 0)
+    {
+        /* Do nothing, just poll... */
+    }
+}
+</pre>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=5" title="Edit section: Dereferencing memory">edit</a>]</div><a name="Dereferencing_memory"></a><h3> Dereferencing memory </h3>
+<p>This is an example of code that is supposed to touch a piece of memory (e.g. to make it become resident or to check if it's valid and doesn't raise a page fault):
+</p>
+<pre>static void touch_mem(void *ptr)
+{
+    char *data = (char *)ptr;
+    /* Should be declared as <b>volatile char *data = (volatile char *)ptr;</b>
+       to prevent the code from being optimized away */
+    
+    /* It is assumed that the memory is not used by other threads at the same time */
+    *data = *data;
+}
+</pre>
+<p>Also see the <a href="/wiki/APIC#IO_APIC_Configuration" title="APIC">APIC example code</a> where the volatile keyword is crucial (reading/writing to hardware registers).
+</p>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit&amp;section=6" title="Edit section: Memory shared by multiple threads">edit</a>]</div><a name="Memory_shared_by_multiple_threads"></a><h3> Memory shared by multiple threads </h3>
+<p>Suppose you have one thread "A" that loops until another thread "B" wants thread "A" to terminate gracefully. They share a structure with a field "terminate" that thread "A" polls to see if another thread wants it to terminate. Unless that field or the entire structure is declared <i>volatile</i>, there's no guarantee that the code works as expected because the compiler/optimizer has no clue about that field being touched by someone else while looping. So it could generate code that reads the value once and caches it, resulting in an infinite loop. Use <i>volatile</i> to prevent wrong code being generated:
+</p>
+<pre>typedef struct {
+    int terminate; /* Should be <b>volatile int terminate;</b> */
+} shared_thread_data;
+
+/* This is the code run by thread "B" to get thread "A" to terminate gracefully */
+void stop_worker_thread(shared_thread_data *thread)
+{
+    thread-&gt;terminate = 1;
+    /* Technically incorrect, you should use a function that guarantees
+       an atomic operation (e.g. <b>lock xchg</b>)
+}
+
+/* This is the thread "A" loop */
+void worker_thread_body(shared_thread_data *thread)
+{
+    while (thread-&gt;terminate == 0)
+    {
+        /* Do some work here... */
+    }
+}
+</pre>
+<!-- Saved in parser cache with key wikidb:pcache:idhash:2034-0!1!0!0!!en!2 and timestamp 20071120180653 -->
+<div class="printfooter">
+Retrieved from "<a href="http://www.osdev.org/wiki/Volatile_%28keyword%29">http://www.osdev.org/wiki/Volatile_%28keyword%29</a>"</div>
+						<!-- end content -->
+			<div class="visualClear"></div>
+		</div>
+	</div>
+		</div>
+		<div id="column-one">
+	<div id="p-cactions" class="portlet">
+		<h5>Views</h5>
+		<ul>
+				 <li id="ca-nstab-main" class="selected"><a href="/wiki/Volatile_%28keyword%29">Article</a></li>
+				 <li id="ca-talk"><a href="/wiki/Talk:Volatile_%28keyword%29">Discussion</a></li>
+				 <li id="ca-edit"><a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=edit">Edit</a></li>
+				 <li id="ca-history"><a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;action=history">History</a></li>
+		</ul>
+	</div>
+	<div class="portlet" id="p-personal">
+		<h5>Personal tools</h5>
+		<div class="pBody">
+			<ul>
+				<li id="pt-login"><a href="/mediawiki/index.php?title=Special:Userlogin&amp;returnto=Volatile_(keyword)">Log in / create account</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="portlet" id="p-logo">
+		<a style="background-image: url(/mediawiki/skins/common/images/osdev.png);" href="/wiki/Main_Page" title="Main Page"></a>
+	</div>
+	<script type="text/javascript"> if (window.isMSIE55) fixalpha(); </script>
+		<div class='portlet' id='p-navigation'>
+		<h5>Navigation</h5>
+		<div class='pBody'>
+			<ul>
+				<li id="n-mainpage"><a href="/wiki/Main_Page">Main Page</a></li>
+				<li id="n-portal"><a href="http://www.osdev.org/phpBB2/">Forums</a></li>
+				<li id="n-FAQ"><a href="/wiki/Category:FAQ">FAQ</a></li>
+				<li id="n-OS-Projects"><a href="/wiki/Projects">OS Projects</a></li>
+				<li id="n-randompage"><a href="/wiki/Special:Random">Random page</a></li>
+			</ul>
+		</div>
+	</div>
+		<div class='portlet' id='p-about'>
+		<h5>About</h5>
+		<div class='pBody'>
+			<ul>
+				<li id="n-This-site"><a href="/wiki/OSDevWiki:About">This site</a></li>
+				<li id="n-Joining"><a href="/wiki/OSDevWiki:Joining">Joining</a></li>
+				<li id="n-Editing-help"><a href="/wiki/OSDevWiki:Editing">Editing help</a></li>
+				<li id="n-recentchanges"><a href="/wiki/Special:Recentchanges">Recent changes</a></li>
+			</ul>
+		</div>
+	</div>
+		<div id="p-search" class="portlet">
+		<h5><label for="searchInput">Search</label></h5>
+		<div id="searchBody" class="pBody">
+			<form action="/wiki/Special:Search" id="searchform"><div>
+				<input id="searchInput" name="search" type="text" accesskey="f" value="" />
+				<input type='submit' name="go" class="searchButton" id="searchGoButton"	value="Go" />&nbsp;
+				<input type='submit' name="fulltext" class="searchButton" value="Search" />
+			</div></form>
+		</div>
+	</div>
+	<div class="portlet" id="p-tb">
+		<h5>Toolbox</h5>
+		<div class="pBody">
+			<ul>
+				<li id="t-whatlinkshere"><a href="/wiki/Special:Whatlinkshere/Volatile_%28keyword%29">What links here</a></li>
+				<li id="t-recentchangeslinked"><a href="/wiki/Special:Recentchangeslinked/Volatile_%28keyword%29">Related changes</a></li>
+<li id="t-upload"><a href="/wiki/Special:Upload">Upload file</a></li>
+<li id="t-specialpages"><a href="/wiki/Special:Specialpages">Special pages</a></li>
+				<li id="t-print"><a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;printable=yes">Printable version</a></li>				<li id="t-permalink"><a href="/mediawiki/index.php?title=Volatile_%28keyword%29&amp;oldid=3820">Permanent link</a></li>			</ul>
+		</div>
+	</div>
+		</div><!-- end of the left (by default at least) column -->
+			<div class="visualClear"></div>
+			<div id="footer">
+				<div id="f-poweredbyico"><a href="http://www.mediawiki.org/"><img src="/mediawiki/skins/common/images/poweredby_mediawiki_88x31.png" alt="MediaWiki" /></a></div>
+			<ul id="f-list">
+				<li id="lastmod"> This page was last modified 04:18, 10 May 2007.</li>
+				<li id="viewcount">This page has been accessed 989 times.</li>
+				<li id="copyright">Content is available under <a href="/wiki/OSDevWiki:License" title="OSDevWiki:License">a license that is currently being determined</a>.</li>
+				<li id="privacy"><a href="/wiki/OSDevWiki:Privacy_policy" title="OSDevWiki:Privacy policy">Privacy policy</a></li>
+				<li id="about"><a href="/wiki/OSDevWiki:About" title="OSDevWiki:About">About OSDevWiki</a></li>
+				<li id="disclaimer"><a href="/wiki/OSDevWiki:General_disclaimer" title="OSDevWiki:General disclaimer">Disclaimers</a></li>
+			</ul>
+		</div>
+	<script type="text/javascript"> if (window.runOnloadHook) runOnloadHook();</script>
+</div>
+<!-- Served by www.osdev.org in 0.49 secs. -->
+</body></html>

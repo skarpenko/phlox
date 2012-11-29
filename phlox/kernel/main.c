@@ -39,7 +39,6 @@ static void recursion(uint32 init) {
 
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
-    asm("fninit"); /* init FPU */
 
     line = kargs->cons_line;
     screenOffset = SCREEN_WIDTH * line;

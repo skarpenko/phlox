@@ -6,7 +6,8 @@ KERNEL := $(KERNEL_OUT_DIR)/$(KERNEL)
 
 KERNEL_O_FILES := \
 	main.o \
-	spinlock.o
+	spinlock.o \
+	processor.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

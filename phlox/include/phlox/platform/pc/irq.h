@@ -5,8 +5,6 @@
 #ifndef _PHLOX_PLATFORM_PC_IRQ_H_
 #define _PHLOX_PLATFORM_PC_IRQ_H_
 
-#include <phlox/platform/pc/pic.h>
-
 
 /* List of interrupts used with IBM PC type systems.
  *
@@ -42,6 +40,15 @@
  * Define PC-specific basic hardware interrupts
  * control interface
 */
+
+/*
+ * These are originally defined in pic.h and redefined here
+ * especially for platform_* definitions to eliminate unnecessary
+ * pic.h inclusion.
+ */
+void pic_int_eoi(uint32 int_num);
+void pic_int_mask(uint32 int_num);
+void pic_int_unmask(uint32 int_num);
 
 /* interrupt acknowledge */
 #define platform_interrupt_ack(int_no)      pic_int_eoi(int_no)

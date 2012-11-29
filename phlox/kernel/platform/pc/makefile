@@ -5,7 +5,8 @@ $(shell mkdir -p $(KERNEL_PLATFORM_OUT_DIR))
 KERNEL_PLATFORM_PC_O_FILES += \
 	machine.o \
 	pit.o \
-	pic.o
+	pic.o \
+	nvram.o
 
 KERNEL_PLATFORM_PC_O_FILES := $(addprefix $(KERNEL_PLATFORM_OUT_DIR)/,$(KERNEL_PLATFORM_PC_O_FILES))
 

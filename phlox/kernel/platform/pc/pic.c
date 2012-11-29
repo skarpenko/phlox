@@ -15,7 +15,7 @@ spinlock_t pic_lock;
  * Bits 0-7  represents mask of master PIC.
  * Bits 8-15 represents mask of slave PIC.
  */
-static uint16 int_mask = 0xffff;
+static uint16 cached_int_mask = 0xffff;
 
 
 /* PICs initialization */
@@ -36,8 +36,10 @@ uint32 pic_init(void) {
     out8_p(PIC_SLAVE_IMR,  PIC_OCW1_MASK_ALL);  /* and slave */
     out8_p(PIC_MASTER_CMD, PIC_OCW2_NON_SPEC_EOI); /* Send EOI to master */
     out8_p(PIC_SLAVE_CMD,  PIC_OCW2_NON_SPEC_EOI); /* Send EOI to slave */
-    /** at this point masks stored in two PICs equal to cached mask in int_mask **/
-    
+    /** At this point masks stored in two PICs equal to cached mask stored 
+     ** in cached_int_mask variable.
+     **/
+
     return 0;
 }
 
@@ -75,11 +77,11 @@ void pic_int_mask(uint32 int_num) {
     irq_state = spin_lock_irqsave(&pic_lock);
 
     /* set bit in cached mask */
-    int_mask |= BIT(irq_num);
+    cached_int_mask |= BIT(irq_num);
 
     /* load mask to PICs */
-    out8_p(PIC_MASTER_IMR, int_mask & 0xff);         /* to master */
-    out8_p(PIC_SLAVE_IMR,  (int_mask >> 8) & 0xff);  /* to slave */
+    out8_p(PIC_MASTER_IMR, cached_int_mask & 0xff);         /* to master */
+    out8_p(PIC_SLAVE_IMR,  (cached_int_mask >> 8) & 0xff);  /* to slave */
 
     /* unlock */
     spin_unlock_irqrstor(&pic_lock, irq_state);
@@ -97,17 +99,17 @@ void pic_int_unmask(uint32 int_num) {
     irq_state = spin_lock_irqsave(&pic_lock);
 
     /* clear bit in cached mask */
-    int_mask &= ~BIT(irq_num);
+    cached_int_mask &= ~BIT(irq_num);
 
     /* if interrupt controlled by slave PIC, unmask IR line
      * of a master PIC where slave connected.
     */
     if(int_num >= PIC_SLAVE_IRQBASE)
-        int_mask &= ~BIT(PIC_MASTER_SLAVEIRQ);
+        cached_int_mask &= ~BIT(PIC_MASTER_SLAVEIRQ);
 
     /* load mask to PICs */
-    out8_p(PIC_MASTER_IMR, int_mask & 0xff);         /* to master    */
-    out8_p(PIC_SLAVE_IMR,  (int_mask >> 8) & 0xff);  /* .. and slave */
+    out8_p(PIC_MASTER_IMR, cached_int_mask & 0xff);         /* to master    */
+    out8_p(PIC_SLAVE_IMR,  (cached_int_mask >> 8) & 0xff);  /* .. and slave */
 
     /* unlock */
     spin_unlock_irqrstor(&pic_lock, irq_state);
@@ -121,11 +123,11 @@ void pic_int_maskall(void) {
     irq_state = spin_lock_irqsave(&pic_lock);
 
     /* mask all IR lines in cached mask */
-    int_mask = 0xffff;
+    cached_int_mask = 0xffff;
 
     /* load mask to PICs */
-    out8_p(PIC_MASTER_IMR, int_mask & 0xff);         /* to master    */
-    out8_p(PIC_SLAVE_IMR,  (int_mask >> 8) & 0xff);  /* .. and slave */
+    out8_p(PIC_MASTER_IMR, cached_int_mask & 0xff);         /* to master    */
+    out8_p(PIC_SLAVE_IMR,  (cached_int_mask >> 8) & 0xff);  /* .. and slave */
 
     /* unlock */
     spin_unlock_irqrstor(&pic_lock, irq_state);
@@ -139,11 +141,11 @@ void pic_int_unmaskall(void) {
     irq_state = spin_lock_irqsave(&pic_lock);
 
     /* unmask all IR lines in cached mask */
-    int_mask = 0x0000;
+    cached_int_mask = 0x0000;
 
     /* load mask to PICs */
-    out8_p(PIC_MASTER_IMR, int_mask & 0xff);         /* to master    */
-    out8_p(PIC_SLAVE_IMR,  (int_mask >> 8) & 0xff);  /* .. and slave */
+    out8_p(PIC_MASTER_IMR, cached_int_mask & 0xff);         /* to master    */
+    out8_p(PIC_SLAVE_IMR,  (cached_int_mask >> 8) & 0xff);  /* .. and slave */
 
     /* unlock */
     spin_unlock_irqrstor(&pic_lock, irq_state);

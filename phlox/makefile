@@ -48,7 +48,8 @@ help:
 	@echo "  bochs    - start Bochs virtual machine."
 	@echo
 	@echo "Additional options:"
-	@echo "  CPU=<cpu type>  - specifies CPU type to optimize for."
+	@echo "  CPU=<cpu type>  - specifies CPU type to optimize for;"
+	@echo "  DEBUG=yes       - turn on debug compilation."
 	@echo
 
 bochs: final

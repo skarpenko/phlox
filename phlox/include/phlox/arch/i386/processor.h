@@ -83,6 +83,27 @@ typedef struct {
  */
 
 /*
+ * Memory barriers
+ */
+/* Mandatory barriers */
+#define arch_mb()   __asm__ __volatile__ ("lock; addl $0,0(%esp);")  /* memory barrier       */
+#define arch_rmb()  __asm__ __volatile__ ("lock; addl $0,0(%esp);")  /* read memory barrier  */
+#define arch_wmb()  __asm__ __volatile__ ("lock; addl $0,0(%esp);")  /* write memory barrier */
+
+/* SMP barriers */
+#if SYSCFG_SMP_SUPPORT
+/* Mandatory barriers for SMP    */
+#define arch_smp_mb()   arch_mb()
+#define arch_smp_rmb()  arch_rmb()
+#define arch_smp_wmb()  arch_wmb()
+#else
+/* Compiler barriers for non-SMP */
+#define arch_smp_mb()   barrier()
+#define arch_smp_rmb()  barrier()
+#define arch_smp_wmb()  barrier()
+#endif
+
+/*
  * System control registers read/write macroses
  */
 #define read_cr0() ({ \
@@ -94,7 +115,7 @@ typedef struct {
 })
 
 #define write_cr0(x) \
-    __asm__ __volatile__ ("movl %0, %%cr0": :"r" (x));
+    __asm__ __volatile__ ("movl %0, %%cr0": :"r" (x))
 
 #define read_cr2() ({ \
     uint32 __dummy; \
@@ -105,7 +126,7 @@ typedef struct {
 })
 
 #define write_cr2(x) \
-    __asm__ __volatile__ ("movl %0, %%cr2": :"r" (x));
+    __asm__ __volatile__ ("movl %0, %%cr2": :"r" (x))
 
 #define read_cr3() ({ \
     uint32 __dummy; \
@@ -116,7 +137,7 @@ typedef struct {
 })
 
 #define write_cr3(x) \
-    __asm__ __volatile__ ("movl %0, %%cr3": :"r" (x));
+    __asm__ __volatile__ ("movl %0, %%cr3": :"r" (x))
 
 #define read_cr4() ({ \
     uint32 __dummy; \
@@ -127,7 +148,7 @@ typedef struct {
 })
 
 #define write_cr4(x) \
-    __asm__ __volatile__ ("movl %0, %%cr4": :"r" (x));
+    __asm__ __volatile__ ("movl %0, %%cr4": :"r" (x))
 
 
 /*

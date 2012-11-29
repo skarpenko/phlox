@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_COMPILER_H
@@ -17,6 +17,10 @@
 
 #define _PACKED __attribute__((packed))
 #define _ALIGNED(x) __attribute__((aligned(x)))
+
+/* Optimization barrier */
+/* The "volatile" is due to gcc bugs */
+#define barrier() __asm__ __volatile__("": : :"memory")
 
 #endif /* #ifndef __ASSEMBLY__ */
 

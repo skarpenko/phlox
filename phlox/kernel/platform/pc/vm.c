@@ -12,14 +12,14 @@
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 
-/* architecture-specific init for virtual memory manager */
-status_t arch_vm_init(kernel_args_t *kargs)
+/* platform-specific init for virtual memory manager */
+status_t platform_vm_init(kernel_args_t *kargs)
 {
     return NO_ERROR;
 }
 
-/* final stage of architecture-specific init */
-status_t arch_vm_init_final(kernel_args_t *kargs)
+/* final stage of platform-specific init */
+status_t platform_vm_init_final(kernel_args_t *kargs)
 {
     return NO_ERROR;
 }

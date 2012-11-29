@@ -9,6 +9,7 @@
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
 #include <phlox/arch/vm.h>
+#include <phlox/platform/vm.h>
 
 /* Memory access attributes */
 #define VM_LOCK_RO      0x0  /* Read-only       */

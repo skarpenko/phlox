@@ -19,6 +19,7 @@
 #include <phlox/mutex.h>
 #include <phlox/heap.h>
 
+#warning "TODO: Mutual exclusion is not completed here"
 
 /*** Debug flags ***/
 #define PARANOID_KFREE 1

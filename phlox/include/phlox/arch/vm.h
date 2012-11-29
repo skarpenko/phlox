@@ -8,9 +8,15 @@
 #include INC_ARCH(phlox/arch,vm.h)
 
 /*
- * Architecture specific virtual memory initialization
+ * Architecture specific virtual memory initialization.
  * Called during system initialization.
 */
 status_t arch_vm_init(kernel_args_t *kargs);
+
+/*
+ * Final stage of architecture-specific VM initialization.
+ * Called on final stage of VM initialization.
+*/
+status_t arch_vm_init_final(kernel_args_t *kargs);
 
 #endif

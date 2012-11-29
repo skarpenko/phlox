@@ -3,6 +3,7 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <phlox/errors.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 #include <phlox/arch/vm_translation_map.h>
@@ -15,51 +16,66 @@ vm_stat_t VM_State;
 /* init virtual memory */
 status_t vm_init(kernel_args_t *kargs)
 {
-   status_t err;
+    status_t err;
 
-   /* clear VM statistics */
-   memset(&VM_State, 0, sizeof(vm_stat_t));
-   
-   /* execute architecture-specific init */
-   err = arch_vm_init(kargs);
-   if(err)
-      panic("arch_vm_init: failed!\n");
+    /* clear VM statistics */
+    memset(&VM_State, 0, sizeof(vm_stat_t));
 
-   /* init memory size */
-   err = vm_page_preinit(kargs);
-   if(err)
-      panic("vm_page_preinit: failed!\n");
+    /* translation map module init */
+    err = vm_translation_map_init(kargs);
+    if(err)
+       panic("vm_init: translation map init failed!\n");
 
-   /* init kernel's heap */
-   {
-       addr_t heap_base;
-       size_t heap_size;
+    /* execute architecture-specific init */
+    err = arch_vm_init(kargs);
+    if(err)
+       panic("arch_vm_init: failed!\n");
 
-       /* compute heap size */
-       heap_size = ROUNDUP(
-                       vm_phys_mem_size() / SYSCFG_KERNEL_HEAP_FRAC,
-                       1*1024*1024 /* Mbyte */
-                   );
-       if(heap_size > SYSCFG_KERNEL_HEAP_MAX)
-             heap_size = SYSCFG_KERNEL_HEAP_MAX;
+    /* init memory size */
+    err = vm_page_preinit(kargs);
+    if(err)
+       panic("vm_page_preinit: failed!\n");
 
-       /* allocate heap area */
-       heap_base = vm_alloc_from_kargs(kargs, heap_size, VM_LOCK_KERNEL|VM_LOCK_RW);
-       /* init heap */
-       heap_init(heap_base, heap_size);
-       /* Fuf... Now kmalloc and kfree is available */
-   }
+    /* init kernel's heap */
+    {
+        addr_t heap_base;
+        size_t heap_size;
 
-   /* init vm page module */
-   err = vm_page_init(kargs);
-   if(err)
-      panic("vm_page_init: failed!\n");
+        /* compute heap size */
+        heap_size = ROUNDUP(
+                      vm_phys_mem_size() / SYSCFG_KERNEL_HEAP_FRAC,
+                      1*1024*1024 /* Mbyte */
+                    );
+        if(heap_size > SYSCFG_KERNEL_HEAP_MAX)
+              heap_size = SYSCFG_KERNEL_HEAP_MAX;
+
+        /* allocate heap area */
+        heap_base = vm_alloc_from_kargs(kargs, heap_size, VM_LOCK_KERNEL | VM_LOCK_RW);
+        /* init heap */
+        heap_init(heap_base, heap_size);
+        /* Fuf... Now kmalloc and kfree is available */
+    }
+
+    /* init vm page module */
+    err = vm_page_init(kargs);
+    if(err)
+       panic("vm_page_init: failed!\n");
 
 /*** Important note: After this point vm_alloc_from_kargs must not be used
  *** because physical pages bookkeping is turned on.
  ***/
+ 
+    /* final stage of translation map module init */
+    err = vm_translation_map_init_final(kargs);
+    if(err)
+       panic("vm_init: final stage of translation map init failed!\n");
 
-   return 0;
+    /* start final init stage of architecture-specific parts */
+    err = arch_vm_init_final(kargs);
+    if(err)
+       panic("arch_vm_init_final: final stage failed!\n");
+
+    return NO_ERROR;
 }
 
 /* allocate virtual space from kernel args */

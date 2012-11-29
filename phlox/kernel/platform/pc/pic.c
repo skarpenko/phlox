@@ -73,7 +73,7 @@ void pic_int_mask(uint32 int_num)
     uint32 irq_state;
     uint32 irq_num = int_num - PIC_IRQBASE;
 
-    /* exit if interrupt is not controlled by PICs*/
+    /* exit if interrupt is not controlled by PICs */
     if(irq_num >= PIC_TOTIRQS) return;
 
     /* set lock */

@@ -11,7 +11,13 @@
  * Translation map module initialization routine.
  * Called during virtual memory initialization.
 */
-status_t arch_vm_translation_map_init(kernel_args_t *kargs);
+status_t vm_translation_map_init(kernel_args_t *kargs);
+
+/*
+ * Translation map module final stage of initialization.
+ * Called during final stage of VM initialization.
+*/
+status_t vm_translation_map_init_final(kernel_args_t *kargs);
 
 /*
  * Map a page directly without using any of Virtual Memory Manager objects.

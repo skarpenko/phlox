@@ -6,7 +6,8 @@ KERNEL_PLATFORM_PC_O_FILES += \
 	machine.o \
 	pit.o \
 	pic.o \
-	nvram.o
+	nvram.o \
+	vm.o
 
 KERNEL_PLATFORM_PC_O_FILES := $(addprefix $(KERNEL_PLATFORM_OUT_DIR)/,$(KERNEL_PLATFORM_PC_O_FILES))
 

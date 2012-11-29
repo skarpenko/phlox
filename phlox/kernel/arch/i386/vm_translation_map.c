@@ -137,7 +137,7 @@ static status_t map_pool_chunk(addr_t pa, addr_t va)
 
 
 /* init translation map module */
-status_t arch_vm_translation_map_init(kernel_args_t *kargs)
+status_t vm_translation_map_init(kernel_args_t *kargs)
 {
     /* init kernel's page directory pointers */
     kernel_pgdir_phys = (mmu_pde *)kargs->arch_args.phys_pgdir;
@@ -276,12 +276,19 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
       }
     } /* end of Set Global Bit block */
 
-    /* deallocate page hole */
-/*    deallocate_page_hole(kernel_pgdir_virt, page_hole_pdeidx, true);
-      page_hole = NULL;
- */
+    return NO_ERROR;
+}
 
-    return 0;
+/* final initialization stage */
+status_t vm_translation_map_init_final(kernel_args_t *kargs)
+{
+    /* deallocate page hole */
+    deallocate_page_hole(kernel_pgdir_virt, page_hole_pdeidx, true);
+    page_hole        = NULL;
+    page_hole_pgdir  = NULL;
+    page_hole_pdeidx = (-1);
+
+    return NO_ERROR;
 }
 
 /*

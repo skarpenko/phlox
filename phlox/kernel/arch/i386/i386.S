@@ -68,3 +68,8 @@ FUNCTION(i386_cpuid_edx):
     movl %edx, %eax     /* copy edx to eax */
     popl %ebx           /* restore ebx */
     ret
+
+/* uint64 i386_rdtsc() */
+FUNCTION(i386_rdtsc):
+    rdtsc   /* read processor time-stamp counter into edx:eax */
+    ret

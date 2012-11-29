@@ -311,8 +311,13 @@ typedef struct {
  * Invalidate all entries in Translation Lookaside Buffer of MMU
  * by reloading CR3
  */
-#define arch_invalidateTLB() \
-    write_cr3( read_cr3() )
+static inline void arch_invalidate_TLB() {
+    __asm__ __volatile__ (
+       " movl %cr3, %eax; "  /* read CR3 */
+       " movl %eax, %cr3; "  /* write CR3 */
+       : : : "%eax"
+    );
+}
 
 /*
  * Invalidate single entry in Translation Lookaside Buffer
@@ -321,10 +326,13 @@ typedef struct {
 #if CPU_i386
   #warning IVLPG instruction is not supported on i386 CPU!
   /* invalidate all TLB entries */
-  #define arch_invalidateTLBentry(virt_addr)  arch_invalidateTLB()
+  #define arch_invalidate_TLB_entry(virt_addr)  arch_invalidate_TLB()
 #else
-  #define arch_invalidateTLBentry(virt_addr) \
-      __asm__ __volatile__ ("invlpg (%0);" : :"r" (virt_addr))
+static inline void invalidate_TLB_entry(addr_t virt_addr) {
+    __asm__ __volatile__ (
+       " invlpg (%0); "
+       : :"r" (virt_addr));
+}
 #endif
 
 /* No Operation instruction */
@@ -373,5 +381,10 @@ uint32 i386_cpuid_edx(uint32 func);
  */
 #define I386_CPU_FEATURE_STR_MAX  400
 void i386_cpu_feature_str(arch_processor_t *p, char *str);
+
+/*
+ * Read processor's time-stamp counter
+ */
+uint64 i386_rdtsc();
 
 #endif

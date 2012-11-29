@@ -16,9 +16,6 @@
 #define ROUNDUP(a, b)   (((a) + ((b)-1)) & ~((b)-1))
 #define ROUNDOWN(a, b)  (((a) / (b)) * (b))
 
-/* to align the pointer to the (next) page boundary (same as ROUNDUP) */
-#define PAGE_ALIGN(a)   (((a)+PAGE_SIZE-1)&PAGE_MASK)
-
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 #define max(a, b)  ((a) > (b) ? (a) : (b))
 
@@ -27,6 +24,9 @@
 #define CLEAR_BIT(a, b)  ((a) & (~(1 << (b))))
 
 #define TOUCH(x) ((void)(x))
+
+#define containerof(ptr, type, member) \
+    ((type *)((addr_t)(ptr) - offsetof(type, member)))
 
 #ifdef __cplusplus
 extern "C" {

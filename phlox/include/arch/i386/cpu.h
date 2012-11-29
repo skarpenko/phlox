@@ -10,6 +10,9 @@
 #define PAGE_SIZE   (1UL << PAGE_SHIFT)
 #define PAGE_MASK   (~(PAGE_SIZE-1))
 
+/* Align the pointer to the (next) page boundary */
+#define PAGE_ALIGN(a)   (((a)+PAGE_SIZE-1)&PAGE_MASK)
+
 /* Max. limit of Global Descriptor Table */
 #define MAX_GDT_LIMIT  0x800
 /*

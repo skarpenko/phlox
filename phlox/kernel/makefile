@@ -11,6 +11,8 @@ KERNEL_O_FILES := \
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 
+include $(KERNEL_SRC_DIR)/vm/makefile
+# !! this include must be the last 'cause includes final target !!
 include $(KERNEL_SRC_DIR)/arch/$(ARCH)/makefile
 
 ALL_OBJ += $(KERNEL_O_FILES)

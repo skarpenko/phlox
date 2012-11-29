@@ -3,9 +3,22 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/kernel.h>
+#include <phlox/list.h>
 #include <phlox/arch/vm_transmap.h>
 #include <phlox/vm.h>
 #include <phlox/vm_page.h>
+
+/* Lists of pages */
+static xlist_t  free_pages;    /* List of free pages   */
+static xlist_t  active_pages;  /* List of active pages */
+
+/* Array of all available pages */
+static vm_page_t *all_pages;
+/* Offset of first available physical page */
+static addr_t physical_page_offset;
+/* Total number of pages */
+static uint32 total_pages_count;
+
 
 /* allocate virtual space from kernel args */
 addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
@@ -68,6 +81,32 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
         }
     }
     /* page cannot be allocated */
+    return 0;
+}
+
+/* pre initialization routine */
+uint32 vm_page_preinit(kernel_args_t *kargs) {
+    uint32 i, last_phys_page = 0;
+
+    /* init lists */
+    xlist_init(&free_pages);
+    xlist_init(&active_pages);
+
+    /*** Calculate the size of memory by looking at the phys_mem_range array ***/
+    /* first available physical page */
+    physical_page_offset = kargs->phys_mem_range[0].start / PAGE_SIZE;
+    /* search for last available physical page */
+    for(i=0; i < kargs->num_phys_mem_ranges; i++) {
+       last_phys_page = (kargs->phys_mem_range[i].start +
+                         kargs->phys_mem_range[i].size) / PAGE_SIZE - 1;
+    }
+    /* number of available physical pages */
+    total_pages_count = last_phys_page - physical_page_offset + 1;
+
+    /* set up the global info structure about physical memory */
+    VM_State.physical_page_size   = PAGE_SIZE;
+    VM_State.total_physical_pages = total_pages_count;
+
     return 0;
 }
 

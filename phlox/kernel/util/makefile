@@ -4,7 +4,8 @@ $(shell mkdir -p $(KERNEL_UTIL_OUT_DIR))
 
 KERNEL_UTIL_O_FILES += \
 	list.o \
-	queue.o
+	queue.o \
+	mutex.o
 
 KERNEL_UTIL_O_FILES := $(addprefix $(KERNEL_UTIL_OUT_DIR)/,$(KERNEL_UTIL_O_FILES))
 

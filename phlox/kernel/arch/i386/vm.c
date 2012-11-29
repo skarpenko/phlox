@@ -13,12 +13,15 @@
 
 /* architecture-specific init for virtual memory manager */
 uint32 arch_vm_init(kernel_args_t *kargs) {
+    uint32 err;
     /* do something */
     uint32 i, n=PAGE_SIZE*MAX_PTENTS;
     uint8 *buf;
 
     /* translation map module init */
-    arch_vm_transmap_init(kargs);
+    err = arch_vm_transmap_init(kargs);
+    if(err)
+      panic("arch_vm_transmap_init: failed!\n");
 
     /*** do not forget remove this test! ***/
     kprint("\nstart vm_alloc_from_kargs test....(%d bytes to allocate)\n", n);

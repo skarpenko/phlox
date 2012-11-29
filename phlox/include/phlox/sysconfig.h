@@ -1,11 +1,17 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SYSCONFIG_H
 #define _PHLOX_SYSCONFIG_H
 
 /*** System configuration, edit these to configure the build ***/
+
+/* Defines kernel's heap size as RAM_Size / SYSCFG_KERNEL_HEAP_FRAC */
+#define SYSCFG_KERNEL_HEAP_FRAC 32
+
+/* Defines maximum kernel's heap size */
+#define SYSCFG_KERNEL_HEAP_MAX (16*1024*1024) /* 16Mbytes */
 
 /* Compile in support for SMP or not (not supported for now) */
 #define SYSCFG_SMP_SUPPORT 0

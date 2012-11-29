@@ -6,7 +6,9 @@ KERNEL_ARCH_I386_O_FILES += \
 	atomic_init.o \
 	atomic.o \
 	arch_i386.o \
-	processor.o
+	processor.o \
+	vm.o \
+	vm_transmap.o
 
 KERNEL_ARCH_I386_O_FILES := $(addprefix $(KERNEL_ARCH_OUT_DIR)/,$(KERNEL_ARCH_I386_O_FILES))
 

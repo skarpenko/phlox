@@ -9,6 +9,7 @@
 #include <phlox/kernel.h>
 #include <phlox/processor.h>
 #include <phlox/kargs.h>
+#include <phlox/vm.h>
 #include <boot/bootfs.h>
 
 #define SCREEN_HEIGHT 25
@@ -27,8 +28,12 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     /* if we are bootstrap processor,
      *  store kernel args to global variable.
      */
-    if(num_cpu==0)
+    if(num_cpu==0) {
       memcpy(&globalKargs, kargs, sizeof(kernel_args_t));
+      /* verify */
+      if(globalKargs.magic != KARGS_MAGIC)
+        panic("Kernel args damaged or incorrect!\n");
+    }
 
     /** will be replaced later **/
     line = kargs->cons_line;
@@ -37,6 +42,14 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
 
     /* processor set initialization */
     processor_set_init(&globalKargs, num_cpu);
+
+    /* init virtual memory manager.
+     * only bootstrap processor can do it,
+     * others must wait for initialization complete.
+     */
+    if(num_cpu==0) {
+       init_vm(&globalKargs);
+    }
 
     kprint("\nkernel test complete. :(\n");
 

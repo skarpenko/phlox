@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -333,6 +333,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
     /* save remaining kernel args */
     kargs->num_cpus = 1;
     kargs->cons_line = screenOffset / SCREEN_WIDTH;
+    kargs->magic = KARGS_MAGIC;  /* magic field */
 
     /* switch to new stack */
     asm(" movl %0,    %%eax; "

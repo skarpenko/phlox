@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_PROCESSOR_H_
@@ -28,10 +28,16 @@ typedef struct {
 } processor_set_t;
 
 /* invalidate all entries in Translation Lookaside Buffer of MMU */
-#define invalidateTLB()  arch_invalidateTLB()
+#define invalidate_TLB()  arch_invalidate_TLB()
 
 /* invalidate single entry in Translation Lookaside Buffer */
-#define invalidateTLBentry(virt_addr)  arch_invalidateTLBentry(virt_addr)
+#define invalidate_TLB_entry(virt_addr)  arch_invalidate_TLB_entry(virt_addr)
+
+/* invalidate TLB entries refered by given virtual address range */
+#define invalidate_TLB_range(start, size)  arch_invalidate_TLB_range(start, size)
+
+/* invalidate list of TLB entries */
+#define invalidate_TLB_list(pages, count)  arch_invalidate_TLB_list(pages, count)
 
 /* no operation  */
 #define nop()  arch_nop()

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_KERNEL_ARGS_H_
@@ -12,8 +12,12 @@
 #define MAX_PHYS_ALLOC_ADDR_RANGE 16
 #define MAX_VIRT_ALLOC_ADDR_RANGE 16
 
+/* Magic value */
+#define KARGS_MAGIC 'karg'
+
 /* Kernel args (used for pass boot params into kernel before it starts) */
 typedef struct {
+    uint32 magic;                   /* This field used for verification */
     uint32 cons_line;
     addr_range_t btfs_image_addr;   /* Physical address range of BootFS image */
     addr_range_t phys_kernel_addr;  /* Physical address range of kernel image */

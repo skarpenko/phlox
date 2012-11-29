@@ -129,4 +129,9 @@ void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu);
 /* this one called by processor_set_init for each cpu */
 void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu);
 
+/*
+ * Returns current processor number
+ */
+uint32 get_current_processor(void);
+
 #endif

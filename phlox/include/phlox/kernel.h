@@ -41,6 +41,9 @@ int sprintf(char * buf, const char *fmt, ...);
 int kprint(const char *fmt, ...);
 int panic(const char *fmt, ...);
 
+/* duplicate string */
+char *kstrdup(const char *text);
+
 #ifdef __cplusplus
 } /* "C" */
 #endif

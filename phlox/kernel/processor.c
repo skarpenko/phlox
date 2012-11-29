@@ -57,3 +57,17 @@ void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu)
     /* execute architecture specific inits */
     arch_processor_init(&p->arch, kargs, curr_cpu);
 }
+
+uint32 get_current_processor(void)
+{
+    /* As SMP is not currently supported we always return
+     * Bootstrap processor number. With SMP support this
+     * routine might be moved to special SMP module.
+     */
+    return BOOTSTRAP_CPU;
+
+/* And fire compilation error if SMP support requested */
+#if SYSCFG_SMP_SUPPORT
+  #error get_current_processor(): smp not supported!
+#endif
+}

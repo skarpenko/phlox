@@ -81,50 +81,46 @@ uint32 arch_interrupt_init(kernel_args_t *kargs)
        i386_set_intr_gate(i, &dummy_interrupt);
 
     /* set interrupt gates */
-   i386_set_intr_gate(0,   &interrupt0);
-   i386_set_intr_gate(1,   &interrupt1);
-   i386_set_intr_gate(2,   &interrupt2);
-   i386_set_intr_gate(3,   &interrupt3);
-   i386_set_intr_gate(4,   &interrupt4);
-   i386_set_intr_gate(5,   &interrupt5);
-   i386_set_intr_gate(6,   &interrupt6);
-   i386_set_intr_gate(7,   &interrupt7);
-   i386_set_intr_gate(8,   &interrupt8);
-   i386_set_intr_gate(9,   &interrupt9);
-   /**/
-   i386_set_intr_gate(10,  &interrupt10);
-   i386_set_intr_gate(11,  &interrupt11);
-   i386_set_intr_gate(12,  &interrupt12);
-   i386_set_intr_gate(13,  &interrupt13);
-   i386_set_intr_gate(14,  &interrupt14);
-   i386_set_intr_gate(16,  &interrupt16);
-   i386_set_intr_gate(17,  &interrupt17);
-   i386_set_intr_gate(18,  &interrupt18);
-   i386_set_intr_gate(19,  &interrupt19);
-   /**/
-   i386_set_intr_gate(32,  &interrupt32);
-   i386_set_intr_gate(33,  &interrupt33);
-   i386_set_intr_gate(34,  &interrupt34);
-   i386_set_intr_gate(35,  &interrupt35);
-   i386_set_intr_gate(36,  &interrupt36);
-   i386_set_intr_gate(37,  &interrupt37);
-   i386_set_intr_gate(38,  &interrupt38);
-   i386_set_intr_gate(39,  &interrupt39);
-   /**/
-   i386_set_intr_gate(40,  &interrupt40);
-   i386_set_intr_gate(41,  &interrupt41);
-   i386_set_intr_gate(42,  &interrupt42);
-   i386_set_intr_gate(43,  &interrupt43);
-   i386_set_intr_gate(44,  &interrupt44);
-   i386_set_intr_gate(45,  &interrupt45);
-   i386_set_intr_gate(46,  &interrupt46);
-   i386_set_intr_gate(47,  &interrupt47);
+    i386_set_intr_gate(0,   &interrupt0);
+    i386_set_intr_gate(1,   &interrupt1);
+    i386_set_intr_gate(2,   &interrupt2);
+    i386_set_intr_gate(3,   &interrupt3);
+    i386_set_intr_gate(4,   &interrupt4);
+    i386_set_intr_gate(5,   &interrupt5);
+    i386_set_intr_gate(6,   &interrupt6);
+    i386_set_intr_gate(7,   &interrupt7);
+    i386_set_intr_gate(8,   &interrupt8);
+    i386_set_intr_gate(9,   &interrupt9);
+    /**/
+    i386_set_intr_gate(10,  &interrupt10);
+    i386_set_intr_gate(11,  &interrupt11);
+    i386_set_intr_gate(12,  &interrupt12);
+    i386_set_intr_gate(13,  &interrupt13);
+    i386_set_intr_gate(14,  &interrupt14);
+    i386_set_intr_gate(16,  &interrupt16);
+    i386_set_intr_gate(17,  &interrupt17);
+    i386_set_intr_gate(18,  &interrupt18);
+    i386_set_intr_gate(19,  &interrupt19);
+    /**/
+    i386_set_intr_gate(32,  &interrupt32);
+    i386_set_intr_gate(33,  &interrupt33);
+    i386_set_intr_gate(34,  &interrupt34);
+    i386_set_intr_gate(35,  &interrupt35);
+    i386_set_intr_gate(36,  &interrupt36);
+    i386_set_intr_gate(37,  &interrupt37);
+    i386_set_intr_gate(38,  &interrupt38);
+    i386_set_intr_gate(39,  &interrupt39);
+    /**/
+    i386_set_intr_gate(40,  &interrupt40);
+    i386_set_intr_gate(41,  &interrupt41);
+    i386_set_intr_gate(42,  &interrupt42);
+    i386_set_intr_gate(43,  &interrupt43);
+    i386_set_intr_gate(44,  &interrupt44);
+    i386_set_intr_gate(45,  &interrupt45);
+    i386_set_intr_gate(46,  &interrupt46);
+    i386_set_intr_gate(47,  &interrupt47);
 
-/* DEBUG: remove this later*/
-   interrupt_enable(0x20); /* enable timer */
-   local_irqs_enable();    /* enable interrupts */
-/* DEBUG end */
-
+    /* completed with no error */
     return 0;
 }
 
@@ -133,40 +129,102 @@ uint32 arch_interrupt_init(kernel_args_t *kargs)
 void i386_handle_interrupt(i386_int_frame_t frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t frame)
 {
-    /* for debugging */
-    if(frame.vector < IRQS_BASE_VECTOR) {
-        kprint("CPU EXCEPTION OCCURED!!\n");
-        kprint(" Stack frame:\n");
-        kprint("  gs = 0x%x\n", frame.gs);
-        kprint("  fs = 0x%x\n", frame.fs);
-        kprint("  es = 0x%x\n", frame.es);
-        kprint("  ds = 0x%x\n", frame.ds);
-        kprint("  edi = 0x%x\n", frame.edi);
-        kprint("  esi = 0x%x\n", frame.esi);
-        kprint("  ebp = 0x%x\n", frame.ebp);
-        kprint("  esp = 0x%x\n", frame.esp);
-        kprint("  ebx = 0x%x\n", frame.ebx);
-        kprint("  edx = 0x%x\n", frame.edx);
-        kprint("  ecx = 0x%x\n", frame.ecx);
-        kprint("  eax = 0x%x\n", frame.eax);
-        kprint("  vector = 0x%x (%d)\n", frame.vector, frame.vector);
-        kprint("  err_code = 0x%x (%d)\n", frame.err_code, frame.err_code);
-        kprint("  eip = 0x%x\n", frame.eip);
-        kprint("  cs = 0x%x\n", frame.cs);
-        kprint("  eglags = 0x%x\n", frame.eflags);
-        kprint("  user_esp = 0x%x\n", frame.user_esp);
-        kprint("  user_ss = 0x%x\n", frame.user_ss);
+    switch(frame.vector) {
+        /* Divide Error Exception */
+        case 0:
+         break;
 
-        local_irqs_disable();
-        panic(":( :( :(\n");
-    }
-    if(frame.vector == (uint32)(-1)) {
-        local_irqs_disable();
-        panic("UNHANDLED INTERRUPT VECTOR\n");
-    }
+        /* Debug Exception */
+        case 1:
+         break;
 
-    /* acknowledge hardware interrupt */
-    if(frame.vector >= IRQS_BASE_VECTOR &&
-       frame.vector <  IRQS_BASE_VECTOR + IRQS_NUMBER)
-        interrupt_ack(frame.vector);
+        /* Nonmaskable Interrupt (NMI) */
+        case 2:
+         break;
+
+        /* Breakpoint Exception */
+        case 3:
+         break;
+
+        /* Overflow Exception */
+        case 4:
+         break;
+
+        /* BOUND Range Exceeded Exception */
+        case 5:
+         break;
+
+        /* Invalid Opcode Exception */
+        case 6:
+         break;
+
+        /* Device Not Available Exception */
+        case 7:
+         break;
+
+        /* Double Fault Exception */
+        case 8:
+         break;
+
+        /* Coprocessor Segment Overrun */
+        case 9:
+         break;
+
+        /* Invalid TSS Exception */
+        case 10:
+         break;
+
+        /* Segment Not Present */
+        case 11:
+         break;
+
+        /* Stack Fault Exception */
+        case 12:
+         break;
+
+        /* General Protection Exception */
+        case 13:
+         break;
+
+        /* Page-Fault Exception */
+        case 14:
+         break;
+
+        /** Vector 15 is reserved on IA-32, so...
+         ** if occurs it will be handled as unhandled.
+         **/
+
+        /* x87 FPU Floating-Point Error */
+        case 16:
+         break;
+
+        /* Alignment Check Exception */
+        case 17:
+         break;
+
+        /* Machine-Check Exception */
+        case 18:
+         break;
+
+        /* SIMD Floating-Point Exception */
+        case 19:
+         break;
+
+        /* Unhandled vector */
+        case 0xffffffff:
+         break;
+
+        /* Here starts handling of hardware interrupts */
+        default: {
+            /* ensure that hardware interrupt occured */
+            if(frame.vector >= IRQS_BASE_VECTOR &&
+               frame.vector <  IRQS_BASE_VECTOR + IRQS_NUMBER) {
+                /* acknowledge hardware interrupt */
+                interrupt_ack(frame.vector);
+                /* start interrupt handling */
+                handle_hw_interrupt(frame.vector-IRQS_BASE_VECTOR);
+            }
+        }
+         break;
+    }
 }

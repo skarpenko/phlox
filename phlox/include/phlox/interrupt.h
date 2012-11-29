@@ -16,4 +16,10 @@
  */
 uint32 interrupt_init(kernel_args_t *kargs);
 
+/*
+ * Called during interrupt handling when
+ * hardware interrupt occurs.
+ */
+uint32 handle_hw_interrupt(uint32 hw_vector);
+
 #endif

@@ -208,10 +208,10 @@ INTERRUPT(interrupt47, 47);  /* IRQ #15 */
 interrupt_start:
     /* store registers */
     pusha
-    push    %ds
-    push    %es
-    push    %fs
-    push    %gs
+    pushl   %ds
+    pushl   %es
+    pushl   %fs
+    pushl   %gs
     /* set Kernel's data segment */
     movl    $KERNEL_DATA_SEG, %eax
     cld
@@ -222,10 +222,10 @@ interrupt_start:
     call    i386_handle_interrupt
 
     /* restore registers */
-    pop     %gs
-    pop     %fs
-    pop     %es
-    pop     %ds
+    popl    %gs
+    popl    %fs
+    popl    %es
+    popl    %ds
     popa
     /* no need to restore vector and err_code, so... just add 8 */
     addl    $8, %esp

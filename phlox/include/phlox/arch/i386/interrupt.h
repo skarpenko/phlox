@@ -31,6 +31,7 @@ typedef struct _PACKED {
 /* 0x38 */  uint32  eip;
 /* 0x3C */  uint32  cs;
 /* 0x40 */  uint32  eflags;
+  /* this ones actual if privilege level changes */
 /* 0x44 */  uint32  user_esp;
 /* 0x48 */  uint32  user_ss;
 } i386_int_frame_t;

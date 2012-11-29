@@ -12,3 +12,10 @@ uint32 interrupt_init(kernel_args_t *kargs)
 
     return 0;
 }
+
+/* handle hardware interrupt */
+uint32 handle_hw_interrupt(uint32 hw_vector)
+{
+    return 0;
+}
+

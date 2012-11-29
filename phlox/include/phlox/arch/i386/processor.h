@@ -345,8 +345,8 @@ typedef struct {
 static inline void arch_invalidate_TLB()
 {
     __asm__ __volatile__ (
-       " movl %cr3, %eax; "  /* read CR3 */
-       " movl %eax, %cr3; "  /* write CR3 */
+       " movl %%cr3, %%eax; "  /* read CR3 */
+       " movl %%eax, %%cr3; "  /* write CR3 */
        : : : "%eax"
     );
 }

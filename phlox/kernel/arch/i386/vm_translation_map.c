@@ -13,10 +13,26 @@
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
+#include <phlox/vm_page_mapper.h>
 
 /* Kernel's page directory */
 static mmu_pde *kernel_pgdir_phys = NULL; /* Physical address */
 static mmu_pde *kernel_pgdir_virt = NULL; /* Virtual address  */
+
+/* Page hole hack */
+static mmu_pte *page_hole = NULL;  /* Page hole address      */
+static mmu_pde *page_hole_pgdir;   /* Page directory address */
+static uint     page_hole_pdeidx;  /* Page hole's PDE index  */
+
+/* Mapping pool */
+static addr_t  map_pool_base;      /* Mapping pool base address    */
+static mmu_pte *map_pool_pgtables; /* Page tables for mapping pool */
+/* each page table covers 4Mb of space in mapping pool */
+#define MAP_POOL_PGTABLE_CHUNK_SIZE  (MAX_PTENTS * PAGE_SIZE)
+/* Number of page tables per mapping pool */
+#define MAP_POOL_PGTABLE_CHUNKS      8
+/* Mapping pool size */
+#define MAP_POOL_SIZE                (MAP_POOL_PGTABLE_CHUNKS * MAP_POOL_PGTABLE_CHUNK_SIZE)
 
 
 /* init page directory entry */
@@ -92,27 +108,86 @@ static void deallocate_page_hole(mmu_pde *pgdir, uint pde_idx, bool inv_ar)
       invalidate_TLB_range(pde_idx * MAX_PDENTS * PAGE_SIZE, MAX_PDENTS * PAGE_SIZE);
 }
 
+/* Chunk mapper routine. A workhorse of page mapper. */
+static status_t map_pool_chunk(addr_t pa, addr_t va)
+{
+    mmu_pte *pte;
+    addr_t ppn;
+
+    pa &= ~(PAGE_SIZE - 1); /* make sure it's page aligned */
+    va &= ~(PAGE_SIZE - 1); /* make sure it's page aligned */
+    /* check that address is inside mappings pool */
+    if(va < map_pool_base || va >= (map_pool_base + MAP_POOL_SIZE))
+        return ERR_VM_GENERAL;
+
+    /* map requested page */
+    ppn = ADDR_SHIFT(pa);
+    pte = &map_pool_pgtables[(va - map_pool_base)/PAGE_SIZE];
+    init_ptentry(pte);
+    pte->stru.base = ppn;
+    pte->stru.us = 0;
+    pte->stru.rw = 1;
+    pte->stru.p = 1;
+
+    /* invalidate newly mapped address in TLB */
+    invalidate_TLB_entry(va);
+
+    return NO_ERROR;
+}
+
+
 /* init translation map module */
 status_t arch_vm_translation_map_init(kernel_args_t *kargs)
 {
-    uint pghole_pde_idx;
-    mmu_pte *pghole;
-    mmu_pde *pghole_pgdir;
-
     /* init kernel's page directory pointers */
     kernel_pgdir_phys = (mmu_pde *)kargs->arch_args.phys_pgdir;
     kernel_pgdir_virt = (mmu_pde *)kargs->arch_args.virt_pgdir;
 
     /* first of all, allocate page hole */
-    pghole_pde_idx = allocate_page_hole(kernel_pgdir_virt, (addr_t)kernel_pgdir_phys, true);
-    if(!pghole_pde_idx)
+    page_hole_pdeidx = allocate_page_hole(kernel_pgdir_virt, (addr_t)kernel_pgdir_phys, true);
+    if(!page_hole_pdeidx)
         panic("arch_vm_translation_map_init: page hole allocation failed. :(");
 
     /* page hole address */
-    pghole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
+    page_hole = (mmu_pte *)PDENT_TO_VADDR(page_hole_pdeidx);
     /* page directory address within page hole */
-    pghole_pgdir = (mmu_pde *)((uint32)pghole + pghole_pde_idx * PAGE_SIZE);
-     
+    page_hole_pgdir = (mmu_pde *)((uint32)page_hole + page_hole_pdeidx * PAGE_SIZE);
+
+
+    /* Init page mapping engine */
+    if( vm_page_mapper_init(kargs, &map_pool_base, MAP_POOL_SIZE, PAGE_SIZE,
+                            MAP_POOL_PGTABLE_CHUNK_SIZE, map_pool_chunk) ) {
+        panic("arch_vm_translation_map_init: page mapper init failed.");
+    }
+
+    /* allocate area for set of page tables which covers mappings pool */
+    map_pool_pgtables = (mmu_pte *)vm_alloc_from_kargs( kargs,
+                                                        MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE,
+                                                        VM_LOCK_KERNEL | VM_LOCK_RW );
+    if(!map_pool_pgtables)
+        panic("arch_vm_translation_map_init: no memory for mappings pool pgtables.");
+    /* init tables with zeroes */
+    memset(map_pool_pgtables, MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE, 0);
+
+    /* now put mappings pool page tables directly into the kernel page directory
+     * these will be wired and kept mapped into virtual space to be easy to get to
+     * by map_pool_chunk function called from page mapper.
+     */
+    {
+        uint i, base_ent = map_pool_base / MAP_POOL_PGTABLE_CHUNK_SIZE;
+        addr_t phys_pgtable;
+        addr_t virt_pgtable;
+        mmu_pde *ent;
+
+        virt_pgtable = (addr_t)map_pool_pgtables;
+        for(i = 0; i < MAP_POOL_PGTABLE_CHUNKS; i++, virt_pgtable += PAGE_SIZE) {
+            vm_tmap_quick_query(virt_pgtable, &phys_pgtable);
+            ent = &page_hole_pgdir[base_ent + i];
+            put_pgtable_in_pgdir(ent, phys_pgtable, VM_LOCK_KERNEL | VM_LOCK_RW);
+        }
+    } /* end of page mapper init */
+
+
     /* and now, set global bit to all pages allocated in kernel space */
     {
       uint kbase_pde = VADDR_TO_PDENT(KERNEL_BASE);  /* kernel base pd entry */
@@ -123,9 +198,9 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
       /* walk through page directory entries */
       for(i=kbase_pde; i<MAX_PDENTS; i++) {
          /* ignore recursive page directory entry */
-         if(i==pghole_pde_idx) continue;
+         if(i==page_hole_pdeidx) continue;
          /* if page table exists */
-         if(pghole_pgdir[i].stru.p) {
+         if(page_hole_pgdir[i].stru.p) {
              /*
               * if kernel base is not aligned to page directory entry
               * use the only part of page table that referes to kernel
@@ -141,7 +216,7 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
                first_pgent = 0; /* else start from first page table entry */
 
              /* get page table address from page hole */
-             pgtable = (mmu_pte *)((uint32)pghole + i * PAGE_SIZE);
+             pgtable = (mmu_pte *)((uint32)page_hole + i * PAGE_SIZE);
              /* walk throught page table entries */
              for(j=first_pgent; j<MAX_PTENTS; j++) {
                if(pgtable[j].stru.p) {
@@ -151,6 +226,41 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
                   pgtable[j].stru.g = 1;
                   invalidate_TLB_entry( PDPTENT_TO_VADDR(i, j) );
                }
+             }
+         }
+      }
+      /* also we need unmap everything below kernel space
+       * so.... do it in the same manner
+       */
+      for(i=0; i<=kbase_pde; i++) {
+         if(i==page_hole_pdeidx) continue;
+
+#warning "Temporary patch is here"
+         /*** Temporary patch starts here ***/
+         /* So... at the current stage of kernel development
+          * it is not possible to unmap page at address 0xb8000
+          * 'cause that is screen I/O buffer.
+         */
+         if(i==VADDR_TO_PDENT(0xb8000)) {
+             pgtable = (mmu_pte *)((uint32)page_hole + i * PAGE_SIZE);
+             for(j=0; j < MAX_PTENTS; j++) {
+                 if(j==VADDR_TO_PTENT(0xb8000)) continue;
+                 pgtable[j].stru.p = 0;
+             }
+             continue;
+         }
+         /*** Temporary patch ends here ***/
+
+         /* if page table exists */
+         if(page_hole_pgdir[i].stru.p) {
+             if(i==kbase_pde) {
+               /* unmap pages below kernel space */
+               pgtable = (mmu_pte *)((uint32)page_hole + i * PAGE_SIZE);
+               for(j=0; j<kbase_pte; j++)
+                   pgtable[j].stru.p = 0;
+             } else {
+               /* unmap bage table */
+               page_hole_pgdir[i].stru.p = 0;
              }
          }
       }
@@ -167,7 +277,9 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
     } /* end of Set Global Bit block */
 
     /* deallocate page hole */
-    deallocate_page_hole(kernel_pgdir_virt, pghole_pde_idx, true);
+/*    deallocate_page_hole(kernel_pgdir_virt, page_hole_pdeidx, true);
+      page_hole = NULL;
+ */
 
     return 0;
 }
@@ -182,21 +294,11 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs)
 status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint attributes)
 {
     mmu_pte *pgentry;
-    uint pghole_pde_idx;
-    mmu_pte *page_hole;
-    mmu_pde *page_hole_pgdir;
     uint pgtable_idx;
 
-    /* allocate page hole */
-    pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
-                                      kargs->arch_args.phys_pgdir, true);
-    if(!pghole_pde_idx)
-        panic("vm_tmap_quick_map: page hole allocation failed. :(");
-
-    /* page hole address */
-    page_hole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
-    /* page directory address within page hole */
-    page_hole_pgdir = (mmu_pde *)((uint32)page_hole + pghole_pde_idx * PAGE_SIZE);
+    /* ensure page hole allocated */
+    if(!page_hole)
+        panic("vm_tmap_quick_map: page hole is not allocated. :(");
 
     /* check to see if a page table exists for this range */
     pgtable_idx = VADDR_TO_PDENT(virt_addr);
@@ -229,9 +331,6 @@ status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t p
     if(is_kernel_address(virt_addr))
         pgentry->stru.g = 1; /* global bit set for all kernel addresses */
 
-    /* deallocate page hole */
-    deallocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir, pghole_pde_idx, true);
-
     /* invalidate newly mapped address */
     invalidate_TLB_entry(virt_addr);
 
@@ -244,45 +343,27 @@ status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t p
  */
 status_t vm_tmap_quick_query(addr_t vaddr, addr_t *out_paddr)
 {
-    uint pghole_pde_idx;
-    mmu_pte *page_hole;
-    mmu_pde *page_hole_pgdir;
     mmu_pte *pt_entry;
-    status_t status = NO_ERROR;
 
-    /* allocate page hole */
-    pghole_pde_idx = allocate_page_hole(kernel_pgdir_virt, kernel_pgdir_phys, true);
-    if(!pghole_pde_idx)
-        panic("vm_tmap_quick_query: page hole allocation failed. :(");
-
-    /* page hole address */
-    page_hole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
-    /* page directory address within page hole */
-    page_hole_pgdir = (mmu_pde *)((uint32)page_hole + pghole_pde_idx * PAGE_SIZE);
+    /* ensure page hole allocated */
+    if(!page_hole)
+        panic("vm_tmap_quick_query: page hole is not allocated. :(");
 
     /* check that page table exists here */
     if(page_hole_pgdir[VADDR_TO_PDENT(vaddr)].stru.p == 0) {
         /* no pagetable here */
-        status = ERR_VM_PAGE_NOT_PRESENT;
-        goto exit_query;
+        return ERR_VM_PAGE_NOT_PRESENT;
     }
 
     /* get page table entry for this address */
     pt_entry = page_hole + vaddr / PAGE_SIZE;
     if(pt_entry->stru.p == 0) {
         /* page mapping not valid */
-        status = ERR_VM_PAGE_NOT_PRESENT;
-        goto exit_query;
+        return ERR_VM_PAGE_NOT_PRESENT;
     }
 
     /* store result */
     *out_paddr = ADDR_REVERSE_SHIFT(pt_entry->stru.base);
 
-    /* perform completion steps */
-exit_query:
-
-    /* deallocate page hole */
-    deallocate_page_hole(kernel_pgdir_virt, pghole_pde_idx, true);
-
-    return status;
+    return NO_ERROR;
 }

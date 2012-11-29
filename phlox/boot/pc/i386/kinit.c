@@ -11,6 +11,7 @@
 #include <phlox/kernel.h>
 #include <phlox/ktypes.h>
 #include <phlox/elf32.h>
+#include <phlox/kargs.h>
 #include <boot/bootfs.h>
 #include "vesa_vbe.h"
 #include "kinit_private.h"

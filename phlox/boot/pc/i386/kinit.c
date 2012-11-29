@@ -21,12 +21,18 @@ static unsigned short *screenBase = (unsigned short *) 0xb8000;
 static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
 
+/* address of temporary page with kernel arguments */
+kernel_args_t *kargs = (kernel_args_t *)0x10000;
+
 /* page directory and page table */
 static mmu_pde *pgdir   = NULL;
 static mmu_pte *pgtable = NULL;
 
+/* address of temporary MMU storage */
+#define MMU_TMPDATA  0x11000 /* next page after kernel args */
+
 /* MMU operations (stolen from NewOS's stage2) */
-static int mmu_init(uint32 *next_physaddr);
+static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr);
 static void mmu_map_page(uint32 virt_addr, uint32 phys_addr);
 
 /* ELF */
@@ -61,6 +67,8 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
     
     screenOffset = console_ptr;
 
+    memset(kargs, 0, PAGE_SIZE); /* prepare kernel args page */
+
     dprintf("\n= kinit started =\n");
     dprintf("remounting bootfs...");
     if( btfs_mount(BTFS_IMAGE, &btfs) )
@@ -74,9 +82,12 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
 
     /* next free physical address is right after bootfs image */
     next_physaddr = (uint32)BTFS_IMAGE + btfs.hdr->fsize*PAGE_SIZE;
-
+    /* store image allocation info into kernel args */
+    kargs->btfs_image_addr.start = (uint32)BTFS_IMAGE;
+    kargs->btfs_image_addr.size  = btfs.hdr->fsize*PAGE_SIZE;
+    
     /* init memory management unit */
-    if(mmu_init(&next_physaddr))
+    if(mmu_init(kargs, &next_physaddr))
         panic("mmu init failed!\n");
 
     /* locate kernel binary */
@@ -86,6 +97,12 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
 
     /* load and map kernel image */
     load_elf_image(btfs_objaddr(en), &next_physaddr, &krange, &kentry);
+
+    /* store kernel image info into kernel args */
+    kargs->phys_kernel_addr.start = ROUNDOWN(next_physaddr - krange.size, PAGE_SIZE);
+    kargs->phys_kernel_addr.size  = krange.size;
+    kargs->virt_kernel_addr.start = krange.start;
+    kargs->virt_kernel_addr.size  = krange.size;
 
     /* next free virtual address is right after kernel */
     next_virtaddr = ROUNDUP(krange.start + krange.size, PAGE_SIZE);
@@ -102,13 +119,16 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
     kstack_size = next_virtaddr - kstack_start;
 
     /* switch to new stack */
-    asm("movl %0,    %%eax;"
-        "movl %%eax, %%esp;"
+    asm(" movl %0,    %%eax; "
+        " movl %%eax, %%esp; "
         :: "m" (kstack_start+kstack_size) );
     /* jump to kernel */
-    asm("pushl %0;"   /* push return address */
-        "ret;"        /* return */
-        :: "g" (kentry) );
+    asm(" pushl $0x0; " /* we are BSP CPU (0) */
+        " pushl %0;   " /* kernel args */
+        " pushl $0x0; " /* dummy return value for call to kernel main() */
+        " pushl %1;   " /* push return address */
+        " ret;        " /* return */
+        :: "g" (kargs), "g" (kentry) );
 }
 
 void clearscreen() {
@@ -184,19 +204,22 @@ int panic(const char *fmt, ...) {
  * pages to the 0xC0000000 - 0xC0400000 region.
  * also identity maps the first 8MB of memory
 */
-static int mmu_init(uint32 *next_physaddr) {
+static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr) {
     int i;
 
     /* allocate a new pgdir */
     pgdir = (mmu_pde *)*next_physaddr;
     (*next_physaddr) += PAGE_SIZE;
 
+    /* store page directory address into kernel args */
+    ka->arch_args.phys_pgdir = (uint32)pgdir;
+
     /* clear out the pgdir */
     for(i = 0; i < 1024; i++)
         pgdir[i].raw.dword0 = 0;
 
-    /* make a pagetable at this random spot */
-    pgtable = (mmu_pte *)0x11000;
+    /* make a new pagetable at this random spot */
+    pgtable = (mmu_pte *)(MMU_TMPDATA);
 
     /* create page table for first 4MB region */
     for (i = 0; i < 1024; i++)
@@ -206,7 +229,7 @@ static int mmu_init(uint32 *next_physaddr) {
     pgdir[0].raw.dword0 = (uint32)pgtable | DEFAULT_PAGE_FLAGS;
 
     /* make another pagetable at this random spot */
-    pgtable = (mmu_pte *)0x12000;
+    pgtable = (mmu_pte *)(MMU_TMPDATA + PAGE_SIZE);
 
     /* create page table for second 4Mb region */
     for (i = 0; i < 1024; i++)
@@ -217,8 +240,12 @@ static int mmu_init(uint32 *next_physaddr) {
 
     /* Get new page table and clear it out */
     pgtable = (mmu_pte *)*next_physaddr;
-
     (*next_physaddr) += PAGE_SIZE;
+
+    /* store page info into kernel args */
+    ka->arch_args.num_pgtables = 1;
+    ka->arch_args.phys_pgtables[0] = (uint32)pgtable;
+
     for (i = 0; i < 1024; i++)
         pgtable[i].raw.dword0 = 0;
 

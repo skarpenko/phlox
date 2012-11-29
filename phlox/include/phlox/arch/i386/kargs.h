@@ -5,7 +5,7 @@
 #ifndef _PHLOX_ARCH_I386_KERNEL_ARGS_H_
 #define _PHLOX_ARCH_I386_KERNEL_ARGS_H_
 
-#define MAX_BOOT_PTABLES 4
+#define MAX_BOOT_PTABLES 2
 
 /* architecture specific kernel args */
 typedef struct {
@@ -14,7 +14,6 @@ typedef struct {
     uint32 virt_pgdir;    /* virtual address of page directory */
     uint32 num_pgtables;  /* number of allocated page tables */
     uint32 phys_pgtables[MAX_BOOT_PTABLES]; /* physical addresses of page tables */
-    uint32 virt_pgtables[MAX_BOOT_PTABLES]; /* virtual addresses of page tables */
 
     /* SMP stuff (currently not used) */
     uint32 apic_time_cv_factor; /* apic ticks per second */

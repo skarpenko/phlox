@@ -7,6 +7,7 @@
 #include <arch/cpu.h>
 #include <phlox/types.h>
 #include <phlox/kernel.h>
+#include <phlox/kargs.h>
 #include <boot/bootfs.h>
 
 #define SCREEN_HEIGHT 25
@@ -36,8 +37,8 @@ static void recursion(uint32 init) {
 }
 /**end of temporary**/
 
-void _phlox_kernel_entry();  /* keep compiler happy */
-void _phlox_kernel_entry() {
+void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
+void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
     asm("fninit"); /* init FPU */
 
     kprintf("\nWelcome to Phlox Kernel!\n");

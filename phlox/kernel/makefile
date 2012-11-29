@@ -11,7 +11,8 @@ KERNEL_O_FILES := \
 	heap.o \
 	machine.o \
 	interrupt.o \
-	misc.o
+	misc.o \
+	klog.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

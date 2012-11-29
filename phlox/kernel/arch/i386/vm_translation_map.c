@@ -12,6 +12,7 @@
 #include <phlox/processor.h>
 #include <phlox/spinlock.h>
 #include <phlox/list.h>
+#include <phlox/heap.h>
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
@@ -40,6 +41,12 @@ static mmu_pte *map_pool_pgtables; /* Page tables for mapping pool */
 #define MAP_POOL_PGTABLE_CHUNKS      8
 /* Mapping pool size */
 #define MAP_POOL_SIZE                (MAP_POOL_PGTABLE_CHUNKS * MAP_POOL_PGTABLE_CHUNK_SIZE)
+
+/* Locally used constants */
+#define FIRST_USER_PGDIR_ENTRY       (VADDR_TO_PDENT(USER_BASE))
+#define NUM_USER_PGDIR_ENTRIES       (VADDR_TO_PDENT(ROUNDUP(USER_SIZE, PAGE_SIZE * MAX_PTENTS)))
+#define FIRST_KERNEL_PGDIR_ENTRY     (VADDR_TO_PDENT(KERNEL_BASE))
+#define NUM_KERNEL_PGDIR_ENTRIES     (VADDR_TO_PDENT(KERNEL_SIZE))
 
 /* Translation map operations */
 static void destroy_tmap(vm_translation_map_t *tmap);
@@ -125,7 +132,40 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint att
 /* destroy translation map */
 static void destroy_tmap(vm_translation_map_t *tmap)
 {
-    /* not implemented */
+    unsigned long irqs_state;
+    unsigned int i;
+
+    /* exit if NULL */
+    if(tmap == NULL)
+        return;
+
+    /* acquire spinlock and remove tmap from tmaps list */
+    irqs_state = spin_lock_irqsave(&tmap_list_lock);
+    xlist_remove(&tmap_list, &tmap->list_node);
+    spin_unlock_irqrstor(&tmap_list_lock, irqs_state);
+
+    if(tmap->arch.pgdir_virt != NULL) {
+        /* cycle through and free all of the user space pgtables */
+        for(i = VADDR_TO_PDENT(USER_BASE);
+                i <= VADDR_TO_PDENT(USER_BASE + (USER_SIZE - 1)); i++) {
+            addr_t pgtable_addr;
+            vm_page_t *page;
+
+            /* if page table present in memory
+             * mark pages it refers as free
+             */
+            if(tmap->arch.pgdir_virt[i].stru.p == 1) {
+                pgtable_addr = tmap->arch.pgdir_virt[i].stru.base;
+                page = vm_page_lookup(pgtable_addr);
+                if(!page)
+                    panic("destroy_tmap: didn't find pgtable page\n");
+                vm_page_set_state(page, VM_PAGE_STATE_FREE);
+            }
+        }
+        kfree(tmap->arch.pgdir_virt);
+    }
+
+    /* TODO: other clean ups goes here */
 }
 
 /* acquire translation map access lock */
@@ -151,21 +191,163 @@ static status_t unlock_tmap(vm_translation_map_t *tmap)
 /* map physical address */
 static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes)
 {
-    /* not implemented */
+    mmu_pde *pgdir = pgdir = tmap->arch.pgdir_virt;
+    mmu_pte *pgtbl;
+    unsigned int index;
+    status_t status;
+
+    /* check to see if a page table exists for this range */
+    index = VADDR_TO_PDENT(va);
+    if(pgdir[index].stru.p == 0) {
+        addr_t pgtable;
+        vm_page_t *page;
+
+        /* we need to allocate a pgtable */
+        page = vm_page_alloc(VM_PAGE_STATE_CLEAR);
+
+        /* mark the page WIRED */
+        vm_page_set_state(page, VM_PAGE_STATE_WIRED);
+        
+        pgtable = page->ppn * PAGE_SIZE;
+
+        /* put it in the page directory */
+        put_pgtable_in_pgdir(&pgdir[index], pgtable, attributes | VM_LOCK_RW);
+
+        /* update any other page directories, if it maps kernel space */
+        if(index >= FIRST_KERNEL_PGDIR_ENTRY &&
+           index < (FIRST_KERNEL_PGDIR_ENTRY + NUM_KERNEL_PGDIR_ENTRIES)) {
+            update_all_pgdirs(index, pgdir[index]);
+        }
+
+        tmap->map_count++;
+    }
+
+    /* now, fill in the page table entry */
+    do {
+        /* get page from via mappings pool */
+        status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
+                                        (addr_t *)&pgtbl, false);
+    } while(status != NO_ERROR);
+    index = VADDR_TO_PTENT(va);
+
+    /* init page table entry */
+    init_ptentry(&pgtbl[index]);
+    pgtbl[index].stru.base = ADDR_SHIFT(pa);
+    pgtbl[index].stru.us = !(attributes & VM_LOCK_KERNEL);
+    pgtbl[index].stru.rw = attributes & VM_LOCK_RW;
+    pgtbl[index].stru.p = 1;
+    if(is_kernel_address(va))
+        pgtbl[index].stru.g = 1; /* global bit set for all kernel addresses */
+
+    /* put page back */
+    put_physical_page_tmap((addr_t)pgtbl);
+
+    /* add page address into invalidation cache */
+    if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {
+        tmap->arch.pages_to_invalidate[tmap->arch.num_invalidate_pages] = va;
+    }
+    tmap->arch.num_invalidate_pages++;
+
+    tmap->map_count++;
+
+    /* all done */
     return NO_ERROR;
 }
 
 /* unmap virtual address range */
 static status_t unmap_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end)
 {
-    /* not implemented */
-    return NO_ERROR;
+    mmu_pde *pgdir = tmap->arch.pgdir_virt;
+    mmu_pte *pgtbl;
+    unsigned int index;
+    status_t status;
+
+    /* align by page size */
+    start = ROUNDOWN(start, PAGE_SIZE);
+    end = ROUNDUP(end, PAGE_SIZE);
+
+restart:
+    if(start >= end)
+        return NO_ERROR;
+
+    index = VADDR_TO_PDENT(start);
+    if(pgdir[index].stru.p == 0) {
+        /* no pagetable here, move the start up to access the next page table */
+        start = ROUNDUP(start + 1, PAGE_SIZE);
+        goto restart;
+    }
+
+    /* get page via mappings pool */
+    do {
+        status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
+                                        (addr_t *)&pgtbl, false);
+    } while(status != NO_ERROR);
+
+    /* unmap pages from page table */
+    for(index = VADDR_TO_PTENT(start); (index < MAX_PTENTS) && (start < end); index++, start += PAGE_SIZE) {
+        if(pgtbl[index].stru.p == 0) {
+            /* page mapping not valid */
+            continue;
+        }
+
+        pgtbl[index].stru.p = 0; /* mark as not present */
+        tmap->map_count--;
+
+        /* add page address into invalidation cache */
+        if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {
+            tmap->arch.pages_to_invalidate[tmap->arch.num_invalidate_pages] = start;
+        }
+        tmap->arch.num_invalidate_pages++;
+    }
+
+    /* put page back */
+    put_physical_page_tmap((addr_t)pgtbl);
+
+    /* jump to next step */
+    goto restart;
 }
 
 /* query physical address */
 static status_t query_tmap(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags)
 {
-    /* not implemented */
+    mmu_pde *pgdir = tmap->arch.pgdir_virt;
+    mmu_pte *pgtbl;
+    unsigned int index;
+    status_t status;
+
+    /* default the flags to not present */
+    *out_flags = 0;
+    *out_pa = 0;
+
+    index = VADDR_TO_PDENT(va);
+    if(pgdir[index].stru.p == 0) {
+        /* no pagetable here */
+        return NO_ERROR;
+    }
+
+    /* get page via mappings pool */
+    do {
+        status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
+                                        (addr_t *)&pgtbl, false);
+    } while(status != NO_ERROR);
+    index = VADDR_TO_PTENT(va);
+
+    /* return physical address to caller */
+    *out_pa = ADDR_REVERSE_SHIFT(pgtbl[index].stru.base) | (va & (PAGE_SIZE-1));
+
+    /* read in the page state flags */
+    *out_flags = 0;
+    *out_flags |= pgtbl[index].stru.rw ? VM_LOCK_RW : VM_LOCK_RO;
+    *out_flags |= pgtbl[index].stru.us ? VM_LOCK_USER : VM_LOCK_KERNEL;
+    *out_flags |= VM_LOCK_EX; /* all pages is executable on IA-32 */
+    *out_flags |= pgtbl[index].stru.d ? VM_FLAG_PAGE_MODIFIED : 0;
+    *out_flags |= pgtbl[index].stru.a ? VM_FLAG_PAGE_ACCESSED : 0;
+    *out_flags |= pgtbl[index].stru.p ? VM_FLAG_PAGE_PRESENT : 0;
+
+    /* put page back */
+    put_physical_page_tmap((addr_t)pgtbl);
+
+    /* all done */
     return NO_ERROR;
 }
 
@@ -178,14 +360,102 @@ static size_t get_mapped_size_tmap(vm_translation_map_t *tmap)
 /* set protection flags */
 static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes)
 {
-    /* not implemented */
-    return NO_ERROR;
+    mmu_pte *pgtbl;
+    mmu_pde *pgdir = tmap->arch.pgdir_virt;
+    unsigned int index;
+    status_t status;
+
+    /* align by page size */
+    start = ROUNDOWN(start, PAGE_SIZE);
+    end = ROUNDUP(end, PAGE_SIZE);
+
+restart:
+    if (start >= end)
+        return NO_ERROR;
+
+    index = VADDR_TO_PDENT(start);
+    if (pgdir[index].stru.p == 0) {
+        /* no pagetable here, move the start up to access the next page table */
+        start = ROUNDUP(start + 1, PAGE_SIZE);
+        goto restart;
+    }
+
+    /* get page via mappings pool */
+    do {
+        status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
+                (addr_t *)&pgtbl, false);
+    } while (status != NO_ERROR);
+
+    /* walk through page table */
+    for (index = VADDR_TO_PTENT(start); index < MAX_PTENTS && start < end; index++, start += PAGE_SIZE) {
+        if (pgtbl[index].stru.p == 0) {
+            /* page mapping not valid */
+            continue;
+        }
+
+        /* set flags */
+        pgtbl[index].stru.us = !(attributes & VM_LOCK_KERNEL);
+        pgtbl[index].stru.rw = attributes & VM_LOCK_RW;
+
+        /* put address into invalidation cache */
+        if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {
+            tmap->arch.pages_to_invalidate[tmap->arch.num_invalidate_pages] = start;
+        }
+        tmap->arch.num_invalidate_pages++;
+    }
+
+    /* put page back into mappings pool */
+    put_physical_page_tmap((addr_t)pgtbl);
+
+    /* jump into next step */
+    goto restart;
 }
 
 /* clear page flags */
 static status_t clear_flags_tmap(vm_translation_map_t *tmap, addr_t va, uint flags)
 {
-    /* not implemented */
+    mmu_pte *pgtbl;
+    mmu_pde *pgdir = tmap->arch.pgdir_virt;
+    unsigned int index;
+    status_t status;
+    bool tlb_flush = false;
+
+    index = VADDR_TO_PDENT(va);
+    if(pgdir[index].stru.p == 0) {
+        /* no pagetable here */
+        return NO_ERROR;
+    }
+
+    /* get page via mappings pool */
+    do {
+        status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
+                                        (addr_t *)&pgtbl, false);
+    } while(status != NO_ERROR);
+    index = VADDR_TO_PTENT(va);
+
+    /* clear out the flags we've been requested to clear */
+    if(flags & VM_FLAG_PAGE_MODIFIED) {
+        pgtbl[index].stru.d = 0;
+        tlb_flush = true;
+    }
+
+    if(flags & VM_FLAG_PAGE_ACCESSED) {
+        pgtbl[index].stru.a = 0;
+        tlb_flush = true;
+    }
+
+    /* ok. now put page back. */
+    put_physical_page_tmap((addr_t)pgtbl);
+
+    /* insert address into invalidation cache if needed */
+    if(tlb_flush) {
+        if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {
+            tmap->arch.pages_to_invalidate[tmap->arch.num_invalidate_pages] = va;
+        }
+        tmap->arch.num_invalidate_pages++;
+    }
+
+    /* all done. */
     return NO_ERROR;
 }
 
@@ -362,6 +632,12 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
 
     /* and now, set global bit to all pages allocated in kernel space */
     {
+      /*
+       * Important note: This chunk of code assumes kernel base can be not PDE
+       * aligned. So... If kernel base is not PDE aliged this unmaps all pages below
+       * kernel base and set all needed flags correctly. But in practice kernel
+       * base must be PDE aligned or this module will not work.
+       */
       uint kbase_pde = VADDR_TO_PDENT(KERNEL_BASE);  /* kernel base pd entry */
       uint kbase_pte = VADDR_TO_PTENT(KERNEL_BASE);  /* kernel base pt entry */
       mmu_pte *pgtable;   /* page table */

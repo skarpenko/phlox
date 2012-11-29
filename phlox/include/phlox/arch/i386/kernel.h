@@ -25,4 +25,20 @@
 /* a macro to test if a pointer is inside kernel space */
 #define is_kernel_address(x)  (((addr_t)(x)) & KERNEL_ADDR_MASK)
 
+
+/*** User Memory Layout ***/
+
+/* User base address */
+#define USER_BASE 0x00000000
+
+/* User space size */
+#define USER_SIZE 0xC0000000
+
+/* User space top address */
+#define USER_TOP (USER_SPACE + USER_SIZE - 1)
+
+/* a macro to test if a pointer is insude user space */
+#define is_user_address(x) (((addr_t)(x)) >= USER_BASE && ((addr_t)(x)) <= USER_TOP)
+
+
 #endif

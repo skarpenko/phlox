@@ -2,14 +2,13 @@
 * Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
-#include <phlox/platform/pc/pit.h>
 #include <phlox/processor.h>
-#include <phlox/spinlock.h>
 #include <phlox/errors.h>
 #include <phlox/param.h>
+#include <phlox/platform/pc/pit.h>
 
 /* lock for PIT ports access */
-static spinlock_t pit_lock;
+spinlock_t pit_lock;
 
 
 /* PIT initialization */
@@ -92,8 +91,24 @@ uint32 pit_set_counter(uint8 counter, uint8 mode, uint16 value) {
 
 /* plug/unplug counter 2 to/from PC speaker */
 void pit_to_spkr(bool v) {
+    uint32 irq_state;
+    uint8 data;
+
+    /* acquire lock */
+    irq_state = spin_lock_irqsave(&pit_lock);
+
+    /* read data from auxiliary port */
+    data = in8_p(PIT_AUX_PORT);
+
+    /* apply mask */
     if(v)
-       out8_p(PIT_AUX_PORT, PIT_AUX_GATE2 | PIT_AUX_OUT2);
+       data |= PIT_AUX_GATE2 | PIT_AUX_OUT2;
     else
-       out8_p(PIT_AUX_PORT, ~(PIT_AUX_GATE2 | PIT_AUX_OUT2));
+       data &= ~(PIT_AUX_GATE2 | PIT_AUX_OUT2);
+
+    /* write data back to aux port */
+    out8_p(PIT_AUX_PORT, data);
+
+    /* release lock */
+    spin_unlock_irqrstor(&pit_lock, irq_state);
 }

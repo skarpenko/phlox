@@ -8,7 +8,8 @@ KERNEL_O_FILES := \
 	main.o \
 	spinlock.o \
 	processor.o \
-	heap.o
+	heap.o \
+	machine.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

@@ -5,6 +5,8 @@
 #ifndef _PHLOX_PLATFORM_PC_IRQ_H_
 #define _PHLOX_PLATFORM_PC_IRQ_H_
 
+#include <phlox/platform/pc/pic.h>
+
 
 /* List of interrupts used with IBM PC type systems.
  *
@@ -34,5 +36,19 @@
 
 /* Base vector for hardware interrupts */
 #define IRQS_BASE_VECTOR  0x20
+
+
+/*
+ * Define PC-specific basic hardware interrupts
+ * control interface
+*/
+
+/* interrupt acknowledge */
+#define platform_interrupt_ack(int_no)      pic_int_eoi(int_no)
+/* interrupt enable */
+#define platform_interrupt_enable(int_no)   pic_int_unmask(int_no)
+/* interrupt disable */
+#define platform_interrupt_disable(int_no)  pic_int_mask(int_no)
+
 
 #endif

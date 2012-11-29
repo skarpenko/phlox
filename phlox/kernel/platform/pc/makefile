@@ -3,6 +3,7 @@ KERNEL_PLATFORM_OUT_DIR := $(KERNEL_OUT_DIR)/platform
 $(shell mkdir -p $(KERNEL_PLATFORM_OUT_DIR))
 
 KERNEL_PLATFORM_PC_O_FILES += \
+	machine.o \
 	pit.o \
 	pic.o
 

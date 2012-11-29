@@ -7,4 +7,15 @@
 
 #include INC_PLATF(phlox/platform,irq.h)
 
+/*
+ * Basic hardware interrupts control interface
+*/
+
+/* interrupt acknowledge */
+#define interrupt_ack(int_no)      platform_interrupt_ack(int_no)
+/* interrupt enable */
+#define interrupt_enable(int_no)   platform_interrupt_enable(int_no)
+/* interrupt disable */
+#define interrupt_disable(int_no)  platform_interrupt_disable(int_no)
+
 #endif

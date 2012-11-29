@@ -7,4 +7,10 @@
 
 #include INC_PLATF(phlox/platform,machine.h)
 
+/*
+ * Platform specific machine initialization routine.
+ * Called during system boot up.
+*/
+uint32 platform_machine_init(kernel_args_t *kargs);
+
 #endif

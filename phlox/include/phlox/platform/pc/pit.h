@@ -6,12 +6,22 @@
 #define _PHLOX_PLATFORM_PC_PIT_H_
 
 #include <phlox/types.h>
+#include <phlox/spinlock.h>
 
 /*
  *
  * Intel's Programmable Interval Timer (82C54) Stuff
  *
 */
+
+
+/*
+ * Spinlock for accessing PIT ports. The lock must be acquired
+ * before access to ports or call to routine which works with PIT
+ * and not acquires lock before. After all operations the lock
+ * must be released.
+*/
+extern spinlock_t pit_lock;
 
 
 /* Clock rate for the PIT */
@@ -91,6 +101,7 @@ uint32 pit_init(void);
 
 /*
  * Sets counter to count
+ * This routine acquires spinlock before accessing PIT ports.
  *
  * Input: counter = 0 - 2;
  *        mode = 0 - 5;
@@ -106,6 +117,7 @@ uint32 pit_set_counter(uint8 counter, uint8 mode, uint16 value);
 /*
  * Plugs or unplugs counter 2 output to/from
  * PC speaker. Input is true or false respectively.
+ * This routine acquires spinlock before accessing PIT ports.
 */
 void pit_to_spkr(bool v);
 

@@ -8,6 +8,7 @@
 #include <phlox/types.h>
 #include <phlox/kernel.h>
 #include <phlox/processor.h>
+#include <phlox/machine.h>
 #include <phlox/kargs.h>
 #include <phlox/vm.h>
 #include <boot/bootfs.h>
@@ -44,6 +45,16 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
 
     /* processor set initialization */
     processor_set_init(&globalKargs, num_cpu);
+
+    /* init machine-specific interfaces
+     * only bootstrap processor can do it,
+     * others must wait for initialization complete.
+     */
+    if(num_cpu==0) {
+       machine_init(&globalKargs);
+    } else {
+       /* wait until BSP completes? */
+    }
 
     /* init virtual memory manager.
      * only bootstrap processor can do it,

@@ -1,2 +1,96 @@
 # IA-32 specific options
 
+KNOWN_CPU := false
+
+# if CPU type not specified optimize for i486 by default
+ifeq ($(CPU), )
+CPU := i486
+endif
+
+# set cpu-specific flags
+ifeq ($(CPU),i386)
+  GLOBAL_CFLAGS += -mcpu=i386
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),i486)
+  GLOBAL_CFLAGS += -mcpu=i486
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),i586)
+  GLOBAL_CFLAGS += -mcpu=i586
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),i686)
+  GLOBAL_CFLAGS += -mcpu=i686
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Pentium)
+  GLOBAL_CFLAGS += -mcpu=pentium
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),PentiumMMX)
+  GLOBAL_CFLAGS += -mcpu=pentium-mmx
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),PentiumPro)
+  GLOBAL_CFLAGS += -mcpu=pentiumpro
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Pentium2)
+  GLOBAL_CFLAGS += -mcpu=pentium2
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Pentium3)
+  GLOBAL_CFLAGS += -mcpu=pentium3
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Pentium4)
+  GLOBAL_CFLAGS += -mcpu=pentium4
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),K6)
+  GLOBAL_CFLAGS += -mcpu=k6
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),K6_2)
+  GLOBAL_CFLAGS += -mcpu=k6-2
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),K6_3)
+  GLOBAL_CFLAGS += -mcpu=k6-3
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),K7)
+  GLOBAL_CFLAGS += -mcpu=athlon
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Athlon)
+  GLOBAL_CFLAGS += -mcpu=athlon
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Athlon_Tbird)
+  GLOBAL_CFLAGS += -mcpu=athlon-tbird
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),Athlon4)
+  GLOBAL_CFLAGS += -mcpu=athlon-4
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),AthlonXP)
+  GLOBAL_CFLAGS += -mcpu=athlon-xp
+  KNOWN_CPU := true
+endif
+ifeq ($(CPU),AthlonMP)
+  GLOBAL_CFLAGS += -mcpu=athlon-mp
+  KNOWN_CPU := true
+endif
+
+ifeq ($(KNOWN_CPU),false)
+  $(error Unknown CPU specified. List of known CPUs is: i386, i486, i586, \
+i686, Pentium, PentiumMMX, PentiumPro, Pentium2, Pentium3, Pentium4, K6, \
+K6_2, K6_3, K7, Athlon, Athlon_Tbird, Athlon4, AthlonXP, AthlonMP)
+endif
+
+GLOBAL_CFLAGS += -DCPU_$(CPU)=1
+
+KNOWN_CPU :=

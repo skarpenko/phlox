@@ -7,22 +7,25 @@
 #ifndef _PHLOX_TYPES_H
 #define _PHLOX_TYPES_H
 
-#if defined(__i386__) || defined(__I386__)
-#undef i386
+/* Macroses for architecture specific includes */
+#if ARCH_i386
 #define INC_ARCH(path, x) <path/i386/x>
 #endif
-#if defined(__ppc__) || defined(__PPC__)
-#undef ppc
+#if ARCH_ppc
 #define INC_ARCH(path, x) <path/ppc/x>
 #endif
-#if defined(__x86_64__) || defined(__X86_64__)
-#undef x86_64
+#if ARCH_x86_64
 #define INC_ARCH(path, x) <path/x86_64/x>
 #endif
-#if defined(__arm__) || defined(__ARM__)
-#undef arm
+#if ARCH_arm
 #define INC_ARCH(path, x) <path/arm/x>
 #endif
+
+/* Macroses for platform specific includes */
+#if PLATFORM_pc
+#define INC_PLATF(path, x) <path/pc/x>
+#endif
+
 
 #include INC_ARCH(arch,types.h)
 

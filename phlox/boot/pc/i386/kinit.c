@@ -50,11 +50,15 @@ static void sort_addr_ranges(addr_range_t *ranges, uint32 count);
  * Paging disabled
  *
 */
-void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, unsigned int vesa_ptr, int console_ptr) {
+void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_vesa, uint32 vesa_ptr, uint32 console_ptr) {
     bootfs_t btfs;
     btfs_dir_entry *en;
     uint32 next_physaddr;
     uint32 next_virtaddr;
+    cpu_seg_desc  gdt_desc;
+    cpu_seg_desc  *gdt;  /* pointer to General Descriptors Table */
+    cpu_gate_desc idt_desc;
+    cpu_gate_desc *idt;  /* pointer to Interrupt Descriptors Table */
     uint32 i;
     uint32 kentry;                    /* kernel entry point */
     uint32 kstack_start, kstack_size; /* kernel stack       */
@@ -85,7 +89,19 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
     /* store image allocation info into kernel args */
     kargs->btfs_image_addr.start = (uint32)BTFS_IMAGE;
     kargs->btfs_image_addr.size  = btfs.hdr->fsize*PAGE_SIZE;
-    
+
+    /* reserve a page for idt */
+    idt = (cpu_gate_desc *)next_physaddr;
+    next_physaddr += PAGE_SIZE;
+    memset(idt, 0, PAGE_SIZE); /* init page to 0 */
+    kargs->arch_args.phys_idt = (uint32)idt;
+
+    /* reserve a page for gdt */
+    gdt = (cpu_seg_desc *)next_physaddr;
+    next_physaddr += PAGE_SIZE;
+    memset(gdt, 0, PAGE_SIZE); /* init page to 0 */
+    kargs->arch_args.phys_gdt = (uint32)gdt;
+
     /* init memory management unit */
     if(mmu_init(kargs, &next_physaddr))
         panic("mmu init failed!\n");
@@ -111,12 +127,161 @@ void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_ves
 
     /* map kernel stack into virtual space */
     kstack_start = next_virtaddr;
+    kargs->phys_cpu_kstack[0].start = next_physaddr;
+    kargs->virt_cpu_kstack[0].start = next_virtaddr;
     for(i=0; i<KERNEL_STACK_SIZE; i++) {
       mmu_map_page(next_virtaddr, next_physaddr);
       next_physaddr += PAGE_SIZE;
       next_virtaddr += PAGE_SIZE;
     }
     kstack_size = next_virtaddr - kstack_start;
+    kargs->phys_cpu_kstack[0].size = kstack_size;
+    kargs->virt_cpu_kstack[0].size = kstack_size;
+
+    /* map idt into virtual space. it will be filled by kernel later. */
+    mmu_map_page(next_virtaddr, (uint32)idt);
+    kargs->arch_args.virt_idt = next_virtaddr;
+    next_virtaddr += PAGE_SIZE;
+    /* load new idt */
+    idt_desc.raw.dword0 = MAX_IDT_LIMIT-1;
+    idt_desc.raw.dword1 = kargs->arch_args.virt_idt;
+    asm("lidt   %0; "
+        : : "m" (idt_desc));
+
+    /* build and map new gdt into virtual space */
+    gdt[0].raw.dword0 = 0;           /* NULL descriptor            */
+    gdt[0].raw.dword1 = 0;
+    gdt[1].raw.dword0 = 0x0000ffff;  /* kernel 4Gb code (seg 0x8)  */
+    gdt[1].raw.dword1 = 0x00cf9a00;
+    gdt[2].raw.dword0 = 0x0000ffff;  /* kernel 4Gb data (seg 0x10) */
+    gdt[2].raw.dword1 = 0x00cf9200;
+    gdt[3].raw.dword0 = 0x0000ffff;  /* user 4Gb code (seg 0x18)   */
+    gdt[3].raw.dword1 = 0x00cffa00;
+    gdt[4].raw.dword0 = 0x0000ffff;  /* user 4Gb data (seg 0x20)   */
+    gdt[4].raw.dword1 = 0x00cff200;
+    /* map into virtual space */
+    mmu_map_page(next_virtaddr, (uint32)gdt);
+    kargs->arch_args.virt_gdt = next_virtaddr;
+    next_virtaddr += PAGE_SIZE;
+    /* load new gdt */
+    gdt_desc.raw.dword0 = MAX_GDT_LIMIT-1;
+    gdt_desc.raw.dword1 = kargs->arch_args.virt_gdt;
+    asm("lgdt   %0; "
+        : : "m" (gdt_desc));
+
+    /* store VESA VBE params in kargs (for more details refer to VBE standard) */
+    if(in_vesa) {
+        ModeInfoBlock_t *mode_info = (ModeInfoBlock_t *)(vesa_ptr + 0x200);
+
+        kargs->fb.enabled                 = 1;
+        kargs->fb.x_size                  = mode_info->XResolution;
+        kargs->fb.y_size                  = mode_info->YResolution;
+        kargs->fb.bit_depth               = mode_info->BitsPerPixel;
+        kargs->fb.red_mask_size           = mode_info->RedMaskSize;
+        kargs->fb.red_field_position      = mode_info->RedFieldPosition;
+        kargs->fb.green_mask_size         = mode_info->GreenMaskSize;
+        kargs->fb.green_field_position    = mode_info->GreenFieldPosition;
+        kargs->fb.blue_mask_size          = mode_info->BlueMaskSize;
+        kargs->fb.blue_field_position     = mode_info->BlueFieldPosition;
+        kargs->fb.reserved_mask_size      = mode_info->RsvdMaskSize;
+        kargs->fb.reserved_field_position = mode_info->RsvdFieldPosition;
+        kargs->fb.mapping.start           = mode_info->PhysBasePtr;
+        kargs->fb.mapping.size            = kargs->fb.x_size *
+                                            kargs->fb.y_size *
+                                            ((kargs->fb.bit_depth+7)/8);
+        kargs->fb.already_mapped          = 0;
+    } else {
+        kargs->fb.enabled = 0;
+    }
+
+    /** Prepare memory map to pass into kernel (this section completely taken from NewOS's Stage2)**/
+    /* mark memory that we know is used */
+    kargs->phys_alloc_range[0].start = (uint32)BTFS_IMAGE;
+    kargs->phys_alloc_range[0].size = next_physaddr - (uint32)BTFS_IMAGE;
+    kargs->num_phys_alloc_ranges = 1;
+
+    /* figure out the memory map */
+    if(ext_mem_count > 0) {
+        struct ext_mem_struct *buf = (struct ext_mem_struct *)ext_mem_block;
+
+        /* print RAM map provided by BIOS */
+        dprintf("BIOS-provided physical RAM map:\n");
+        for(i = 0; i < ext_mem_count; i++) {
+          dprintf(" BIOS-e820: 0x%016LX - 0x%016LX", buf[i].base_addr, buf[i].length);
+          if(buf[i].type == 1)
+            dprintf(" (usable)\n");
+          else
+            dprintf(" (reserved)\n");
+        }
+        dprintf("===\n");
+
+        kargs->num_phys_mem_ranges = 0;
+
+        for(i = 0; i < ext_mem_count; i++) {
+          if(buf[i].type == 1) {
+             /* round everything up to page boundaries, exclusive of pages it partially occupies */
+             buf[i].length   -= (buf[i].base_addr % PAGE_SIZE) ? (PAGE_SIZE - (buf[i].base_addr % PAGE_SIZE)) : 0;
+             buf[i].base_addr = ROUNDUP(buf[i].base_addr, PAGE_SIZE);
+             buf[i].length    = ROUNDOWN(buf[i].length, PAGE_SIZE);
+
+             /* this is mem we can use */
+             if(kargs->num_phys_mem_ranges == 0) {
+                 kargs->phys_mem_range[0].start = (addr_t)buf[i].base_addr;
+                 kargs->phys_mem_range[0].size  = (addr_t)buf[i].length;
+                 kargs->num_phys_mem_ranges++;
+             } else {
+                 /* we might have to extend the previous hole */
+                 addr_t previous_end = kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].start +
+                                       kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].size;
+                 if(previous_end <= buf[i].base_addr &&
+                   ((buf[i].base_addr - previous_end) < 0x100000)) {
+                     /* extend the previous buffer */
+                     kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].size += (buf[i].base_addr - previous_end) +
+                                                                                 buf[i].length;
+                         
+                     /* mark the gap between the two allocated ranges in use */
+                     kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].start = previous_end;
+                     kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].size  = buf[i].base_addr - previous_end;
+                     kargs->num_phys_alloc_ranges++;
+                 }
+             }
+        }
+    }
+    } else {
+        /* we dont have an extended map, assume memory is contiguously mapped at 0x0 */
+        kargs->phys_mem_range[0].start = 0;
+        kargs->phys_mem_range[0].size = memsize;
+        kargs->num_phys_mem_ranges = 1;
+
+        /* mark the bios area allocated */
+        kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].start = 0x9f000; /* 640k - 1 page */
+        kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].size  = 0x61000;
+        kargs->num_phys_alloc_ranges++;
+    }
+
+    /* save the memory we've virtually allocated (for the kernel and other stuff) */
+    kargs->virt_alloc_range[0].start = KERNEL_BASE;
+    kargs->virt_alloc_range[0].size = next_virtaddr - KERNEL_BASE;
+    kargs->num_virt_alloc_ranges = 1;
+
+    /* sort the address ranges */
+    sort_addr_ranges(kargs->phys_mem_range,   kargs->num_phys_mem_ranges);
+    sort_addr_ranges(kargs->phys_alloc_range, kargs->num_phys_alloc_ranges);
+    sort_addr_ranges(kargs->virt_alloc_range, kargs->num_virt_alloc_ranges);
+
+    /* print out kinit summary */
+    dprintf("\nkinit summary:\n");
+    dprintf(" Kernel physical range: 0x%08X - 0x%08X\n", kargs->phys_kernel_addr.start,
+                                                         kargs->phys_kernel_addr.start +
+                                                         kargs->phys_kernel_addr.size);
+    dprintf(" Kernel virtual range:  0x%08X - 0x%08X\n", kargs->virt_kernel_addr.start,
+                                                         kargs->virt_kernel_addr.start +
+                                                         kargs->virt_kernel_addr.size);
+    dprintf("===\n");
+
+    /* save remaining the kernel args */
+    kargs->num_cpus = 1;
+    kargs->cons_line = screenOffset / SCREEN_WIDTH;
 
     /* switch to new stack */
     asm(" movl %0,    %%eax; "

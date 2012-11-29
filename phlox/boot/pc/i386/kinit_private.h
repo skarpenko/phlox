@@ -28,7 +28,7 @@ struct ext_mem_struct {
     uint64 filler;
 } _PACKED;
 
-extern void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, unsigned int vesa_ptr, int console_ptr);
+extern void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_vesa, uint32 vesa_ptr, uint32 console_ptr);
 extern void clearscreen(void);
 extern int puts(const char *str);
 extern int dprintf(const char *fmt, ...);

@@ -8,6 +8,13 @@
 #include <phlox/compiler.h>
 #include <phlox/types.h>
 
+/* Max. limit of General Descriptors Table */
+#define MAX_GDT_LIMIT  0x800
+
+/* Max. limit of Interrupt Descriptors Table */
+#define MAX_IDT_LIMIT  0x800
+
+
 /*
 * General-Segment Descriptor Format
 *

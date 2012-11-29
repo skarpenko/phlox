@@ -10,6 +10,10 @@
 /* architecture specific kernel args */
 typedef struct {
     /* architecture specific */
+    uint32 phys_gdt;      /* physical GDT address */
+    uint32 virt_gdt;      /* virtual GDT address */
+    uint32 phys_idt;      /* physical IDT address */
+    uint32 virt_idt;      /* virtual IDT address */
     uint32 phys_pgdir;    /* physical address of page directory */
     uint32 virt_pgdir;    /* virtual address of page directory */
     uint32 num_pgtables;  /* number of allocated page tables */

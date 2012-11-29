@@ -43,6 +43,10 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu) {
 
     kprintf("\nWelcome to Phlox Kernel!\n");
 
+    kprintf("\nKernel Args test...");
+    kprintf("btfs_base = %x, size = %d\n", kargs->btfs_image_addr.start,
+                                           kargs->btfs_image_addr.size);
+
     kprintf("\nTouching uninit data...");
     for(i=0; i<SIZE; i++) uninit[i] = 1;
     kprintf("Ok.\n");

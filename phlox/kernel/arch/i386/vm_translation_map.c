@@ -26,16 +26,16 @@ static inline void init_ptentry(mmu_pte *ptentry)
 }
 
 /* put page table into page directory entry */
-static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 attributes)
+static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint attributes)
 {
     /* put it in the page directory */
     init_pdentry(pdentry);
     pdentry->stru.base = ADDR_SHIFT(pgtable_phys);
 
-    /* mark it user and read/write.
+    /* mark it system and read/write.
      * The page table entries will override it.
      */
-    pdentry->stru.us = 1;
+    pdentry->stru.us = 0;
     pdentry->stru.rw = 1;
     pdentry->stru.p  = 1;
 }
@@ -45,10 +45,10 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint32 a
  * Set inv_ar = true if TLB invalidation required for page hole
  * address range.
  */
-static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool inv_ar)
+static uint allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool inv_ar)
 {
-    uint32 i;
-    uint32 res = 0; /* zero returns on fail */
+    uint i;
+    uint res = 0; /* zero returns on fail */
 
     /* search from the end of page directory */
     for(i=MAX_PDENTS-1; i>0; i--) {
@@ -59,7 +59,7 @@ static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool in
            /* make it recursively refer to page directory */
            pgdir[i].stru.base = ADDR_SHIFT(phys_pgdir_addr);
            /* set flags */
-           pgdir[i].stru.us = 1;
+           pgdir[i].stru.us = 0;
            pgdir[i].stru.rw = 1;
            pgdir[i].stru.p  = 1;
            /* invalidate page hole address range if requested */
@@ -77,7 +77,7 @@ static uint32 allocate_page_hole(mmu_pde *pgdir, addr_t phys_pgdir_addr, bool in
 }
 
 /* Dellocate previously allocated page hole. */
-static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar)
+static void deallocate_page_hole(mmu_pde *pgdir, uint pde_idx, bool inv_ar)
 {
     /* remove entry from page directory */
     pgdir[pde_idx].raw.dword0 = 0;
@@ -87,9 +87,9 @@ static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar)
 }
 
 /* init translation map module */
-uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
+status_t arch_vm_translation_map_init(kernel_args_t *kargs)
 {
-    uint32 pghole_pde_idx;
+    uint pghole_pde_idx;
     mmu_pte *pghole;
     mmu_pde *pghole_pgdir;
 
@@ -106,10 +106,10 @@ uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
      
     /* and now, set global bit to all pages allocated in kernel space */
     {
-      uint32 kbase_pde = VADDR_TO_PDENT(KERNEL_BASE);  /* kernel base pd entry */
-      uint32 kbase_pte = VADDR_TO_PTENT(KERNEL_BASE);  /* kernel base pt entry */
+      uint kbase_pde = VADDR_TO_PDENT(KERNEL_BASE);  /* kernel base pd entry */
+      uint kbase_pte = VADDR_TO_PTENT(KERNEL_BASE);  /* kernel base pt entry */
       mmu_pte *pgtable;   /* page table */
-      uint32 i, j, first_pgent;
+      uint i, j, first_pgent;
 
       /* walk through page directory entries */
       for(i=kbase_pde; i<MAX_PDENTS; i++) {
@@ -132,7 +132,7 @@ uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
                first_pgent = 0; /* else start from first page table entry */
 
              /* get page table address from page hole */
-             pgtable = (mmu_pte *)((uint32)pghole + i * PAGE_SIZE);
+             pgtable = (mmu_pte *)((uint)pghole + i * PAGE_SIZE);
              /* walk throught page table entries */
              for(j=first_pgent; j<MAX_PTENTS; j++) {
                if(pgtable[j].stru.p) {
@@ -145,7 +145,8 @@ uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
              }
          }
       }
-      /* Turn on Global bit if supported.
+      /* Turn on Global bit if supported. This prevents kernel pages
+       * from being flushed from TLB on context-switch.
        * Note that only bootstrap processor enters this section during
        * kernel initialization stage.
        */
@@ -169,13 +170,13 @@ uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
  * 4Mb of page tables into a 4Mb region.
  * This routine used only during system start up. Do not use after.
  */
-uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint32 attributes)
+status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint attributes)
 {
     mmu_pte *pgentry;
-    uint32 pghole_pde_idx;
+    uint pghole_pde_idx;
     mmu_pte *page_hole;
     mmu_pde *page_hole_pgdir;
-    uint32 pgtable_idx;
+    uint pgtable_idx;
 
     /* allocate page hole */
     pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
@@ -186,7 +187,7 @@ uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phy
     /* page hole address */
     page_hole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
     /* page directory address within page hole */
-    page_hole_pgdir = (mmu_pde *)((uint32)page_hole + pghole_pde_idx * PAGE_SIZE);
+    page_hole_pgdir = (mmu_pde *)((uint)page_hole + pghole_pde_idx * PAGE_SIZE);
         
     /* check to see if a page table exists for this range */
     pgtable_idx = VADDR_TO_PDENT(virt_addr);
@@ -194,7 +195,7 @@ uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phy
         addr_t pgtable;
         mmu_pde *pdentry;
         /* we need to allocate a page table */
-        pgtable = vm_alloc_phpage_from_kargs(kargs);
+        pgtable = vm_alloc_ppage_from_kargs(kargs);
         if(!pgtable)
            panic("vm_tmap_quick_map: failed to allocate physical page.");
         /* page table is in pages, convert to physical address */
@@ -205,7 +206,7 @@ uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phy
         put_pgtable_in_pgdir(pdentry, pgtable, attributes);
 
         /* zero it out in it's new mapping */
-        memset((uint32 *)((uint32)page_hole + VADDR_TO_PDENT(virt_addr) * PAGE_SIZE), 0, PAGE_SIZE);
+        memset((uint *)((uint)page_hole + VADDR_TO_PDENT(virt_addr) * PAGE_SIZE), 0, PAGE_SIZE);
     }
     /* now, fill in the page entry */
     pgentry = page_hole + virt_addr / PAGE_SIZE;

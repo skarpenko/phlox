@@ -1,5 +1,6 @@
 /*
 * Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2001-2004, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/kernel.h>
@@ -28,7 +29,7 @@ static spinlock_t page_lock;
 /* Offset of first available physical page */
 static addr_t physical_page_offset;
 /* Total number of pages */
-static uint32 total_pages_count;
+static uint total_pages_count;
 
 
 /**
@@ -67,7 +68,7 @@ static void move_page_to_list(page_list_t *list_from, page_list_t *list_to, vm_p
  ** Locally used operations with pages.
  ** (Note: No locks used!)
  **/
-static uint32 set_page_state(vm_page_t *page, uint32 page_state)
+static uint set_page_state(vm_page_t *page, uint page_state)
 {
     page_list_t *from_list = NULL;
     page_list_t *to_list   = NULL;
@@ -78,38 +79,66 @@ static uint32 set_page_state(vm_page_t *page, uint32 page_state)
 
     /* get source page list */
     switch(page->state) {
+        /* pages from active_pages_list */
         case VM_PAGE_STATE_ACTIVE:
            VM_State.active_pages--;
            from_list = &active_pages_list;
-           break;
-        case VM_PAGE_STATE_FREE:
-           VM_State.free_pages--;
-           from_list = &free_pages_list;
            break;
         case VM_PAGE_STATE_UNUSED:
            VM_State.unused_pages--;
            from_list = &active_pages_list;
            break;
+        case VM_PAGE_STATE_WIRED:
+           VM_State.wired_pages--;
+           from_list = &active_pages_list;
+           break;
+        case VM_PAGE_STATE_BUSY:
+           VM_State.busy_pages--;
+           from_list = &active_pages_list;
+           break;
+        /* pages from other page lists */
+        case VM_PAGE_STATE_FREE:
+           VM_State.free_pages--;
+           from_list = &free_pages_list;
+           break;
+        case VM_PAGE_STATE_CLEAR:
+           VM_State.clear_pages--;
+           from_list = &clear_pages_list;
+           break;
         default:
-            panic("vm_page_set_state: vm_page %p in invalid state %d\n", page, page->state);
+            panic("set_page_state: vm_page %p in invalid state %d\n", page, page->state);
     }
 
     /* get destination page list */
     switch(page_state) {
+        /* pages to active_pages_list */
         case VM_PAGE_STATE_ACTIVE:
            VM_State.active_pages++;
            to_list = &active_pages_list;
-           break;
-        case VM_PAGE_STATE_FREE:
-           VM_State.free_pages++;
-           to_list = &free_pages_list;
            break;
         case VM_PAGE_STATE_UNUSED:
            VM_State.unused_pages++;
            to_list = &active_pages_list;
            break;
+        case VM_PAGE_STATE_WIRED:
+           VM_State.wired_pages++;
+           to_list = &active_pages_list;
+           break;
+        case VM_PAGE_STATE_BUSY:
+           VM_State.busy_pages++;
+           to_list = &active_pages_list;
+           break;
+        /* pages to other page lists */
+        case VM_PAGE_STATE_FREE:
+           VM_State.free_pages++;
+           to_list = &free_pages_list;
+           break;
+        case VM_PAGE_STATE_CLEAR:
+           VM_State.clear_pages++;
+           to_list = &clear_pages_list;
+           break;
         default:
-            panic("vm_page_set_state: invalid target state %d\n", page_state);
+            panic("set_page_state: invalid target state %d\n", page_state);
     }
 
     /* move page to new list */
@@ -121,11 +150,24 @@ static uint32 set_page_state(vm_page_t *page, uint32 page_state)
     return 0;
 }
 
+/* fill with zeroes given physical page */
+static void clear_page(addr_t pa)
+{
+    addr_t va;
+
+    /* ask mapper to map page */
+/*    vm_pmap_get_ppage(pa, &va, true); */
+    /* clear it */
+/*    memset((void *)va, 0, PAGE_SIZE); */
+    /* and tell mapper that we are done */
+/*    vm_pmap_put_ppage(va);*/
+}
+
 
 /* pre initialization routine */
-uint32 vm_page_preinit(kernel_args_t *kargs)
+status_t vm_page_preinit(kernel_args_t *kargs)
 {
-    uint32 i, last_phys_page = 0;
+    uint i, last_phys_page = 0;
 
     /* init lists */
     xlist_init(&free_pages_list);
@@ -154,9 +196,9 @@ uint32 vm_page_preinit(kernel_args_t *kargs)
 }
 
 /* module initialization routine */
-uint32 vm_page_init(kernel_args_t *kargs)
+status_t vm_page_init(kernel_args_t *kargs)
 {
-    uint32 i;
+    uint i;
 
     /* allocate area for pages structures */
     all_pages = (vm_page_t *)vm_alloc_from_kargs(kargs, total_pages_count*sizeof(vm_page_t),
@@ -181,10 +223,10 @@ uint32 vm_page_init(kernel_args_t *kargs)
 }
 
 /* allocate virtual space from kernel args */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size)
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size)
 {
     addr_t spot = 0;
-    uint32 i;
+    uint i;
     int last_valloc_entry = 0;
 
     size = PAGE_ALIGN(size);
@@ -228,9 +270,9 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size)
 }
 
 /* horrible brute-force method of determining if the page can be allocated */
-static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr)
+static uint is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr)
 {
-    uint32 i;
+    uint i;
 
     for(i=0; i < kargs->num_phys_mem_ranges; i++) {
         /* if physical page lies in one of availabe physical ranges
@@ -247,9 +289,9 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr)
 }
 
 /* allocate physical page from kernel args */
-addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs)
+addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs)
 {
-    uint32 i;
+    uint i;
     addr_t next_page;
 
     for(i=0; i < kargs->num_phys_alloc_ranges; i++) {
@@ -275,18 +317,18 @@ addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs)
 }
 
 /* allocates memory block of given size form kernel args */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes)
 {
     addr_t vspot;
     addr_t pspot;
-    uint32 i;
+    uint i;
 
     /* find the vaddr to allocate at */
     vspot = vm_alloc_vspace_from_kargs(kargs, size);
 
     /* map the pages */
     for(i=0; i < PAGE_ALIGN(size)/PAGE_SIZE; i++) {
-        pspot = vm_alloc_phpage_from_kargs(kargs);
+        pspot = vm_alloc_ppage_from_kargs(kargs);
         if(pspot == 0)
             panic("error allocating physical page from globalKargs!\n");
         vm_tmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
@@ -297,13 +339,13 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
 }
 
 /* mark physical page as used */
-uint32 vm_page_mark_page_inuse(addr_t page)
+status_t vm_page_mark_page_inuse(addr_t page)
 {
    return vm_page_mark_range_inuse(page, 1);
 }
 
 /* mark range of physical pages as used */
-uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages)
+status_t vm_page_mark_range_inuse(addr_t start_page, size_t len_pages)
 {
     unsigned long irqs_state;
     vm_page_t *page;
@@ -327,10 +369,14 @@ uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages)
     for(i = 0; i < len_pages; i++) {
        page = &all_pages[start_page + i];
        switch(page->state) {
+         case VM_PAGE_STATE_CLEAR:
          case VM_PAGE_STATE_FREE:
            set_page_state(page, VM_PAGE_STATE_UNUSED);
            break;
+         case VM_PAGE_STATE_WIRED:
+           break;
          case VM_PAGE_STATE_ACTIVE:
+         case VM_PAGE_STATE_BUSY:
          case VM_PAGE_STATE_UNUSED:
          default:
            kprint("vm_page_mark_range_inuse: page 0x%lx in non-free state %d!\n",
@@ -342,4 +388,221 @@ uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages)
     spin_unlock_irqrstor(&page_lock, irqs_state);
 
     return NO_ERROR;
+}
+
+/* allocate specific page by its number and state */
+vm_page_t *vm_page_alloc_specific(addr_t page_num, uint page_state)
+{
+    vm_page_t *p;
+    uint irqs_state;
+    /* preset old page state. it needs on exit. */
+    uint old_page_state = VM_PAGE_STATE_BUSY;
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&page_lock);
+
+    /* get asked page */
+    p = vm_page_lookup(page_num);
+    if(p == NULL)
+        goto exit_allocate;
+
+    /* remove page from proper list */
+    switch(p->state) {
+        case VM_PAGE_STATE_FREE:
+            remove_page_from_list(&free_pages_list, p);
+            VM_State.free_pages--;
+            break;
+        case VM_PAGE_STATE_CLEAR:
+            remove_page_from_list(&clear_pages_list, p);
+            VM_State.clear_pages--;
+            break;
+        case VM_PAGE_STATE_UNUSED:
+            break;
+        default:
+            /* we can't allocate this page */
+            p = NULL;
+    }
+    if(p == NULL)
+        goto exit_allocate;
+
+    /* store previous and set new page state */
+    old_page_state = p->state;
+    p->state = VM_PAGE_STATE_BUSY;
+    VM_State.busy_pages++; /* statistics */
+
+    if(old_page_state != VM_PAGE_STATE_UNUSED)
+        put_page_to_list(&active_pages_list, p);
+
+    /* complete our job */
+exit_allocate:
+    /* release lock */
+    spin_unlock_irqrstor(&page_lock, irqs_state);
+
+    if(p != NULL && page_state == VM_PAGE_STATE_CLEAR &&
+        (old_page_state == VM_PAGE_STATE_FREE ||
+         old_page_state == VM_PAGE_STATE_UNUSED)) {
+
+        /* clear page if it is not allocated from
+         * list of clear pages
+         */
+        clear_page(p->ppn * PAGE_SIZE);
+    }
+
+    return p;
+}
+
+/* allocate page by state */
+vm_page_t *vm_page_alloc(uint page_state)
+{
+    vm_page_t *p;
+    unsigned long irqs_state;
+    page_list_t *pages_list;
+    page_list_t *spare_pages_list;
+    uint old_page_state;
+
+    /* set source list and spare list.
+     * we can allocate only from list of free pages
+     * or clear pages.
+     */
+    switch(page_state) {
+        case VM_PAGE_STATE_FREE:
+            pages_list = &free_pages_list;
+            spare_pages_list = &clear_pages_list;
+            break;
+        case VM_PAGE_STATE_CLEAR:
+            pages_list = &clear_pages_list;
+            spare_pages_list = &free_pages_list;
+            break;
+        default:
+            return NULL; /* invalid page state */
+    }
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&page_lock);
+
+    p = get_page_from_list(pages_list);
+    if(p == NULL) {
+        /* pages list is empty. use spare pages list */
+        pages_list = spare_pages_list;
+        p = get_page_from_list(pages_list);
+        if(p == NULL) {
+            /* panic. spare pages list is empty too! */
+            panic("vm_page_alloc: out of memory!\n");
+        }
+    }
+
+    /* update statistics */
+    if(pages_list == &free_pages_list)
+        VM_State.free_pages--;
+    else
+        VM_State.clear_pages--;
+
+    old_page_state = p->state;
+    p->state = VM_PAGE_STATE_BUSY;
+    VM_State.busy_pages++;
+
+    /* put page to new list */
+    put_page_to_list(&active_pages_list, p);
+
+    /* release lock */
+    spin_unlock_irqrstor(&page_lock, irqs_state);
+
+    if(page_state == VM_PAGE_STATE_CLEAR &&
+       old_page_state == VM_PAGE_STATE_FREE) {
+        /* clear page if needed */
+        clear_page(p->ppn * PAGE_SIZE);
+    }
+
+    return p;
+}
+
+/* allocate range of pages */
+vm_page_t *vm_page_alloc_range(uint page_state, addr_t npages)
+{
+    unsigned long irqs_state;
+    uint start;
+    uint i;
+    bool foundit;
+    vm_page_t *first_page = NULL;
+
+    start = 0;
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&page_lock);
+
+    for(;;) {
+        foundit = true;
+        if(start + npages >= total_pages_count)
+            break;
+        /* locate continuous chunk of pages */
+        for(i = 0; i < npages; i++) {
+            if(all_pages[start + i].state != VM_PAGE_STATE_FREE &&
+              all_pages[start + i].state != VM_PAGE_STATE_CLEAR) {
+                foundit = false;
+                i++;
+                break;
+            }
+        }
+        if(foundit) {
+            /* pull the pages out of the appropriate lists */
+            for(i = 0; i < npages; i++)
+                set_page_state(&all_pages[start + i], VM_PAGE_STATE_BUSY);
+            first_page = &all_pages[start];
+            break;
+        } else {
+            start += i;
+            if(start >= total_pages_count) {
+                /* no more pages to look through */
+                break;
+            }
+        }
+    }
+    /* release lock */
+    spin_unlock_irqrstor(&page_lock, irqs_state);
+
+    return first_page;
+}
+
+/* look up a page */
+vm_page_t *vm_page_lookup(addr_t page_num)
+{
+    /* ensure that page number correct */
+    if(page_num < physical_page_offset)
+        return NULL;
+    page_num -= physical_page_offset;
+    if(page_num >= total_pages_count)
+        return NULL;
+
+    /* return page to caller */
+    return &all_pages[page_num];
+}
+
+/* set page state */
+status_t vm_page_set_state(vm_page_t *page, uint page_state)
+{
+    status_t err;
+    unsigned long irqs_state;
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&page_lock);
+
+    err = set_page_state(page, page_state);
+
+    /* release lock */
+    spin_unlock_irqrstor(&page_lock, irqs_state);
+
+    return err;
+}
+
+/* return total pages count */
+size_t vm_page_pages_count(void)
+{
+    return total_pages_count;
+}
+
+/* return free pages count*/
+size_t vm_page_free_pages_count(void)
+{
+    /* return sum of pages from free and clear page lists */
+    return (free_pages_list.count + clear_pages_list.count);
 }

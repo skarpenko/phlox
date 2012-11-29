@@ -12,11 +12,11 @@
 #include <phlox/vm.h>
 
 /* architecture-specific init for virtual memory manager */
-uint32 arch_vm_init(kernel_args_t *kargs)
+status_t arch_vm_init(kernel_args_t *kargs)
 {
-    uint32 err;
+    status_t err;
     /* do something */
-    uint32 i, n=PAGE_SIZE*MAX_PTENTS;
+    uint i, n=PAGE_SIZE*MAX_PTENTS;
     uint8 *buf;
 
     /* translation map module init */

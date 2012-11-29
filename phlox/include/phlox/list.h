@@ -19,29 +19,29 @@ typedef struct list_element {
 typedef struct {
     list_elem_t *first;  /* first element in the list */
     list_elem_t *last;   /* last element in the list  */
-    uint32 count;
+    uint count;
 } xlist_t;
 
 
 /*** Routines for multi-purpose list manipulations ***/
 
 /* init list */
-uint32 xlist_init(xlist_t *list);
+uint xlist_init(xlist_t *list);
 
 /* init list element */
-uint32 xlist_elem_init(list_elem_t *e);
+uint xlist_elem_init(list_elem_t *e);
 
 /* returns true if list is empty */
-uint32 xlist_isempty(xlist_t *list);
+uint xlist_isempty(xlist_t *list);
 
 /* remove element from list */
-uint32 xlist_remove(xlist_t *list, list_elem_t *e);
+uint xlist_remove(xlist_t *list, list_elem_t *e);
 
 /* add element to list as first */
-uint32 xlist_add_first(xlist_t *list, list_elem_t *e);
+uint xlist_add_first(xlist_t *list, list_elem_t *e);
 
 /* add element to list as last */
-uint32 xlist_add_last(xlist_t *list, list_elem_t *e);
+uint xlist_add_last(xlist_t *list, list_elem_t *e);
 
 /* extract first element from list */
 list_elem_t *xlist_extract_first(xlist_t *list);
@@ -53,13 +53,13 @@ list_elem_t *xlist_extract_last(xlist_t *list);
  * Note: firstly routine searches list for item to ensure
  * list integrity.
  */
-uint32 xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e);
+uint xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e);
 
 /* insert element to list before given item
  * Note: firstly routine searches list for item to ensure
  * list integrity.
  */
-uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e);
+uint xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e);
 
 /* peek first element of the list */
 list_elem_t *xlist_peek_first(xlist_t *list);
@@ -68,7 +68,7 @@ list_elem_t *xlist_peek_first(xlist_t *list);
 list_elem_t *xlist_peek_last(xlist_t *list);
 
 /* dump all elements into array */
-uint32 xlist_dump_elements(xlist_t *list, list_elem_t **elements);
+uint xlist_dump_elements(xlist_t *list, list_elem_t **elements);
 
 /* default add operation */
 #define xlist_add(list, e)      xlist_add_last(list, e)
@@ -286,9 +286,9 @@ static inline bool clist_isempty(list_elem_t *list)
 }
 
 /* returns count of items in list */
-static inline uint32 clist_count(list_elem_t *list)
+static inline uint clist_count(list_elem_t *list)
 {
-    uint32 res = 0;
+    uint res = 0;
     list_elem_t *temp = list;
 
     do {
@@ -302,7 +302,7 @@ static inline uint32 clist_count(list_elem_t *list)
 /* dumps all list elements into array */
 static inline void clist_dump_elements(list_elem_t *list, list_elem_t **elements)
 {
-    uint32 i = 0;
+    uint i = 0;
     list_elem_t *temp = list;
 
     do {

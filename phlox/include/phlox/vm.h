@@ -23,14 +23,16 @@
  */
 typedef struct {
     /*** Amount of RAM in the system ***/
-    uint32  physical_page_size;
-    uint32  total_physical_pages;
+    uint  physical_page_size;
+    uint  total_physical_pages;
 
     /*** Page lists ***/
-    uint32  active_pages;
-    uint32  clear_pages;
-    uint32  free_pages;
-    uint32  unused_pages;
+    uint  active_pages;
+    uint  wired_pages;
+    uint  busy_pages;
+    uint  clear_pages;
+    uint  free_pages;
+    uint  unused_pages;
 } vm_stat_t;
 
 
@@ -38,7 +40,7 @@ typedef struct {
  * This routine called during system init stage
  * for virtual memory initialization.
 */
-uint32 vm_init(kernel_args_t *kargs);
+status_t vm_init(kernel_args_t *kargs);
 
 
 /* Returns available physical memory

@@ -11,12 +11,12 @@
  * Translation map module initialization routine.
  * Called during virtual memory initialization.
 */
-uint32 arch_vm_translation_map_init(kernel_args_t *kargs);
+status_t arch_vm_translation_map_init(kernel_args_t *kargs);
 
 /*
  * Map a page directly without using any of Virtual Memory Manager objects.
  * This routine used only during system start up. Do not use after.
 */
-uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint32 attributes);
+status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint attributes);
 
 #endif

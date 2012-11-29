@@ -12,9 +12,9 @@ vm_stat_t VM_State;
 
 
 /* init virtual memory */
-uint32 vm_init(kernel_args_t *kargs)
+status_t vm_init(kernel_args_t *kargs)
 {
-   uint32 err;
+   status_t err;
 
    /* clear VM statistics */
    memset(&VM_State, 0, sizeof(vm_stat_t));

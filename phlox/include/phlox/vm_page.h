@@ -15,13 +15,13 @@ typedef struct {
     /* pages list node */
     list_elem_t list_node;
     /* physical number of the page */
-    uint32 ppn;
+    uint ppn;
     /* references count to page */
-    uint32 ref_count;
+    uint ref_count;
     /* page type */
-    uint32 type  : 2;
+    uint type  : 2;
     /* page state */
-    uint32 state : 4;
+    uint state : 4;
 } vm_page_t;
 
 /* Page types */
@@ -33,6 +33,9 @@ enum {
 enum {
     VM_PAGE_STATE_ACTIVE = 0,  /* Active page */
     VM_PAGE_STATE_FREE,        /* Free page */
+    VM_PAGE_STATE_CLEAR,       /* Clear page */
+    VM_PAGE_STATE_WIRED,       /* Wired page */
+    VM_PAGE_STATE_BUSY,        /* Busy page */
     VM_PAGE_STATE_UNUSED       /* Unused or reserved page */
 };
 
@@ -43,36 +46,72 @@ enum {
  * Pre initialization routine.
  * Computes memory sizes and sets memory statistics structure.
  */
-uint32 vm_page_preinit(kernel_args_t *kargs);
+status_t vm_page_preinit(kernel_args_t *kargs);
 
 /*
  * Page module initialization.
  * Initializes page lists.
  */
-uint32 vm_page_init(kernel_args_t *kargs);
+status_t vm_page_init(kernel_args_t *kargs);
 
 /* Allocate virtual space of given size from kernel args structure. */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size);
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
 /* Allocate free physical page from kernel args structure. */
-addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs);
+addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs);
 /*
  * Allocate memory block of given size form kernel args structure.
  * Attributes parameter specifies access rights to allocated block.
 */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes);
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes);
 
 /*
- * Mark given physical page as in use, but stil not
+ * Mark given physical page as in use, but still not
  * used by VM
  *
 */
-uint32 vm_page_mark_page_inuse(addr_t page);
+status_t vm_page_mark_page_inuse(addr_t page);
 
 /*
- * Mark given range of physical pages as in use, but stil not
+ * Mark given range of physical pages as in use, but still not
  * used by VM
  *
 */
-uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages);
+status_t vm_page_mark_range_inuse(addr_t start_page, size_t len_pages);
+
+/*
+ * Allocate specific page by its physical number and
+ * state in VM subsystem
+*/
+vm_page_t *vm_page_alloc_specific(addr_t page_num, uint page_state);
+
+/*
+ * Allocate page by state in VM subsystem
+*/
+vm_page_t *vm_page_alloc(uint page_state);
+
+/*
+ * Allocate continuous range of pages by state in VM subsystem
+*/
+vm_page_t *vm_page_alloc_range(uint page_state, addr_t npages);
+
+/*
+ * Look up a page
+*/
+vm_page_t *vm_page_lookup(addr_t page_num);
+
+/*
+ * Set page state in VM subsystem
+*/
+status_t vm_page_set_state(vm_page_t *page, uint page_state);
+
+/*
+ * Returns total pages count
+*/
+size_t vm_page_pages_count(void);
+
+/*
+ * Returns free pages count
+*/
+size_t vm_page_free_pages_count(void);
 
 #endif

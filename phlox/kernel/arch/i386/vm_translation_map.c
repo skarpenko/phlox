@@ -9,7 +9,7 @@
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
 #include <phlox/processor.h>
-#include <phlox/arch/vm_transmap.h>
+#include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 
@@ -87,7 +87,7 @@ static void deallocate_page_hole(mmu_pde *pgdir, uint32 pde_idx, bool inv_ar)
 }
 
 /* init translation map module */
-uint32 arch_vm_transmap_init(kernel_args_t *kargs)
+uint32 arch_vm_translation_map_init(kernel_args_t *kargs)
 {
     uint32 pghole_pde_idx;
     mmu_pte *pghole;
@@ -97,7 +97,7 @@ uint32 arch_vm_transmap_init(kernel_args_t *kargs)
     pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
                                       kargs->arch_args.phys_pgdir, true);
     if(!pghole_pde_idx)
-        panic("arch_vm_transmap_init: page hole allocation failed. :(");
+        panic("arch_vm_translation_map_init: page hole allocation failed. :(");
 
     /* page hole address */
     pghole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
@@ -169,7 +169,7 @@ uint32 arch_vm_transmap_init(kernel_args_t *kargs)
  * 4Mb of page tables into a 4Mb region.
  * This routine used only during system start up. Do not use after.
  */
-uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint32 attributes)
+uint32 vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint32 attributes)
 {
     mmu_pte *pgentry;
     uint32 pghole_pde_idx;
@@ -181,7 +181,7 @@ uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t
     pghole_pde_idx = allocate_page_hole((mmu_pde *)kargs->arch_args.virt_pgdir,
                                       kargs->arch_args.phys_pgdir, true);
     if(!pghole_pde_idx)
-        panic("vm_transmap_quick_map: page hole allocation failed. :(");
+        panic("vm_tmap_quick_map: page hole allocation failed. :(");
 
     /* page hole address */
     page_hole = (mmu_pte *)PDENT_TO_VADDR(pghole_pde_idx);
@@ -196,7 +196,7 @@ uint32 vm_transmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t
         /* we need to allocate a page table */
         pgtable = vm_alloc_phpage_from_kargs(kargs);
         if(!pgtable)
-           panic("vm_transmap_quick_map: failed to allocate physical page.");
+           panic("vm_tmap_quick_map: failed to allocate physical page.");
         /* page table is in pages, convert to physical address */
         pgtable *= PAGE_SIZE;
 

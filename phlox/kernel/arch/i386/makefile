@@ -8,7 +8,7 @@ KERNEL_ARCH_I386_O_FILES += \
 	arch_i386.o \
 	processor.o \
 	vm.o \
-	vm_transmap.o \
+	vm_translation_map.o \
 	interrupt.o \
 	int_entry.o
 

@@ -4,7 +4,7 @@
 */
 #include <phlox/kernel.h>
 #include <phlox/list.h>
-#include <phlox/arch/vm_transmap.h>
+#include <phlox/arch/vm_translation_map.h>
 #include <phlox/processor.h>
 #include <phlox/spinlock.h>
 #include <phlox/errors.h>
@@ -289,7 +289,7 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes)
         pspot = vm_alloc_phpage_from_kargs(kargs);
         if(pspot == 0)
             panic("error allocating physical page from globalKargs!\n");
-        vm_transmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
+        vm_tmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
     }
 
     /* return start address of allocated block */

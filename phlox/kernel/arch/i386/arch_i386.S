@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -108,3 +108,58 @@ GLOBAL(__arch_invalidate_TLB_list_link): .long 0
 FUNCTION(arch_invalidate_TLB_list):
     jmp *__arch_invalidate_TLB_list_link
 #endif
+
+/* void i386_fpu_fsave(fpu_state *state) */
+FUNCTION(i386_fpu_fsave):
+    movl   ARG0, %eax
+    fsave  (%eax)       /* save fpu context */
+    ret
+
+/* void i386_fpu_frstor(fpu_state *state) */
+FUNCTION(i386_fpu_frstor):
+    movl    ARG0, %eax
+    frstor  (%eax)      /* load fpu context */
+    ret
+
+/* void i386_fpu_fsr_swap(fpu_state *old_state, fpu_state *new_state) */
+FUNCTION(i386_fpu_fsr_swap):
+    movl    ARG0, %eax
+    fsave   (%eax)       /* save fpu context */
+    movl    ARG1, %eax
+    frstor  (%eax)       /* load new fpu context */
+    ret
+
+/* void i386_fpu_fxsave(fpu_state *state) */
+FUNCTION(i386_fpu_fxsave):
+    movl    ARG0, %eax
+    fxsave  (%eax)      /* save fpu context */
+    ret
+
+/* void i386_fpu_fxrstor(fpu_state *state) */
+FUNCTION(i386_fpu_fxrstor):
+    movl     ARG0, %eax
+    fxrstor  (%eax)      /* load fpu context */
+    ret
+
+/* void i386_fpu_fxsr_swap(fpu_state *old_state, fpu_state *new_state) */
+FUNCTION(i386_fpu_fxsr_swap):
+    movl     ARG0, %eax
+    fxsave   (%eax)      /* save fpu context */
+    movl     ARG1, %eax
+    fxrstor  (%eax)      /* load new fpu context */
+    ret
+
+/* void i386_fpu_context_save(fpu_state *state) */
+GLOBAL(__i386_fpu_context_save_link): .long 0
+FUNCTION(i386_fpu_context_save):
+    jmp *__i386_fpu_context_save_link
+
+/* void i386_fpu_context_load(fpu_state *state) */
+GLOBAL(__i386_fpu_context_load_link): .long 0
+FUNCTION(i386_fpu_context_load):
+    jmp *__i386_fpu_context_load_link
+
+/* void i386_fpu_context_swap(fpu_state *old_state, fpu_state *new_state) */
+GLOBAL(__i386_fpu_context_swap_link): .long 0
+FUNCTION(i386_fpu_context_swap):
+    jmp *__i386_fpu_context_swap_link

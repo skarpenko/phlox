@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -51,6 +51,12 @@ void cpu_i386_arch_invalidate_TLB_list(addr_t pages[], size_t count);
 void cpu_i486_arch_invalidate_TLB_list(addr_t pages[], size_t count);
 #endif
 
+/* links to proper FPU context management routines */
+extern uint32 __i386_fpu_context_save_link;
+extern uint32 __i386_fpu_context_load_link;
+extern uint32 __i386_fpu_context_swap_link;
+
+
 /* architecture specific processor module init */
 void arch_processor_mod_init(arch_processor_t *bsp) {
 #if CPU_i386
@@ -67,6 +73,19 @@ void arch_processor_mod_init(arch_processor_t *bsp) {
        __arch_invalidate_TLB_list_link  = (uint32)&cpu_i486_arch_invalidate_TLB_list;
     }
 #endif
+
+    /* init FPU context management routines */
+    if(bsp->features[I386_FEATURE_D] & X86_CPUID_FXSR) {
+       /* FXSAVE/FXRSTOR instructions supported */
+       __i386_fpu_context_save_link = (uint32)&i386_fpu_fxsave;
+       __i386_fpu_context_load_link = (uint32)&i386_fpu_fxrstor;
+       __i386_fpu_context_swap_link = (uint32)&i386_fpu_fxsr_swap;
+    } else {
+       /* use FSAVE/FRSTOR instructions */
+       __i386_fpu_context_save_link = (uint32)&i386_fpu_fsave;
+       __i386_fpu_context_load_link = (uint32)&i386_fpu_frstor;
+       __i386_fpu_context_swap_link = (uint32)&i386_fpu_fsr_swap;
+    }
 }
 
 /* architecture specific processor set init */

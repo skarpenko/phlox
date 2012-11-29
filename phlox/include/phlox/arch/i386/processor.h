@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_PROCESSOR_H_
@@ -396,5 +396,27 @@ void i386_cpu_feature_str(arch_processor_t *p, char *str);
  * Read processor's time-stamp counter
  */
 uint64 i386_rdtsc();
+
+/*
+ * Save, restore and swap FPU context using FSAVE/FRSTOR instructions
+ */
+void i386_fpu_fsave(fpu_state *state);
+void i386_fpu_frstor(fpu_state *state);
+void i386_fpu_fsr_swap(fpu_state *old_state, fpu_state *new_state);
+
+/*
+ * Save, restore and swap FPU context using FXSAVE/FXRSTOR instructions
+ */
+void i386_fpu_fxsave(fpu_state *state);
+void i386_fpu_fxrstor(fpu_state *state);
+void i386_fpu_fxsr_swap(fpu_state *old_state, fpu_state *new_state);
+
+/*
+ * Save, restore and swap FPU context using default method detected during
+ * checking processor features.
+ */
+void i386_fpu_context_save(fpu_state *state);
+void i386_fpu_context_load(fpu_state *state);
+void i386_fpu_context_swap(fpu_state *old_state, fpu_state *new_state);
 
 #endif

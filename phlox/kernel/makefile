@@ -5,7 +5,8 @@ $(shell mkdir -p $(KERNEL_OUT_DIR))
 KERNEL := $(KERNEL_OUT_DIR)/$(KERNEL)
 
 KERNEL_O_FILES := \
-	main.o
+	main.o \
+	spinlock.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

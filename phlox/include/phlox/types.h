@@ -26,7 +26,18 @@
 #define INC_PLATF(path, x) <path/pc/x>
 #endif
 
+/*
+ * Check at compile time that something is of a particular type.
+ * Always evaluates to 1 so you may use it easily in comparisons.
+ */
+#define typecheck(type,x) \
+({  type __dummy; \
+    typeof(x) __dummy2; \
+    (void)(&__dummy == &__dummy2); \
+    1; \
+})
 
+/* Include architecture specific types */
 #include INC_ARCH(arch,types.h)
 
 #ifndef __cplusplus

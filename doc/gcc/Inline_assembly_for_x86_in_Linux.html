@@ -1,0 +1,440 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US"><head><meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/><title>Inline assembly for x86 in Linux</title><meta http-equiv="PICS-Label" content='(PICS-1.1 "http://www.icra.org/ratingsv02.html" l gen true r (cz 1 lz 1 nz 1 oz 1 vz 1) "http://www.rsac.org/ratingsv01.html" l gen true r (n 0 s 0 v 0 l 0) "http://www.classify.org/safesurf/" l gen true r (SS~~000 1))' />
+<link rel="schema.DC" href="http://purl.org/DC/elements/1.0/" />
+<link rel="SHORTCUT ICON" href="http://www.ibm.com/favicon.ico" />
+<meta name="Owner" content="dW Information/Raleigh/IBM" />
+<meta name="DC.Language" scheme="rfc1766" content="en-US" />
+<meta name="IBM.Country" content="ZZ" />
+<meta name="Security" content="Public" />
+<!-- <meta name="IBM.SpecialPurpose" content="SP001" />
+<meta name="IBM.PageAttributes" content="sid=1003"/> -->
+<meta name="Source" content="Based on v14 Template Generator, Template 14"/>
+<meta name="Abstract" content="Bharata B. Rao offers a guide to the overall use and structure of inline assembly for x86 on the Linux platform. He covers the basics of inline assembly and its various usages, gives some basic inline assembly coding guidelines, and explains the instances of inline assembly code in the Linux kernel." /><meta name="Description" content="Bharata B. Rao offers a guide to the overall use and structure of inline assembly for x86 on the Linux platform. He covers the basics of inline assembly and its various usages, gives some basic inline assembly coding guidelines, and explains the instances of inline assembly code in the Linux kernel.f
+      " /><meta name="Keywords" content="Bharata Rao, inline assembly, x86, Linux, assembly coding guidelines, Linux kernel, GNU assembler syntax, assembly language, C statement linux tutorials, linux training, linux standards, linux code, linux resources, linux programming, open source standards, linux how to, tttlca" /><meta name="DC.Date" scheme="iso8601" content="2001-03-01" /><meta name="DC.Type" scheme="IBM_ContentClassTaxonomy" content="CT316" /><meta name="DC.Subject" scheme="IBM_SubjectTaxonomy" content="" /><meta name="DC.Rights" content="Copyright (c) 2001 by IBM Corporation" /> <meta name="Robots" content="index,follow" /><meta name="IBM.Effective" scheme="W3CDTF" content="2001-03-01" /><meta name="Last update" content="13062005ganesab@us.ibm.com" /><!-- STYLESHEETS/SCRIPTS -->
+<!-- for tables -->
+<link rel="stylesheet" type="text/css" media="screen,print" href="//www.ibm.com/common/v14/table.css" /> 
+<!-- end for tables -->
+<script language="JavaScript" src="/developerworks/js/dwcss14.js" type="text/javascript"></script>
+<link rel="stylesheet" type="text/css" href="//www.ibm.com/common/v14/main.css" />
+<link rel="stylesheet" type="text/css" media="all" href="//www.ibm.com/common/v14/screen.css" />
+<link rel="stylesheet" type="text/css" media="print" href="//www.ibm.com/common/v14/print.css" />
+<script language="JavaScript" src="//www.ibm.com/common/v14/detection.js" type="text/javascript"></script>
+<script language="JavaScript" src="/developerworks/js/dropdown.js" type="text/javascript"></script>
+<script language="JavaScript" src="/developerworks/email/grabtitle.js" type="text/javascript"></script>
+<script language="JavaScript" src="/developerworks/email/emailfriend2.js" type="text/javascript"></script><script language="JavaScript" src="/developerworks/js/urltactic.js" type="text/javascript"></script><script language="JavaScript" type="text/javascript">
+ <!--
+ setDefaultQuery('linuxart');
+ //-->
+</script>
+<!--START RESERVED FOR FUTURE USE INCLUDE FILES--><script language="javascript" src="/developerworks/js/ajax1.js" type="text/javascript"></script><script language="javascript" src="/developerworks/js/searchcount.js" type="text/javascript"></script><!--END RESERVED FOR FUTURE USE INCLUDE FILES--><script language="JavaScript" type="text/javascript">var emailAbstract = "Bharata B. Rao offers a guide to the overall use and structure of inline assembly for x86 on the Linux platform. He covers the basics of inline assembly and its various usages, gives some basic inline assembly coding guidelines, and explains the instances of inline assembly code in the Linux kernel."; </script></head><body><!--MASTHEAD_BEGIN--><table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr valign="top">
+<td class="bbg" width="110"><a href="http://www.ibm.com/"><img alt="IBM&reg;" border="0" height="52" src="//www.ibm.com/i/v14/t/ibm-logo.gif" width="110"/></a></td>
+<td class="bbg"><img src="//www.ibm.com/i/c.gif" width="1" height="1" border="0" alt="" /></td>
+<td align="right"  class="mbbg" width="650">
+<table border="0" cellpadding="0" cellspacing="0" align="right" >
+<tr class="cty-tou">
+<td rowspan="2" width="17" class="upper-masthead-corner"><a href="#main"><img src="//www.ibm.com/i/c.gif" border="0" width="1" height="1" alt="Skip to main content"/></a></td>
+<td align="left">
+<table border="0" cellpadding="0" cellspacing="0" align="left">
+<tr>
+<td><span class="spacer">&nbsp;&nbsp;&nbsp;&nbsp;</span><b class="country">Country/region</b><span class="spacer">&nbsp;[</span><a class="ur-link" href="http://www.ibm.com/developerworks/country/">select</a><span class="spacer">]</span></td>
+<td width="29" class="upper-masthead-divider">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td align="left"><a class="ur-link" href="http://www.ibm.com/legal/">Terms of use</a></td>
+</tr>
+</table>
+</td>
+<td width="40">&nbsp;</td>
+</tr>
+<tr>
+<td class="cty-tou-border" height="1" colspan="2"><img src="//www.ibm.com/i/c.gif" alt="" height="1" width="1"/></td>
+</tr>
+<tr>
+<td colspan="3"><img alt="" height="8" src="//www.ibm.com/i/c.gif" width="1"/></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td align="center" colspan="2">
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<form method="get" action="//www.ibm.com/developerworks/search/searchResults.jsp" id="form1" name="form1"><input type="hidden" name="searchType" value="1"/><input type="hidden" name="searchSite" value="dW"/>
+<td width="18"><label for="q"><img src="//www.ibm.com/i/c.gif" width="1" height="1" alt="Search in:"/></label></td>
+<td align="right"><select id="sq" name="searchScope" class="input-local" size="1">
+<label for="sq"><option value="dW" selected>All of dW</option>
+<option value="dW">-----------------</option>
+<option value="aixunix">&nbsp;&nbsp;AIX and UNIX</option>
+<option value="eserver">&nbsp;&nbsp;IBM Systems</option>
+<option value="db2">&nbsp;&nbsp;Information Mgmt</option>
+<option value="lotus">&nbsp;&nbsp;Lotus</option>
+<option value="rdd">&nbsp;&nbsp;Rational</option>
+<option value="tivoli">&nbsp;&nbsp;Tivoli</option>  
+<option value="WSDD">&nbsp;&nbsp;WebSphere</option>
+<option value="dW">-----------------</option> 
+<option value="archZ">&nbsp;&nbsp;Architecture</option>
+<option value="acZ">&nbsp;&nbsp;Autonomic computing</option>
+<option value="gridZ">&nbsp;&nbsp;Grid computing</option>
+<option value="javaZ">&nbsp;&nbsp;Java technology</option> 
+<option value="linuxZ">&nbsp;&nbsp;Linux</option> 
+<option value="opensrcZ">&nbsp;&nbsp;Open source</option>
+<option value="paZ">&nbsp;&nbsp;Power Architecture</option>
+<option value="webservZ">&nbsp;&nbsp;SOA &amp; Web services</option>
+<option value="webarchZ">&nbsp;&nbsp;Web development</option>  
+<option value="xmlZ">&nbsp;&nbsp;XML</option>
+<option value="dW">-----------------</option>
+<option value="forums">&nbsp;&nbsp;dW forums</option> 
+<option value="dW">-----------------</option>
+<option value="aW">alphaWorks</option>
+<option value="dW">-----------------</option>
+<option value="all">All of IBM</option>
+</label></select></td>
+<td width="7" align="right"><label for="q"><img src="//www.ibm.com/i/c.gif" width="1" height="1" alt="Search for:"/></label>&nbsp;&nbsp;</td>
+<td align="right"><input class="input" id="q" maxlength="100" name="query" size="15" type="text" value=""/>
+</td>
+<td width="7">&nbsp;
+</td>
+<td width="90"><input alt="Search" name="Search" src="//www.ibm.com/i/v14/t/search.gif" type="image" value="Search" /></td>
+<!-- <td width="20">&nbsp;</td> -->
+</form>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="blbg" colspan="3">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td><span class="spacer">&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+<td><a class="masthead-mainlink" href="http://www.ibm.com/">Home</a></td>
+<td class="masthead-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="masthead-mainlink" href="http://www.ibm.com/products/">Products</a></td>
+<td class="masthead-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="masthead-mainlink" href="http://www.ibm.com/servicessolutions/">Services &amp; industry solutions</a></td>
+<td class="masthead-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="masthead-mainlink" href="http://www.ibm.com/support/">Support &amp; downloads</a></td>
+<td class="masthead-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="masthead-mainlink" href="http://www.ibm.com/account/">My IBM</a></td>
+<td><span class="spacer">&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<script src="//www.ibm.com/common/v14/pmh.js" language="JavaScript" type="text/javascript"></script><!--MASTHEAD_END--><!-- CMA ID for this content is: 11094 --> <table id="v14-body-table" border="0" cellpadding="0" cellspacing="0" width="100%"><tr valign="top"><!--LEFTNAV_BEGIN--><td id="navigation" width="150"><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td class="left-nav-spacer"><a href="http://www.ibm.com/developerworks" class="left-nav-overview"> </a></td></tr></table><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td colspan="2" class="left-nav-overview"><a href="http://www.ibm.com/developerworks" class="left-nav-overview">developerWorks</a></td></tr></table><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td colspan="2" class="left-nav-highlight"><a href="#" class="left-nav">In this article:</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h0" class="left-nav-child">GNU assembler syntax in brief</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h1" class="left-nav-child">Inline assembly</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h7" class="left-nav-child">Examples of common inline assembly usage</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h8" class="left-nav-child">Use of specific register constraints</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h9" class="left-nav-child">Using matching constraints</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h10" class="left-nav-child">Use of memory operand constraint</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h11" class="left-nav-child">Using clobbered registers</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#h12" class="left-nav-child">Conclusion</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#resources" class="left-nav-child">Resources</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#author" class="left-nav-child">About the author</a></td></tr><tr class="left-nav-child-highlight"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/cl-bullet.gif"/></td><td><a href="#rate" class="left-nav-child">Rate this page</a></td></tr><tr class="left-nav-last"><td width="14"><img class="display-img" alt="" height="1" width="14" src="//www.ibm.com/i/c.gif"/></td><td width="136"><img class="display-img" alt="" height="19" width="136" src="//www.ibm.com/i/v14/t/left-nav-corner.gif"/></td></tr></table><br /><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td class="related" colspan="2"><b class="related">Related links</b></td></tr><tr class="rlinks"><td><img alt="" height="8" width="2" src="//www.ibm.com/i/v14/t/rl-bullet.gif"/></td><td><a class="rlinks" href="http://www.ibm.com/developerworks/views/linux/library.jsp">Linux technical library</a></td></tr><!--START RESERVED FOR FUTURE USE INCLUDE FILES--><!-- No content currently --><!--END RESERVED FOR FUTURE USE INCLUDE FILES--><tr><td width="14"><img class="display-img" alt="" height="1" width="14" src="//www.ibm.com/i/c.gif"/></td><td width="136"><img class="display-img" alt="" height="19" width="136" src="//www.ibm.com/i/c.gif"/></td></tr></table><!--START RESERVED FOR FUTURE USE INCLUDE FILES--><!-- Next Steps Area:  Start -->
+<!-- Commented out the include call in the dwmaster version of this file to prevent ajax calls
+     being made during article previews and testing.  Live site has uncommented copy of this file (jpp) -->
+<!-- Call Next Steps Servlet -->
+<script language="JavaScript" type="text/javascript">
+<!--
+/*
+ * ajaxInclude makes a call to the url and render the results in the div tag specified in divId
+ */
+function ajaxInclude(url, divId) { 
+ var req = newXMLHttpRequest(); 
+ if (req) { 
+   req.onreadystatechange = getReadyStateHandler(req, 
+	function (result) {  
+           var contents = document.getElementById(divId);  
+           if (result != null && result.length > 0 && contents != null) {
+	     contents.innerHTML = result;  
+           }
+        }); 
+   req.open("GET", url, true);
+   req.send("");
+ }
+}
+//-->
+</script>
+
+<!-- Display Next Steps Result -->
+<div id="nextsteps"></div>
+
+<!-- Initiate Next Steps Call -->
+<script language="JavaScript" type="text/javascript">
+<!-- 
+ ajaxInclude("/developerworks/niagara/jsp/getNiagaraContent.jsp?url="+window.location.href,"nextsteps");
+//-->
+</script>
+<!-- Next Steps Area:  End --><!--END RESERVED FOR FUTURE USE INCLUDE FILES--></td><!--LEFTNAV_END--><td width="100%"><table id="content-table" border="0" cellpadding="0" cellspacing="0" width="100%"><tr valign="top"><td width="100%"><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><a name="main"><img border="0" alt="skip to main content" height="1" width="592" src="//www.ibm.com/i/c.gif"/></a></td></tr></table><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr valign="top"><td height="18" width="10"><img alt="" height="18" width="10" src="//www.ibm.com/i/c.gif"/></td><td width="100%"><img alt="" height="6" width="1" src="//www.ibm.com/i/c.gif"/><br /><a href="http://www.ibm.com/developerworks/" class="bctl">developerWorks</a><span class="bct">  &gt;  </span><a class="bctl" href="http://www.ibm.com/developerworks/linux/">Linux</a><span class="bct">  &gt;</span><img alt="" height="1" width="1" src="//www.ibm.com/i/c.gif"/><br /><h1>Inline assembly for x86 in Linux</h1><p id="subtitle"><em>Putting the pieces together</em></p><img alt="" height="6" width="1" src="//www.ibm.com/i/c.gif" class="display-img"/></td><td class="no-print" width="192"><a href="http://www.ibm.com/developerworks/"><img alt="developerWorks" border="0" height="18" width="192" src="/developerworks/i/dw.gif"/></a></td></tr></table></td></tr></table><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr valign="top"><td width="10"><img alt="" height="1" width="10" src="//www.ibm.com/i/c.gif"/></td><td width="100%"><table class="no-print" border="0" width="160" cellspacing="0" cellpadding="0" align="right"><tr><td width="10"><img alt="" height="1" width="10" src="//www.ibm.com/i/c.gif"/></td><td><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td class="v14-header-1-small">Document options</td></tr></table><table class="v14-gray-table-border" cellspacing="0" cellpadding="0" border="0"><tr><td class="no-padding" width="150"><table width="143" cellspacing="0" cellpadding="0" border="0"><script language="JavaScript" type="text/javascript">
+<!--
+document.write('<tr valign="top"><td width="8"><img src="//www.ibm.com/i/c.gif" width="8" height="1" alt=""/></td><td width="16"><img alt="Set printer orientation to landscape mode" height="16" src="//www.ibm.com/i/v14/icons/printer.gif" width="16" vspace="3" /></td><td width="122"><p><b><a class="smallplainlink" href="javascript:print()">Print this page</a></b></p></td></tr>');
+//-->
+</script>
+<noscript></noscript><script language="JavaScript" type="text/javascript">
+<!-- 5.6 10/24 llk: added cdata around the subdirectory path of email gif-->
+<!--
+document.write('<tr valign="top"><td width="8"><img src="//www.ibm.com/i/c.gif" width="8" height="1" alt=""/></td><td width="16"><img src="//www.ibm.com/i/v14/icons/em.gif" height="16" width="16" vspace="3" alt="Email this page" /></td><td width="122"><p><a class="smallplainlink" href="javascript:void newWindow()"><b>E-mail this page</b></a></p></td></tr>');
+//-->
+</script><noscript><tr valign="top"><td width="8"><img alt="" height="1" width="8" src="//www.ibm.com/i/c.gif"/></td><td width="16"><img alt="" width="16" height="16" src="//www.ibm.com/i/c.gif"/></td><td class="small" width="122"><p><span class="ast">Document options requiring JavaScript are not displayed</span></p></td></tr></noscript></table></td></tr></table><!--START RESERVED FOR FUTURE USE INCLUDE FILES--><!-- 11/28/07 refreshed by gem, per MOC --> 
+
+<!--<br /><table border="0" cellpadding="0" cellspacing="0" width="150"><tr><td class="v14-header-2-small">New forum features</td></tr></table><table border="0" cellpadding="0" cellspacing="0" class="v14-gray-table-border"><tr><td width="150" class="no-padding"><table border="0" cellpadding="0" cellspacing="0" width="143"><tr valign="top"><td width="8"><img src="//www.ibm.com/i/c.gif" width="8" height="1" alt=""/></td><td><img src="//www.ibm.com/i/v14/icons/fw_bold.gif" height="16" width="16" border="0" vspace="3" alt=""/></td><td width="125"><p><a href="http://www.ibm.com/developerworks/community/forum/?S_TACT=105AGX01&amp;S_CMP=LEAF" class="smallplainlink">Try private messaging, 
+read-tracking, and more
+</a>
+</p></td></tr></table></td></tr></table>--><!--END RESERVED FOR FUTURE USE INCLUDE FILES--><br /><table width="150" cellspacing="0" cellpadding="0" border="0"><tr><td class="v14-header-2-small">Rate this page</td></tr></table><table class="v14-gray-table-border" cellspacing="0" cellpadding="0" border="0"><tr><td class="no-padding" width="150"><table width="143" cellspacing="0" cellpadding="0" border="0"><tr valign="top"><td width="8"><img alt="" height="1" width="8" src="//www.ibm.com/i/c.gif"/></td><td><img alt="" vspace="3" border="0" width="16" height="16" src="//www.ibm.com/i/v14/icons/d_bold.gif"/></td><td width="125"><p><a href="#rate" class="smallplainlink"><b>Help us improve this content</b></a></p></td></tr></table></td></tr></table><br /></td></tr></table><p>Level: Advanced</p><p><a href="#author">Bharata Rao</a> (<a href="mailto:rbharata@in.ibm.com?subject=Inline assembly for x86 in Linux">rbharata@in.ibm.com</a>)IBM Linux Technology Center, IBM Software Labs, India<br /></p><p> 01 Mar  2001</p><blockquote>Bharata B. Rao offers a guide to the overall use and structure of inline assembly for x86 on the Linux platform. He covers the basics of inline assembly and its various usages, gives some basic inline assembly coding guidelines, and explains the instances of inline assembly code in the Linux kernel.</blockquote><!--START RESERVED FOR FUTURE USE INCLUDE FILES--><script language="JavaScript" type="text/javascript">
+<!--
+if (document.referrer&&document.referrer!="") { 
+   // document.write(document.referrer);
+   var q = document.referrer;
+   var engine = q;
+   var isG = engine.search(/google\.com/i);
+   var searchTerms;
+   //var searchTermsForDisplay;
+   if (isG != -1) { 
+	   var i = q.search(/q=/);
+	   var q2 = q.substring(i+2);
+	   var j = q2.search(/&/);
+	   j = (j == -1)?q2.length:j;
+	   searchTerms = q.substring(i+2,i+2+j);
+	   if (searchTerms.length != 0) {
+	       searchQuery(searchTerms);
+	       document.write("<div id=\"contents\"></div>");
+	   }
+   } 
+}
+//-->
+</script><!--END RESERVED FOR FUTURE USE INCLUDE FILES--><p>If you're a Linux kernel developer, you probably find yourself coding  highly architecture-dependent functions or optimizing a code path pretty often. And you probably do this by inserting assembly language instructions into the middle of C statements (a method otherwise known as inline assembly). Let's take a look at the specific
+usage of inline assembly in Linux. (We'll limit our discussion to the IA32 assembly.)</p><p><a name="h0"><span class="atitle">GNU assembler syntax in brief</span></a></p><p>
+
+
+Let's first look at the basic assembler syntax used in Linux. GCC, the GNU C Compiler for Linux, uses AT&amp;T assembly syntax. Some of the basic rules of this syntax are listed below. (The list is by no means complete; I've included only those rules pertinent to inline assembly.)</p><p>
+<b>Register naming</b>
+<br />
+Register names are prefixed by %. That is, if eax has to be used, it should be used as %eax.</p><p>
+<b>Source and destination ordering</b>
+<br />
+ In any instruction, source comes first and destination follows. This differs from Intel syntax, where source comes after destination.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    mov %eax, %ebx, transfers the contents of eax to ebx.
+</pre></td></tr></table><br /><p>
+<b>Size of operand</b>
+<br />
+ The instructions are suffixed by b, w, or l, depending on whether the operand is a byte, word, or long. This is not mandatory; GCC tries provide the appropriate suffix by reading the operands. But specifying the suffixes manually improves the code
+readability and eliminates the possibility of the compilers guessing incorrectly.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    movb %al, %bl -- Byte move
+	movw %ax, %bx -- Word move
+	movl %eax, %ebx -- Longword move
+</pre></td></tr></table><br /><p>
+<b>Immediate operand</b>
+<br />
+ An immediate operand is specified by using $.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    movl $0xffff, %eax -- will move the value of 0xffff into eax register.
+</pre></td></tr></table><br /><p>
+<b>Indirect memory reference</b>
+<br />
+ Any indirect references to memory are done by using ( ).</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+ movb (%esi), %al -- will transfer the byte in the memory 
+                     pointed by esi into al  register
+</pre></td></tr></table><br /><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h1"><span class="atitle">Inline assembly</span></a></p><p>
+
+
+GCC provides the special construct "asm" for inline assembly, which has the following format:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+			
+		
+	asm ( assembler template
+	    : output operands			 	(optional)
+	    : input operands			 	(optional)
+	    : list of clobbered registers 	  	(optional)
+	    );	
+</pre></td></tr></table><br /><p>In this example, the assembler template consists of assembly instructions. The input operands are the C expressions that serve as input operands to the instructions. The output operands are the C expressions on which the output of the assembly instructions will be performed.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    asm ("movl %%cr3, %0\n" :"=r"(cr3val));
+ </pre></td></tr></table><br /><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+  a	%eax
+  b 	%ebx
+  c 	%ecx
+  d 	%edx
+  S	%esi
+  D	%edi
+</pre></td></tr></table><br /><p>
+<b>Memory operand constraint(m)</b>
+<br />
+ When the operands are in the memory, any operations performed on them will occur directly in the memory location, as opposed to register constraints, which first store the value in a register to be modified and then write it back to the memory location. But register constraints are usually used only when they are absolutely necessary for an instruction or they significantly speed up the process. Memory constraints can be used most efficiently in cases where a C variable needs to be updated inside "asm" and you really don't want to use a register to hold its value. For example, the value of idtr is stored in the memory location loc:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+     ("sidt %0\n" : :"m"(loc));
+  </pre></td></tr></table><br /><p>
+<b>Matching(Digit) constraints</b>
+<br />
+ In some cases, a single variable may serve as both the input and the output operand. Such cases may be specified in "asm" by using matching constraints.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    asm ("incl %0" :"=a"(var):"0"(var));
+</pre></td></tr></table><br /><p>
+In our example for matching constraints, the register %eax is used as both the input and the output variable. var input is read to %eax and updated %eax is stored in var again after increment. "0" here specifies the same constraint as the 0th output variable. That is, it specifies that the output instance of var should be stored in %eax only. This constraint can be used:
+</p><ul>
+<li>In cases where input is read from a variable or the variable is modified and modification is written back to the same variable </li>
+<li>In cases where separate instances of input and output operands are not necessary</li>
+</ul><p>
+</p><p>The most important effect of using matching restraints is that they lead to the efficient use of available registers.</p><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h7"><span class="atitle">Examples of common inline assembly usage</span></a></p><p>
+
+
+The following examples illustrate usage through different operand constraints. There are too many constraints to give examples for each one, but these are the most frequently used constraint types.</p><p>
+<b>"asm" and the register constraint "r"</b>
+<br />
+
+Let's first take a look at "asm" with the register constraint 'r'. Our example shows how GCC allocates registers, and how it updates the value of output variables.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+		
+	
+int main(void)
+{
+	int x = 10, y;
+	
+	asm ("movl %1, %%eax;
+	     "movl %%eax, %0;"
+		:"=r"(y)	/* y is output operand */
+		:"r"(x)		/* x is input operand */
+		:"%eax");	/* %eax is clobbered register */
+}
+
+</pre></td></tr></table><br /><p>In this example, the value of x is copied to y inside "asm". x and y are passed to "asm" by being stored in registers. The assembly code generated for this example looks like this:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+		
+	
+    main:
+        pushl %ebp
+        movl %esp,%ebp
+        subl $8,%esp
+        movl $10,-4(%ebp)	 
+        movl -4(%ebp),%edx	/* x=10 is stored in %edx */
+#APP	/* asm starts here */	
+        movl %edx, %eax		/* x is moved to %eax */
+        movl %eax, %edx		/* y is allocated in edx and updated */
+
+#NO_APP	/* asm ends here */
+        movl %edx,-8(%ebp)	/* value of y in stack is updated with 
+				   the value in %edx */ 
+</pre></td></tr></table><br /><p>
+GCC is free here to allocate any register when the "r" constraint is used. In our example it chose %edx for storing x. After reading the value of x in %edx, it allocated the same register for y.</p><p>Since y is specified in the output operand section, the updated value in %edx is stored in -8(%ebp), the location of y on stack. If y were specified in the input section, the value of y on stack would
+not be updated, even though it does get updated in the temporary register
+storage of y(%edx).</p><p>And since %eax is specified in the clobbered list, GCC doesn't use it anywhere else to store data.</p><p>Both input x and output y were allocated in the same %edx register, assuming that inputs are consumed before outputs are produced. Note that if you have a lot of instructions, this may not be the case. To make sure that input and output are allocated in different registers, we can specify the &amp; constraint modifier. Here is our example with the constraint modifier added.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+	int main(void)
+{
+	int x = 10, y;
+	
+	asm ("movl %1, %%eax;
+	     "movl %%eax, %0;"
+		:"=&amp;r"(y)	/* y is output operand, note the	
+				   &amp; constraint modifier. */
+		:"r"(x)		/* x is input operand */
+		:"%eax");	/* %eax is clobbered register */
+}
+</pre></td></tr></table><br /><p>
+And here is the assembly code generated for this example, from which it is evident that x and y have been stored in different registers across "asm".</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    main:
+        pushl %ebp
+        movl %esp,%ebp
+        subl $8,%esp
+        movl $10,-4(%ebp)
+        movl -4(%ebp),%ecx	/* x, the input is in %ecx */
+#APP
+	movl %ecx, %eax
+	movl %eax, %edx		/* y, the output is in %edx */
+
+#NO_APP
+        movl %edx,-8(%ebp)
+ </pre></td></tr></table><br /><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h8"><span class="atitle">Use of specific register constraints</span></a></p><p>
+
+
+Now let's take a look at how to specify individual registers as constraints for the operands. In the following example, the cpuid instruction takes the input in the %eax register and gives output in four registers: %eax, %ebx, %ecx, %edx. The input to cpuid (the variable "op") is passed to "asm" in the eax register, as cpuid expects it to. The a, b, c, and d constraints are used in the output to collect the values in the four registers, respectively.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    asm ("cpuid"
+                : "=a" (_eax),
+                  "=b" (_ebx),
+                  "=c" (_ecx),
+                  "=d" (_edx)
+                : "a" (op));
+  </pre></td></tr></table><br /><p>And below you can see the generated assembly code for this (assuming the _eax, _ebx, etc....
+variables are stored on stack):</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    movl -20(%ebp),%eax	/* store 'op' in %eax -- input */
+#APP
+        cpuid
+#NO_APP
+        movl %eax,-4(%ebp)	/* store %eax in _eax -- output */
+        movl %ebx,-8(%ebp)	/* store other registers in
+        movl %ecx,-12(%ebp)	   respective output variables */  
+        movl %edx,-16(%ebp)
+</pre></td></tr></table><br /><p>The strcpy function can be implemented using the "S" and "D" constraints in the following manner:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    asm ("cld\n
+	      rep\n
+	      movsb"
+	      : /* no input */
+	      :"S"(src), "D"(dst), "c"(count));
+</pre></td></tr></table><br /><p>The source pointer src is put into %esi by using the "S" constraint, and the destination
+pointer dst is put into %edi using the "D" constraint. The count value is put into
+%ecx as it is needed by rep prefix.</p><p>And here you can see another constraint that uses the two registers %eax and %edx to combine two 32-bit values and generate a 64-bit value:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+#define rdtscll(val) \
+     __asm__ __volatile__ ("rdtsc" : "=A" (val))
+
+The generated assembly looks like this (if val has a 64 bit memory space).
+
+#APP
+        rdtsc
+#NO_APP
+        movl %eax,-8(%ebp)	/* As a result of A constraint 
+        movl %edx,-4(%ebp)	   %eax and %edx serve as outputs */
+
+Note here that the values in %edx:%eax serve as 64 bit output.
+</pre></td></tr></table><br /><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h9"><span class="atitle">Using matching constraints</span></a></p><p>
+
+
+Here you can see the code for the system call, with four parameters:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
+type name (type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
+{ \
+long __res; \
+__asm__ volatile ("int $0x80" \
+        : "=a" (__res) \
+        : "0" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
+          "d" ((long)(arg3)),"S" ((long)(arg4))); \
+__syscall_return(type,__res); \
+}
+</pre></td></tr></table><br /><p>In the above example, four arguments to the system call are put into %ebx, %ecx, %edx, and %esi by using the constraints b, c, d, and S. Note that the "=a" constraint is used in the output so that the return value of the system call, which is in %eax, is put into the variable __res. By using the matching constraint "0" as the first operand constraint in the input section, the syscall number __NR_##name is put into %eax and serves as the input to the system call. Thus %eax serves here as both input and output register. No separate registers are used for this purpose. Note also that the input (syscall number) is consumed (used) before the output (the return value of syscall) is produced.</p><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h10"><span class="atitle">Use of memory operand constraint</span></a></p><p>
+
+
+Consider the following atomic decrement operation:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    __asm__ __volatile__(
+                "lock; decl %0"
+                :"=m" (counter)
+                :"m" (counter));
+</pre></td></tr></table><br /><p>The generated assembly for this would look something like this:</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+    #APP
+	lock
+	decl -24(%ebp) /* counter is modified on its memory location */
+#NO_APP.
+</pre></td></tr></table><br /><p>You might think of using the register constraint here for the counter. If you do, the value of the counter must first be copied on to a register, decremented, and then updated to its memory. But then you lose the whole purpose of locking and atomicity, which clearly shows the necessity of using the memory constraint.</p><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h11"><span class="atitle">Using clobbered registers</span></a></p><p>
+
+
+Consider an elementary implementation of memory copy.</p><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="code-outline"><pre class="displaycode">
+	asm ("movl $count, %%ecx;
+	      up: lodsl;	
+	      stosl;
+	      loop up;"
+		: 			/* no output */
+		:"S"(src), "D"(dst)	/* input */
+		:"%ecx", "%eax" );	/* clobbered list */	
+</pre></td></tr></table><br /><p>
+While lodsl modifies %eax, the lodsl and stosl instructions use it implicitly. And the %ecx register explicitly loads the count. But GCC won't know this unless we inform it, which is exactly what we do by including %eax and %ecx in the clobbered register set. Unless this is done, GCC assumes that %eax and %ecx are free, and it may decide to use them for storing other data. Note here that %esi and %edi are used by "asm", and are not in the clobbered list. This is because it has been declared that "asm" will use them in the input operand list. The bottom line here is that if a register is used inside "asm" (implicitly or explicitly), and it is not present in either the input or output operand list, you must list it as a clobbered register.</p><br /><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td><img width="100%" src="//www.ibm.com/i/v14/rules/blue_rule.gif" height="1" alt=""/></td></tr></table><table class="no-print" cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /><p><a name="h12"><span class="atitle">Conclusion</span></a></p><p>
+
+
+On the whole, inline assembly is huge and provides a lot of features that we did not even touch on here. But with a basic grasp of the material in this article, you should be able to start coding inline assembly on your own.</p><br /><br /><p><a name="resources"><span class="atitle">Resources</span></a></p><ul><li>Refer to the <a href="http://gcc.gnu.org/onlinedocs/gcc-2.95.3/gcc.html">Using and Porting the GNU Compiler Collection (GCC)</a> manual.<br /><br /></li><li>Refer to the <a href="http://www.gnu.org/manual/gas-2.9.1/as.html">GNU Assembler (GAS)</a> manual.<br /><br /></li><li>Check out <a href="http://www.delorie.com/djgpp/doc/brennan/brennan_att_inline_djgpp.html">
+Brennan's Guide to Inline Assembly</a>.<br /></li></ul><br /><br /><p><a name="author"><span class="atitle">About the author</span></a></p><table border="0" cellspacing="0" cellpadding="0" width="100%"><tr><td colspan="3"><img alt="" width="100%" height="5" src="//www.ibm.com/i/c.gif"/></td></tr><tr align="left" valign="top"><td><p/></td><td><img alt="" width="4" height="5" src="//www.ibm.com/i/c.gif"/></td><td width="100%"><p>
+Bharata B. Rao has a bachelor of Engineering in Electronics and Communication from
+Mysore University, India. He has been working for IBM Global Services, India since 1999. He is a member of the IBM Linux Technology Center, where he concentrates primarily on Linux RAS (Reliability, Availability, and Serviceability). Other areas of interest are operating system  internals and processor architecture. He can be reached at <a href="mailto:rbharata@in.ibm.com?cc=">rbharata@in.ibm.com</a>.
+</p></td></tr></table><br /><br /><br /><p class="no-print"><span class="atitle"><a name="rate">Rate this page</a></span></p><span class="no-print"><form action="http://www-128.ibm.com/developerworks/utils/RatingsHandler" method="post"><input value="1" name="SITE_ID" type="hidden"/><input value="Inline assembly for x86 in Linux" name="ArticleTitle" type="hidden"/><input value="Linux" name="Zone" type="hidden"/><input value="http://www.ibm.com/developerworks/thankyou/feedback-thankyou.html" name="RedirectURL" type="hidden"/><input value="11094" name="ArticleID" type="hidden"/><input value="03012001" name="publish-date" type="hidden"/><input type="hidden" name="author1-email" value="rbharata@in.ibm.com" /><input type="hidden" name="author1-email-cc" value="" /><script language="javascript" type="text/javascript">document.write('<input type="hidden" name="url" value="'+location.href+'" />');</script><img width="100%" src="//www.ibm.com/i/v14/rules/gray_rule.gif" height="1" alt=""/><br /><table width="100%" class="v14-gray-table-border" cellspacing="0" cellpadding="0" border="0"><tr><td width="100%"><table width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td colspan="3"><p>Please take a moment to complete this form to help us better serve you.</p></td></tr><tr valign="top"><td width="140"><img width="140" src="//www.ibm.com/i/c.gif" height="1" alt=""/><br /><p><label for="Goal">Did the information help you to achieve your goal?</label></p></td><td width="303"><img width="303" src="//www.ibm.com/i/c.gif" height="6" alt=""/><br /><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td><input value="Yes" id="Goal" name="Goal" type="radio"/>Yes</td><td><input value="No" id="Goal" name="Goal" type="radio"/>No</td><td><input value="Don't know" id="Goal" name="Goal" type="radio"/>Don't know</td></tr></table></td><td width="100%"> </td></tr><tr><td colspan="3"><img alt="" height="12" width="8" src="//www.ibm.com/i/c.gif"/></td></tr><tr valign="top"><td width="140"><img width="140" src="//www.ibm.com/i/c.gif" height="1" alt=""/><br /><p><label for="Comments">Please provide us with comments to help improve this page:</label></p></td><td width="303"><img width="303" src="//www.ibm.com/i/c.gif" height="6" alt=""/><br /><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td><textarea class="iform" cols="35" rows="5" wrap="virtual" id="Comments" name="Comments"> </textarea></td></tr></table></td><td width="100%"> </td></tr><tr><td colspan="3"><img alt="" height="12" width="8" src="//www.ibm.com/i/c.gif"/></td></tr><tr valign="top"><td width="140"><img width="140" src="//www.ibm.com/i/c.gif" height="1" alt=""/><br /><p><label for="Rating">How useful is the information?</label></p></td><td width="303"><img width="303" src="//www.ibm.com/i/c.gif" height="6" alt=""/><br /><table width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="left" width="60"><input value="1" id="Rating" name="Rating" type="radio"/>1</td><td align="left" width="60"><input value="2" id="Rating" name="Rating" type="radio"/>2</td><td align="left" width="60"><input value="3" id="Rating" name="Rating" type="radio"/>3</td><td align="left" width="60"><input value="4" id="Rating" name="Rating" type="radio"/>4</td><td align="left" width="63"><input value="5" id="Rating" name="Rating" type="radio"/>5</td></tr><tr><td align="left" width="60"><span class="greytext">Not</span><br /><span class="greytext">useful</span></td><td align="left" width="60"><img src="//www.ibm.com/i/c.gif" height="1" width="1" alt=""/></td><td align="left" width="60"><img src="//www.ibm.com/i/c.gif" height="1" width="1" alt=""/></td><td align="left" width="60"><img src="//www.ibm.com/i/c.gif" height="1" width="1" alt=""/></td><td align="left" width="63"><span class="greytext">Extremely<br />useful</span></td></tr></table></td><td width="100%"> </td></tr></table></td></tr></table><table class="v14-gray-table-border" width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td colspan="3"><img alt="" height="8" width="8" src="//www.ibm.com/i/c.gif"/></td></tr><tr><td width="8"><img alt="" height="1" width="8" src="//www.ibm.com/i/c.gif"/></td><td colspan="3"><input alt="Submit" height="21" width="120" border="0" src="//www.ibm.com/i/v14/buttons/submit.gif" type="image"/></td></tr><tr><td colspan="3"><img alt="" height="8" width="8" src="//www.ibm.com/i/c.gif"/></td></tr></table></form><br /></span><span class="no-print"><table cellspacing="0" cellpadding="0" align="right"><tr align="right"><td><table border="0" cellpadding="0" cellspacing="0"><tr><td valign="middle"><img width="16" src="//www.ibm.com/i/v14/icons/u_bold.gif" height="16" border="0" alt=""/><br /></td><td valign="top" align="right"><a href="#main" class="fbox"><b>Back to top</b></a></td></tr></table></td></tr></table><br /><br /></span></td><td width="10"><img alt="" height="1" width="10" src="//www.ibm.com/i/c.gif"/></td></tr></table></td></tr></table><!--FOOTER_BEGIN--><br />
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td class="bbg" height="19">
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td><span class="spacer">&nbsp;&nbsp;&nbsp;&nbsp;</span><a class="mainlink" href="http://www.ibm.com/ibm/">About IBM</a></td>
+<td class="footer-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="mainlink" href="http://www.ibm.com/privacy/">Privacy</a></td>
+<td class="footer-divider" width="27">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td><a class="mainlink" href="http://www.ibm.com/contact/">Contact</a></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<script type="text/javascript" language="JavaScript1.2" src="//www.ibm.com/common/stats/stats.js"></script>
+<noscript><img src="//stats.www.ibm.com/rc/images/uc.GIF?R=noscript" width="1" height="1" alt="" border="0" /></noscript><!--FOOTER_END--><!--XSLT stylesheet used to transform this file:  dw-document-html-5.8.xsl--></body></html>

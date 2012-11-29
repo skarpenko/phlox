@@ -2,6 +2,7 @@
 * Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
+#include <string.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 #include <phlox/heap.h>
@@ -14,6 +15,9 @@ vm_stat_t VM_State;
 uint32 vm_init(kernel_args_t *kargs)
 {
    uint32 err;
+
+   /* clear VM statistics */
+   memset(&VM_State, 0, sizeof(vm_stat_t));
    
    /* execute architecture-specific init */
    err = arch_vm_init(kargs);

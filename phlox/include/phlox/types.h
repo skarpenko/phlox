@@ -121,6 +121,20 @@ typedef volatile unsigned short      vushort;
 typedef volatile unsigned int        vuint;
 typedef volatile unsigned long       vulong;
 
+typedef unsigned char      uchar_t;
+typedef unsigned short     ushort_t;
+typedef unsigned int       uint_t;
+typedef unsigned long      ulong_t;
+
+typedef volatile unsigned char       vuchar_t;
+typedef volatile unsigned short      vushort_t;
+typedef volatile unsigned int        vuint_t;
+typedef volatile unsigned long       vulong_t;
+
+typedef int             intptr_t;
+typedef unsigned int    uintptr_t;
+
+
 /* system types */
 typedef int64 bigtime_t;
 typedef uint64 vnode_id;

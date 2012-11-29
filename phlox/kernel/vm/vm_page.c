@@ -16,6 +16,7 @@ typedef xlist_t page_list_t;
 
 /* Lists of pages */
 static page_list_t  free_pages_list;    /* List of free pages   */
+static page_list_t  clear_pages_list;   /* List of clear pages  */
 static page_list_t  active_pages_list;  /* List of active pages */
 
 /* Array of all available pages */
@@ -128,6 +129,7 @@ uint32 vm_page_preinit(kernel_args_t *kargs)
 
     /* init lists */
     xlist_init(&free_pages_list);
+    xlist_init(&clear_pages_list);
     xlist_init(&active_pages_list);
 
     /* init spinlock */

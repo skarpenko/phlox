@@ -25,4 +25,10 @@ void kfree(void *address);
 /* kfree and set to NULL */
 void kfree_and_null(void **address);
 
+/*
+ * Allocates npages of hardware pages and guarantees allocated
+ * memory page aligned.
+ */
+void *kmalloc_pages(size_t npages);
+
 #endif

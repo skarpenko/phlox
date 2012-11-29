@@ -5,7 +5,7 @@
 #ifndef _SYS_DEBUG_H_
 #define _SYS_DEBUG_H_
 
-#ifdef (__KERNEL__ && __DEBUG__)
+#if defined(__KERNEL__) && defined(__DEBUG__)
 extern int panic(const char *fmt, ...);
 #define ASSERT(ex) \
           if(!(ex)) panic("[ASSERT] File %s, Line %d\n", \

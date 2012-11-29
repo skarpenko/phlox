@@ -13,6 +13,7 @@
  * Note: Bins for sizes less than PAGE_SIZE grows until page filled.
  */
 
+#include <sys/debug.h>
 #include <string.h>
 #include <arch/cpu.h>
 #include <phlox/mutex.h>
@@ -309,4 +310,18 @@ void kfree_and_null(void **address)
     if(!address || !*address) return;
     kfree(*address);
     *address = NULL;
+}
+
+void *kmalloc_pages(size_t npages)
+{
+    void *p;
+
+    p = kmalloc(npages * PAGE_SIZE);
+    if (!p)
+        return NULL;
+
+    /* check page alignment in debug kernels */
+    ASSERT_MSG(!((addr_t)p % PAGE_SIZE), "allocated memory is not page aligned!\n");
+
+    return p;
 }

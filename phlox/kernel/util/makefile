@@ -4,6 +4,7 @@ $(shell mkdir -p $(KERNEL_UTIL_OUT_DIR))
 
 KERNEL_UTIL_O_FILES += \
 	list.o \
+	avl_tree.o \
 	queue.o \
 	mutex.o
 

@@ -42,6 +42,19 @@ typedef struct {
 */
 status_t vm_init(kernel_args_t *kargs);
 
+/*
+ * Allocate virtual space of given size from kernel args structure.
+ * Used on system init, do not use after!
+ */
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
+
+/*
+ * Allocate memory block of given size form kernel args structure.
+ * Attributes parameter specifies access rights to allocated block.
+ * Used on system init, do not use after!
+*/
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes);
+
 
 /* Returns available physical memory
  * size installed in the system.

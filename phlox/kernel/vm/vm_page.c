@@ -222,53 +222,6 @@ status_t vm_page_init(kernel_args_t *kargs)
     return 0;
 }
 
-/* allocate virtual space from kernel args */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size)
-{
-    addr_t spot = 0;
-    uint i;
-    int last_valloc_entry = 0;
-
-    size = PAGE_ALIGN(size);
-    
-    /* find a slot in the virtual allocation addr_t range */
-    for(i=1; i < kargs->num_virt_alloc_ranges; i++) {
-        last_valloc_entry = i;
-        /* check to see if the space between this one and the last is big enough */
-        if(kargs->virt_alloc_range[i].start -
-          (kargs->virt_alloc_range[i-1].start +
-           kargs->virt_alloc_range[i-1].size) >= size) {
-             spot = kargs->virt_alloc_range[i-1].start +
-                     kargs->virt_alloc_range[i-1].size;
-             kargs->virt_alloc_range[i-1].size += size;
-             goto out;
-        }
-    }
-    if(spot == 0) {
-        /* we hadn't found one between allocation ranges. this is ok.
-         * see if there's a gap after the last one
-         */
-        if(kargs->virt_alloc_range[last_valloc_entry].start +
-           kargs->virt_alloc_range[last_valloc_entry].size + size <=
-              KERNEL_BASE + (KERNEL_SIZE - 1)) {
-              spot = kargs->virt_alloc_range[last_valloc_entry].start +
-                      kargs->virt_alloc_range[last_valloc_entry].size;
-              kargs->virt_alloc_range[last_valloc_entry].size += size;
-              goto out;
-        }
-        /* see if there's a gap before the first one */
-        if(kargs->virt_alloc_range[0].start > KERNEL_BASE) {
-            if(kargs->virt_alloc_range[0].start - KERNEL_BASE >= size) {
-                kargs->virt_alloc_range[0].start -= size;
-                spot = kargs->virt_alloc_range[0].start;
-                goto out;
-            }
-        }
-    }
-
-    out: return spot;
-}
-
 /* horrible brute-force method of determining if the page can be allocated */
 static uint is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr)
 {
@@ -314,28 +267,6 @@ addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs)
     }
     /* could not allocate a block :( */
     return 0;
-}
-
-/* allocates memory block of given size form kernel args */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes)
-{
-    addr_t vspot;
-    addr_t pspot;
-    uint i;
-
-    /* find the vaddr to allocate at */
-    vspot = vm_alloc_vspace_from_kargs(kargs, size);
-
-    /* map the pages */
-    for(i=0; i < PAGE_ALIGN(size)/PAGE_SIZE; i++) {
-        pspot = vm_alloc_ppage_from_kargs(kargs);
-        if(pspot == 0)
-            panic("error allocating physical page from globalKargs!\n");
-        vm_tmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
-    }
-
-    /* return start address of allocated block */
-    return vspot;
 }
 
 /* mark physical page as used */

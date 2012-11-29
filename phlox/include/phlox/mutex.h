@@ -12,7 +12,7 @@ typedef struct {
     sem_id sem;
 } mutex_t;
 
-uint32 mutex_init(mutex_t *mtx, const char *name);
+uint mutex_init(mutex_t *mtx, const char *name);
 void mutex_destroy(mutex_t *mtx);
 void mutex_lock(mutex_t *mtx);
 void mutex_unlock(mutex_t *mtx);

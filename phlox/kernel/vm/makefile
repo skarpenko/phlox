@@ -4,7 +4,8 @@ $(shell mkdir -p $(KERNEL_VM_OUT_DIR))
 
 KERNEL_VM_O_FILES += \
 	vm.o \
-	vm_page.o
+	vm_page.o \
+	vm_page_mapper.o
 
 KERNEL_VM_O_FILES := $(addprefix $(KERNEL_VM_OUT_DIR)/,$(KERNEL_VM_O_FILES))
 

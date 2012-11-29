@@ -54,15 +54,12 @@ status_t vm_page_preinit(kernel_args_t *kargs);
  */
 status_t vm_page_init(kernel_args_t *kargs);
 
-/* Allocate virtual space of given size from kernel args structure. */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
-/* Allocate free physical page from kernel args structure. */
-addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs);
 /*
- * Allocate memory block of given size form kernel args structure.
- * Attributes parameter specifies access rights to allocated block.
-*/
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes);
+ * Allocate free physical page from kernel args structure.
+ * Used on system init stage.
+ */
+addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs);
+
 
 /*
  * Mark given physical page as in use, but still not

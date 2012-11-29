@@ -6,7 +6,7 @@
 
 #warning "MUTEXES IS NOT IMPLEMENTED!!!"
 
-uint32 mutex_init(mutex_t *mtx, const char *in_name)
+uint mutex_init(mutex_t *mtx, const char *in_name)
 {
     kprint("mutex_init: not implemented!\n");
 

@@ -76,14 +76,12 @@ void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, ui
 
 /* architecture specific processor init */
 void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr_cpu) {
-    uint32 cpu;
+    uint32 cpu, fpu;
+    uint16 fpu_tmp;
     uint32 a, b, c, d;
     uint32 i;
     char feature_str[I386_CPU_FEATURE_STR_MAX];
-    
-    /* init FPU */
-    asm("fninit");
-    /* NOTE: So, on 80386 and 80486 FPU must be present! */
+
 
     /*
      * This asm part returns 3 - for 80386 CPU,
@@ -208,8 +206,37 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
            ap->rdtsc = 1; /* RDTSC instruction supported */
      } /* else */
 
+
+    /*
+     *  Detect and initialize FPU.
+     *  Returns 1 if FPU present, else returns 0.
+     */
+    asm(
+     "    movl     $0, %0        ;"   /* init variables */
+     "    movw     $0x5252, %1   ;"
+     "    clts                   ;"   /* clear TS flag */
+     /* check fpu status word */
+     "    fninit                 ;"   /* reset fpu status word */
+     "    fnstsw   %%ax          ;"   /* save fpu status word */
+     "    cmpb     $0, %%al      ;"   /* was correct status word? */
+     "    jne 1f                 ;"   /* no fpu present */
+     /* check fpu control word */
+     "    fnstcw   %1            ;"   /* save fpu control word */
+     "    movw     %1, %%ax      ;"   /* copy control word to %ax */
+     "    andw     $0x103f, %%ax ;"   /* selected parts to examine */
+     "    cmpw     $0x3f, %%ax   ;"   /* was correct control word? */
+     "    jne 1f                 ;"   /* incorrect control word, no FPU */
+     /* fpu present */
+     "    movl     $1, %0        ;"   /* fpu present */
+     "    .byte 0xDB, 0xE4       ;"   /* fsetpm for 287, ignored by 387 */
+     " 1:                        "    /* finish */
+     : : "m" (fpu), "m" (fpu_tmp) : "%eax");
+     ap->fpu = fpu;
+
+
      /* print processor info */
      kprint("CPU #%d info:\n", curr_cpu);
+     kprint("  FPU present: "); (ap->fpu)?kprint("yes\n"):kprint("no\n");
      kprint("  CPUID support: "); (ap->cpuid)?kprint("yes\n"):kprint("no\n");
      kprint("  Vendor: %s (%s)\n", ap->vendor_name, ap->vendor_str);
      kprint("  CPU: Family %d, Model %d, SteppingID %d\n", ap->family, ap->model, ap->stepping);
@@ -222,6 +249,11 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
      /* Ensure that it is possible to run kernel on this processor */
      if(curr_cpu && ap->family == 3) {
         kprint("\n\nSorry, but SMP currently is not supported on i386 chips.\n\n");
+        kprint("system stopped.\n");
+        while(1);
+     }
+     if(!ap->fpu) {
+        kprint("\n\nSorry, but FPU emulation currently is not supported.\n\n");
         kprint("system stopped.\n");
         while(1);
      }

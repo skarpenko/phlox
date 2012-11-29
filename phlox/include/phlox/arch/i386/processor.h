@@ -72,6 +72,7 @@ typedef struct {
     uint8 family;              /* instruction family */
     uint8 model;               /* model */
     uint8 stepping;            /* stepping id */
+    uint8 fpu;                 /* FPU presence */
     uint8 cpuid;               /* CPUID instruction support */
     uint8 rdtsc;               /* RDTSC instruction support */
 } arch_processor_t;

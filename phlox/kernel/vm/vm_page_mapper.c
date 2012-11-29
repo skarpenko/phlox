@@ -2,6 +2,8 @@
 * Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
+#include <string.h>
+#include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/avl_tree.h>
 #include <phlox/list.h>
@@ -87,7 +89,7 @@ static inline void list_add_mapping(xlist_t *list, mapping_desc_t *mapping)
 /* remove mapping from list */
 static inline int list_remove_mapping(xlist_t *list, mapping_desc_t *mapping)
 {
-    return (int)xlist_remove(list, &mapping->lst_elem);
+    return (int)xlist_remove_unsafe(list, &mapping->lst_elem);
 }
 
 /* extract first mapping from list */
@@ -136,6 +138,9 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
                        VM_LOCK_KERNEL | VM_LOCK_RW );
     if (!mappings)
         return ERR_NO_MEMORY;
+
+    /* clear allocated memory */
+    memset(mappings, 0, mappings_count * sizeof(mapping_desc_t));
 
     /* init bookkeeping structures */
     avl_tree_create( &mappings_tree,
@@ -207,8 +212,14 @@ restart:
     tree_insert_mapping(md, where);
 
     /* map chunk */
-    map_chunk(md->paddr, md->vaddr);
+    if ( map_chunk(md->paddr, md->vaddr) ) {
+        ASSERT_MSG(0, "vm_pmap_get_ppage: map_chunk failed");
+        /* release mutex */
+        mutex_unlock(&map_pool_mutex);
+        return ERR_VM_GENERAL;
+    }
 
+    /* release mutex */
     mutex_unlock(&map_pool_mutex);
 
     return NO_ERROR;
@@ -244,7 +255,8 @@ status_t vm_pmap_put_ppage(addr_t va)
         /* remove mapping descriptor from used mappings list */
         list_remove_mapping(&used_mappings, md);
         /* ... and from tree */
-        tree_remove_mapping(md);
+        if (!tree_remove_mapping(md))
+            panic("vm_pmap_put_ppage: mapping is not in AVL tree!\n");
 
         /* put it to free mappings list */
         list_add_mapping(&free_mappings, md);

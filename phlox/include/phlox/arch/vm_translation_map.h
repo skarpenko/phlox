@@ -19,4 +19,10 @@ status_t arch_vm_translation_map_init(kernel_args_t *kargs);
 */
 status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint attributes);
 
+/*
+ * Returns physical address of a page overriding Virtual Memory Manager.
+ * This routine used only during system start up. Do not use after.
+ */
+status_t vm_tmap_quick_query(addr_t vaddr, addr_t *out_paddr);
+
 #endif

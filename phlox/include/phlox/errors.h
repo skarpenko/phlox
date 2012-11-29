@@ -21,6 +21,7 @@ enum PhloxGeneralErrors {
 enum PhloxVirtualMemoryErrors {
     ERR_VM_GENERAL_BASE = 0x81000000,
     ERR_VM_GENERAL = ERR_VM_GENERAL_BASE,
+    ERR_VM_PAGE_NOT_PRESENT,
     ERR_VM_GENERAL_LIMIT
 };
 

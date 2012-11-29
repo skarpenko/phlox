@@ -37,6 +37,12 @@ uint xlist_isempty(xlist_t *list);
 /* remove element from list */
 uint xlist_remove(xlist_t *list, list_elem_t *e);
 
+/* remove element from list in unsafe manner
+ * Note: it is not checked that element is really
+ * lies in given list.
+ */
+uint xlist_remove_unsafe(xlist_t *list, list_elem_t *e);
+
 /* add element to list as first */
 uint xlist_add_first(xlist_t *list, list_elem_t *e);
 
@@ -55,11 +61,21 @@ list_elem_t *xlist_extract_last(xlist_t *list);
  */
 uint xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e);
 
+/* insert elemet to list after given item in unsafe manner
+ * Note: no additional list integrity checking performed.
+ */
+uint xlist_insert_after_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e);
+
 /* insert element to list before given item
  * Note: firstly routine searches list for item to ensure
  * list integrity.
  */
 uint xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e);
+
+/* insert elemet to list before given item in unsafe manner
+ * Note: no additional list integrity checking performed.
+ */
+uint xlist_insert_before_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e);
 
 /* peek first element of the list */
 list_elem_t *xlist_peek_first(xlist_t *list);

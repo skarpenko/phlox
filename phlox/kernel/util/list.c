@@ -59,6 +59,30 @@ uint xlist_remove(xlist_t *list, list_elem_t *e)
     return 0;
 }
 
+uint xlist_remove_unsafe(xlist_t *list, list_elem_t *e)
+{
+/*
+ * That is unsafe remove. It is not checked that
+ * "e" is really in "list".
+ */
+
+    /* ensure that item is not first */
+    if(e->prev)
+      e->prev->next = e->next;
+    else
+      list->first = e->next;
+
+    /* ensure that item is not last */
+    if(e->next)
+      e->next->prev = e->prev;
+    else
+      list->last = e->prev;
+
+    list->count--; /* decrement items count */
+    e->next = e->prev = NULL; /* set item to initial state */
+    return 1; /* return true */
+}
+
 uint xlist_add_first(xlist_t *list, list_elem_t *e)
 {
     if(!list->first) {
@@ -158,6 +182,21 @@ uint xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e)
     return 0; /* return false */
 }
 
+uint xlist_insert_after_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e)
+{
+/*
+ * Unsafe insert. It is not checked that "item" is really in "list".
+ */
+
+    e->prev = item;
+    e->next = item->next;
+    if(!e->next)
+      list->last = e;
+    item->next = e;
+    list->count++; /* increase items count */
+    return 1; /* return true */
+}
+
 uint xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e)
 {
     list_elem_t *temp;
@@ -179,6 +218,21 @@ uint xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e)
     }
 
     return 0; /* return false */
+}
+
+uint xlist_insert_before_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e)
+{
+/*
+ * Unsafe insert. It is not checked that "item" is really in "list".
+ */
+
+    e->prev = item->prev;
+    e->next = item;
+    if(!e->prev)
+      list->first = e;
+    item->prev = e;
+    list->count++; /* increase items count */
+    return 1; /* return true */
 }
 
 list_elem_t *xlist_peek_first(xlist_t *list)

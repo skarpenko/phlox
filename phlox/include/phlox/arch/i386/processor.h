@@ -387,22 +387,27 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count);
 /* interrupt control */
 #define arch_local_irqs_enable()   __asm__ __volatile__ ("sti")
 #define arch_local_irqs_disable()  __asm__ __volatile__ ("cli")
+
+/* returns non-zero value if irqs disabled */
 #define arch_local_irqs_disabled() \
 ({ \
     uint32 __flags; \
     local_store_flags(__flags); \
     !(__flags & X86_EFLAGS_IF); \
 })
+
 /* save irqs state and disable them after. used in spinlocks, for example. */
 #define arch_local_irqs_save_and_disable(x) \
     do { \
       typecheck(unsigned long,x); \
-      __asm__ __volatile__ ("pushfl; popl %0; cli;" \
+      __asm__ __volatile__ ("pushfl; cli; popl %0;" \
       : "=g" (x) \
       : /* no input */ \
       : "memory" ); \
+      x &= X86_EFLAGS_IF; \
     } while (0)
 
+/* save irqs state */
 #define arch_local_irqs_save(x) \
     do { \
       typecheck(unsigned long,x); \
@@ -410,15 +415,23 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count);
       : "=g" (x) \
       : /* no input */ \
       : "memory" ); \
+      x &= X86_EFLAGS_IF; \
     } while (0)
 
+/* restore irqs from previously saved state */
 #define arch_local_irqs_restore(x)  \
     do { \
       typecheck(unsigned long,x); \
-      __asm__ __volatile__ ("pushl %0; popfl;" \
-      : /* no output */ \
-      : "g" (x) \
-      : "memory", "cc"); \
+      __asm__ __volatile__ ( \
+         "   cmpl $0, %%eax; " \
+         "   je 1f;          " \
+         "   sti;            " \
+         "   jmp 2f;         " \
+         "1: cli;            " \
+         "2:                 " \
+         : /* no output */ \
+         : "a" (x) \
+      ); \
     } while (0)
 
 /* used in the idle loop; sti takes one instruction cycle to complete */

@@ -110,6 +110,9 @@ typedef struct {
 #define local_irqs_save_and_disable(x)  arch_local_irqs_save_and_disable(x)
 #define local_irqs_save(x)              arch_local_irqs_save(x)
 #define local_irqs_restore(x)           arch_local_irqs_restore(x)
+/*
+ * Note on irqs save/restore: x is zero if irqs disabled, otherwise x != 0
+ */
 
 /* used in the idle loop */
 #define safe_halt()  arch_safe_halt()

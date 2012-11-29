@@ -3,8 +3,8 @@ KERNEL_UTIL_OUT_DIR := $(KERNEL_OUT_DIR)/util
 $(shell mkdir -p $(KERNEL_UTIL_OUT_DIR))
 
 KERNEL_UTIL_O_FILES += \
-	lists.o
-	
+	list.o \
+	queue.o
 
 KERNEL_UTIL_O_FILES := $(addprefix $(KERNEL_UTIL_OUT_DIR)/,$(KERNEL_UTIL_O_FILES))
 

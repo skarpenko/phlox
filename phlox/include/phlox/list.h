@@ -61,6 +61,12 @@ uint32 xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e);
  */
 uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e);
 
+/* peek first element of the list */
+list_elem_t *xlist_peek_first(xlist_t *list);
+
+/* peek last element of the list */
+list_elem_t *xlist_peek_last(xlist_t *list);
+
 /* dump all elements into array */
 uint32 xlist_dump_elements(xlist_t *list, list_elem_t **elements);
 

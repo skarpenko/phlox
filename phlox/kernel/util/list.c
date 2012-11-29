@@ -2,7 +2,7 @@
 * Copyright 2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
-#include <phlox/lists.h>
+#include <phlox/list.h>
 
 
 uint32 xlist_init(xlist_t *list) {
@@ -169,6 +169,14 @@ uint32 xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e) {
     }
 
     return 0; /* return false */
+}
+
+list_elem_t *xlist_peek_first(xlist_t *list) {
+    return list->first;
+}
+
+list_elem_t *xlist_peek_last(xlist_t *list) {
+    return list->last;
 }
 
 uint32 xlist_dump_elements(xlist_t *list, list_elem_t **elements) {

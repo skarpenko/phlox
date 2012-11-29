@@ -292,7 +292,7 @@ typedef struct {
     do { \
       typecheck(unsigned long,x); \
       __asm__ __volatile__ ("pushfl; popl %0;" \
-      :"=g" (x) \
+      : "=g" (x) \
       : /* no input */); \
     } while (0)
     
@@ -301,8 +301,8 @@ typedef struct {
       typecheck(unsigned long,x); \
       __asm__ __volatile__ ("pushl %0; popfl;" \
       : /* no output */ \
-      :"g" (x) \
-      :"memory", "cc"); \
+      : "g" (x) \
+      : "memory", "cc"); \
     } while (0)
 
 /*
@@ -382,6 +382,33 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count);
     local_store_flags(__flags); \
     !(__flags & X86_EFLAGS_IF); \
 })
+/* save irqs state and disable them after. used in spinlocks, for example. */
+#define arch_local_irqs_save_and_disable(x) \
+    do { \
+      typecheck(unsigned long,x); \
+      __asm__ __volatile__ ("pushfl; popl %0; cli;" \
+      : "=g" (x) \
+      : /* no input */ \
+      : "memory" ); \
+    } while (0)
+
+#define arch_local_irqs_save(x) \
+    do { \
+      typecheck(unsigned long,x); \
+      __asm__ __volatile__ ("pushfl; popl %0;" \
+      : "=g" (x) \
+      : /* no input */ \
+      : "memory" ); \
+    } while (0)
+
+#define arch_local_irqs_restore(x)  \
+    do { \
+      typecheck(unsigned long,x); \
+      __asm__ __volatile__ ("pushl %0; popfl;" \
+      : /* no output */ \
+      : "g" (x) \
+      : "memory", "cc"); \
+    } while (0)
 
 /* used in the idle loop; sti takes one instruction cycle to complete */
 #define arch_safe_halt()  __asm__ __volatile__ ("sti; hlt;")

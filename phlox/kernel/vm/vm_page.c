@@ -290,6 +290,7 @@ uint32 vm_page_mark_page_inuse(addr_t page) {
 
 /* mark range of physical pages as used */
 uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages) {
+    unsigned long irqs_state;
     vm_page_t *page;
     addr_t i;
 
@@ -304,9 +305,8 @@ uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages) {
         return ERR_INVALID_ARGS;
     }
 
-/*    local_irqs_disable(); */
-#warning Interrupts must be disabled
-    spin_lock(&page_lock);
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&page_lock);
 
     /* process pages */
     for(i = 0; i < len_pages; i++) {
@@ -323,9 +323,8 @@ uint32 vm_page_mark_range_inuse(addr_t start_page, size_t len_pages) {
        }
     }
 
-    spin_unlock(&page_lock);
-#warning Interrupts must be correctly enabled
-/*    local_irqs_enable(); */
+    /* release lock */
+    spin_unlock_irqrstor(&page_lock, irqs_state);
 
     return NO_ERROR;
 }

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SPINLOCK_H_
@@ -36,9 +36,21 @@ void spin_safelock(spinlock_t *s);
 int spin_trylock(spinlock_t *s);
 
 /*
+ * Acquire lock with disabled interrupt requests.
+ * Returns previous interrupt requests state.
+*/
+unsigned long spin_lock_irqsave(spinlock_t *s);
+
+/*
  * Release lock
 */
 void spin_unlock(spinlock_t *s);
+
+/*
+ * Release lock and restore previously saved interrupt
+ * requests state.
+*/
+void spin_unlock_irqrstor(spinlock_t *s, unsigned long irqs_state);
 
 /*
  * Wait for lock release

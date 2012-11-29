@@ -104,9 +104,12 @@ typedef struct {
 #define cpu_relax()  arch_cpu_relax()
 
 /* interrupt control */
-#define local_irqs_enable()    arch_local_irqs_enable()
-#define local_irqs_disable()   arch_local_irqs_disable()
-#define local_irqs_disabled()  arch_local_irqs_disabled()
+#define local_irqs_enable()             arch_local_irqs_enable()
+#define local_irqs_disable()            arch_local_irqs_disable()
+#define local_irqs_disabled()           arch_local_irqs_disabled()
+#define local_irqs_save_and_disable(x)  arch_local_irqs_save_and_disable(x)
+#define local_irqs_save(x)              arch_local_irqs_save(x)
+#define local_irqs_restore(x)           arch_local_irqs_restore(x)
 
 /* used in the idle loop */
 #define safe_halt()  arch_safe_halt()

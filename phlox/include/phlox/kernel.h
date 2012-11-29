@@ -8,11 +8,15 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <arch/cpu.h>
 #include "arch/kernel.h"
 
 /* macro definitions */
 #define ROUNDUP(a, b)   (((a) + ((b)-1)) & ~((b)-1))
 #define ROUNDOWN(a, b)  (((a) / (b)) * (b))
+
+/* to align the pointer to the (next) page boundary (same as ROUNDUP) */
+#define PAGE_ALIGN(a)   (((a)+PAGE_SIZE-1)&PAGE_MASK)
 
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 #define max(a, b)  ((a) > (b) ? (a) : (b))

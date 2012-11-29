@@ -5,8 +5,10 @@
 #ifndef _PHLOX_ARCH_I386_CPU_H
 #define _PHLOX_ARCH_I386_CPU_H
 
-/* Memory page size */
-#define PAGE_SIZE 4096
+/* PAGE_SHIFT determines the memory page size */
+#define PAGE_SHIFT  12
+#define PAGE_SIZE   (1UL << PAGE_SHIFT)
+#define PAGE_MASK   (~(PAGE_SIZE-1))
 
 /* Max. limit of Global Descriptor Table */
 #define MAX_GDT_LIMIT  0x800

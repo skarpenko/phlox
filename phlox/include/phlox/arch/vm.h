@@ -7,4 +7,10 @@
 
 #include INC_ARCH(phlox/arch,vm.h)
 
+/*
+ * Architecture specific virtual memory initialization
+ * Called during system initialization.
+*/
+void arch_init_vm(kernel_args_t *kargs);
+
 #endif

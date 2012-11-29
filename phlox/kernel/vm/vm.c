@@ -6,9 +6,6 @@
 
 /* init virtual memory */
 void init_vm(kernel_args_t *kargs) {
+   /* execute architecture-specific init */
    arch_init_vm(kargs);
 }
-
-
-
-

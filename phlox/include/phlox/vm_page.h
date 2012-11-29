@@ -5,4 +5,17 @@
 #ifndef _PHLOX_VM_PAGE_H_
 #define _PHLOX_VM_PAGE_H_
 
+
+/*** The following routines used during system initialization do not use them ***/
+
+/* Allocate virtual space of given size from kernel args structure. */
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size);
+/* Allocate free physical page from kernel args structure. */
+addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs);
+/*
+ * Allocate memory block of given size form kernel args structure.
+ * Attributes parameter specifies access rights to allocated block.
+*/
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes);
+
 #endif

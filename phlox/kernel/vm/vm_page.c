@@ -5,9 +5,10 @@
 #include <phlox/kernel.h>
 #include <phlox/arch/vm_transmap.h>
 #include <phlox/vm.h>
+#include <phlox/vm_page.h>
 
 /* allocate virtual space from kernel args */
-static addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
+addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, uint32 size) {
     addr_t spot = 0;
     uint32 i;
     int last_valloc_entry = 0;
@@ -71,7 +72,7 @@ static uint32 is_page_in_phys_range(kernel_args_t *kargs, addr_t paddr) {
 }
 
 /* allocate physical page from kernel args */
-static addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
+addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
     uint32 i;
     addr_t next_page;
 
@@ -97,7 +98,8 @@ static addr_t vm_alloc_phpage_from_kargs(kernel_args_t *kargs) {
     return 0;
 }
 
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 lock) {
+/* allocates memory block of given size form kernel args */
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 attributes) {
     addr_t vspot;
     addr_t pspot;
     uint32 i;
@@ -110,8 +112,9 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, uint32 size, uint32 lock) {
         pspot = vm_alloc_phpage_from_kargs(kargs);
         if(pspot == 0)
             panic("error allocating physical page from globalKargs!\n");
-        vm_transmap_quick_map(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, lock);
+        vm_transmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
     }
 
+    /* return start address of allocated block */
     return vspot;
 }

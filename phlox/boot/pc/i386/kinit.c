@@ -61,10 +61,10 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     btfs_dir_entry *en;
     uint32 next_physaddr;
     uint32 next_virtaddr;
-    cpu_seg_desc  gdt_desc;
-    cpu_seg_desc  *gdt;  /* pointer to Global Descriptor Table */
-    cpu_gate_desc idt_desc;
-    cpu_gate_desc *idt;  /* pointer to Interrupt Descriptor Table */
+    cpu_desc_tbl_ptr gdt_ptr;  /* pointer for loading into GDT Register */
+    cpu_seg_desc     *gdt;     /* pointer to Global Descriptor Table */
+    cpu_desc_tbl_ptr idt_ptr;  /* pointer for loading into IDT Register */
+    cpu_gate_desc    *idt;     /* pointer to Interrupt Descriptor Table */
     uint32 i;
     uint32 kentry;                    /* kernel entry point */
     uint32 kstack_start, kstack_size; /* kernel stack       */
@@ -149,10 +149,10 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     kargs->arch_args.virt_idt = next_virtaddr;
     next_virtaddr += PAGE_SIZE;
     /* load new idt */
-    idt_desc.raw.dword0 = MAX_IDT_LIMIT-1;
-    idt_desc.raw.dword1 = kargs->arch_args.virt_idt;
+    idt_ptr.limit   = MAX_IDT_LIMIT-1;
+    idt_ptr.address = kargs->arch_args.virt_idt;
     asm("lidt   %0; "
-        : : "m" (idt_desc));
+        : : "m" (idt_ptr));
 
     /* build and map new gdt into virtual space */
     gdt[0].raw.dword0 = 0;           /* NULL descriptor            */
@@ -170,10 +170,10 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     kargs->arch_args.virt_gdt = next_virtaddr;
     next_virtaddr += PAGE_SIZE;
     /* load new gdt */
-    gdt_desc.raw.dword0 = MAX_GDT_LIMIT-1;
-    gdt_desc.raw.dword1 = kargs->arch_args.virt_gdt;
+    gdt_ptr.limit   = MAX_GDT_LIMIT-1;
+    gdt_ptr.address = kargs->arch_args.virt_gdt;
     asm("lgdt   %0; "
-        : : "m" (gdt_desc));
+        : : "m" (gdt_ptr));
 
     /* map page directory into virtual space */
     mmu_map_page(next_virtaddr, (uint32)pgdir);

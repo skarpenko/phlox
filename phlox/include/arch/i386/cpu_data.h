@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_CPU_DATA_H_
@@ -7,6 +7,34 @@
 
 #include <phlox/compiler.h>
 #include <phlox/types.h>
+
+/*
+* Address pair (far pointer format)
+*
+* 47       32 31                      0
+* -------------------------------------
+* | Selector |         Offset         |
+* -------------------------------------
+*/
+typedef struct _PACKED {
+    uint32 offset;
+    uint16 selector;
+} cpu_addr_pair;
+
+
+/*
+* Descriptor table pointer
+*
+* 47                    16 15         0
+* -------------------------------------
+* |    Linear address     |   Limit   |
+* -------------------------------------
+*/
+typedef struct _PACKED {
+    uint16 limit;
+    uint32 address;
+} cpu_desc_tbl_ptr;
+
 
 /*
 * General-Segment Descriptor Format

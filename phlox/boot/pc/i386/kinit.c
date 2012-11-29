@@ -60,9 +60,9 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count, int in_ve
     uint32 next_physaddr;
     uint32 next_virtaddr;
     cpu_seg_desc  gdt_desc;
-    cpu_seg_desc  *gdt;  /* pointer to General Descriptors Table */
+    cpu_seg_desc  *gdt;  /* pointer to Global Descriptor Table */
     cpu_gate_desc idt_desc;
-    cpu_gate_desc *idt;  /* pointer to Interrupt Descriptors Table */
+    cpu_gate_desc *idt;  /* pointer to Interrupt Descriptor Table */
     uint32 i;
     uint32 kentry;                    /* kernel entry point */
     uint32 kstack_start, kstack_size; /* kernel stack       */

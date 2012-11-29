@@ -460,11 +460,10 @@
 /* Access byte */
 /* Descriptor type */
 #define X86_ACB_TYP_CALLGATE286  0x00000400  /* Call Gate 286       */
-#define X86_ACB_TYP_TASKGATE286  0x00000500  /* Task Gate 286       */
+#define X86_ACB_TYP_TASKGATE     0x00000500  /* Task Gate           */
 #define X86_ACB_TYP_INTGATE286   0x00000600  /* Interrupt Gate 286  */
 #define X86_ACB_TYP_TRAPGATE286  0x00000700  /* Trap Gate 286       */
 #define X86_ACB_TYP_CALLGATE386  0x00000c00  /* Call Gate 386+      */
-#define X86_ACB_TYP_TASKGATE386  0x00000d00  /* Task Gate 386+      */
 #define X86_ACB_TYP_INTGATE386   0x00000e00  /* Interrupt Gate 386+ */
 #define X86_ACB_TYP_TRAPGATE386  0x00000f00  /* Trap Gate 386+      */
 

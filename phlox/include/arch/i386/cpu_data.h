@@ -37,6 +37,35 @@ typedef struct _PACKED {
 
 
 /*
+* Selector format
+*
+* 15                               3  2  1      0
+* -----------------------------------------------
+* |    Index                        |TI |  RPL  |
+* -----------------------------------------------
+* Index - Descriptor index        TI - Descriptor
+* RPL   - Requestor's Privelege        table type
+*         Level
+*/
+typedef struct _PACKED {
+    uint16 rpl:    2;
+    uint16 ti:     1;
+    uint16 index: 13;
+} cpu_selector_struc;
+
+/* raw format */
+typedef struct _PACKED {
+    uint16 word0;
+} cpu_selector_raw;
+
+/* union */
+typedef union {
+    cpu_selector_struc stru;
+    cpu_selector_raw   raw;
+} cpu_selector;
+
+
+/*
 * General-Segment Descriptor Format
 *
 * 31                      16 15                        0

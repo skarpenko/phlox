@@ -9,7 +9,8 @@ KERNEL_ARCH_I386_O_FILES += \
 	processor.o \
 	vm.o \
 	vm_transmap.o \
-	interrupt.o
+	interrupt.o \
+	int_entry.o
 
 KERNEL_ARCH_I386_O_FILES := $(addprefix $(KERNEL_ARCH_OUT_DIR)/,$(KERNEL_ARCH_I386_O_FILES))
 

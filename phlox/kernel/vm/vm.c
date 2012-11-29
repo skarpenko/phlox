@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <phlox/errors.h>
+#include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 #include <phlox/arch/vm_translation_map.h>
@@ -50,7 +51,8 @@ status_t vm_init(kernel_args_t *kargs)
               heap_size = SYSCFG_KERNEL_HEAP_MAX;
 
         /* allocate heap area */
-        heap_base = vm_alloc_from_kargs(kargs, heap_size, VM_LOCK_KERNEL | VM_LOCK_RW);
+        heap_base = vm_alloc_from_kargs(kargs, heap_size,
+                                  VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
         /* init heap */
         heap_init(heap_base, heap_size);
         /* Fuf... Now kmalloc and kfree is available */

@@ -14,9 +14,17 @@
 /* Memory access attributes */
 #define VM_LOCK_RO      0x0  /* Read-only       */
 #define VM_LOCK_RW      0x1  /* Read and write  */
+#define VM_LOCK_NOEX    0x0  /* Non-executable  */
+#define VM_LOCK_EX      0x2  /* Executable      */
 #define VM_LOCK_USER    0x0  /* User's memory   */
-#define VM_LOCK_KERNEL  0x2  /* Kernel's memory */
-#define VM_LOCK_MASK    0x3  /* Mask */
+#define VM_LOCK_KERNEL  0x4  /* Kernel's memory */
+#define VM_LOCK_MASK    0x7  /* Mask            */
+/* Page state flags */
+#define VM_FLAG_PAGE_PRESENT   0x08  /* Page present  */
+#define VM_FLAG_PAGE_MODIFIED  0x10  /* Page modified */
+#define VM_FLAG_PAGE_ACCESSED  0x20  /* Page accessed */
+#define VM_FLAG_PAGE_MASK      0x38  /* Mask          */
+
 
 /*
  * State of the Virtual Memory.
@@ -42,19 +50,6 @@ typedef struct {
  * for virtual memory initialization.
 */
 status_t vm_init(kernel_args_t *kargs);
-
-/*
- * Allocate virtual space of given size from kernel args structure.
- * Used on system init, do not use after!
- */
-addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
-
-/*
- * Allocate memory block of given size form kernel args structure.
- * Attributes parameter specifies access rights to allocated block.
- * Used on system init, do not use after!
-*/
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes);
 
 
 /* Returns available physical memory

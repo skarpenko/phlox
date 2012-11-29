@@ -5,7 +5,46 @@
 #ifndef _PHLOX_ARCH_VM_TRANSLATION_MAP_H
 #define _PHLOX_ARCH_VM_TRANSLATION_MAP_H
 
+#include <arch/arch_bits.h>
+#include <arch/arch_data.h>
+#include <phlox/types.h>
+#include <phlox/ktypes.h>
+#include <phlox/kargs.h>
+#include <phlox/spinlock.h>
+#include <phlox/list.h>
 #include INC_ARCH(phlox/arch,vm_translation_map.h)
+
+
+/* VM translation map object */
+typedef struct vm_translation_map_struct {
+    /* List node */
+    list_elem_t                           list_node;
+    /* Set of translation map operations */
+    struct vm_translation_map_ops_struct  *ops;
+    /* Access lock. Note: Spinlock must be replaced with more complex lock! */
+    spinlock_t                            lock;
+    /* Mapped size */
+    uint                                  map_count;
+    /* Architecture-dependend data */
+    arch_vm_translation_map_t             arch;
+} vm_translation_map_t;
+
+/* VM translation map operations */
+typedef struct vm_translation_map_ops_struct {
+    void     (*destroy)(vm_translation_map_t *tmap);
+    status_t (*lock)(vm_translation_map_t *tmap);
+    status_t (*unlock)(vm_translation_map_t *tmap);
+    status_t (*map)(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes);
+    status_t (*unmap)(vm_translation_map_t *tmap, addr_t start, addr_t end);
+    status_t (*query)(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags);
+    size_t   (*get_mapped_size)(vm_translation_map_t *tmap);
+    status_t (*protect)(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes);
+    status_t (*clear_flags)(vm_translation_map_t *tmap, addr_t va, uint flags);
+    void     (*flush)(vm_translation_map_t *tmap);
+    status_t (*get_physical_page)(addr_t pa, addr_t *out_va, uint flags);
+    status_t (*put_physical_page)(addr_t va);
+} vm_translation_map_ops_t;
+
 
 /*
  * Translation map module initialization routine.

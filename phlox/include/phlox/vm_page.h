@@ -40,26 +40,17 @@ enum {
 };
 
 
-/*** The following routines used during system initialization do not use them ***/
-
 /*
- * Pre initialization routine.
+ * Pre initialization routine. Called during VM init stage.
  * Computes memory sizes and sets memory statistics structure.
  */
 status_t vm_page_preinit(kernel_args_t *kargs);
 
 /*
- * Page module initialization.
+ * Page module initialization. Called during VM init stage.
  * Initializes page lists.
  */
 status_t vm_page_init(kernel_args_t *kargs);
-
-/*
- * Allocate free physical page from kernel args structure.
- * Used on system init stage.
- */
-addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs);
-
 
 /*
  * Mark given physical page as in use, but still not

@@ -10,7 +10,10 @@
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
 #include <phlox/processor.h>
+#include <phlox/spinlock.h>
+#include <phlox/list.h>
 #include <phlox/arch/vm_translation_map.h>
+#include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
 #include <phlox/vm_page_mapper.h>
@@ -24,6 +27,10 @@ static mmu_pte *page_hole = NULL;  /* Page hole address      */
 static mmu_pde *page_hole_pgdir;   /* Page directory address */
 static uint     page_hole_pdeidx;  /* Page hole's PDE index  */
 
+/* Translation maps list */
+static xlist_t    tmap_list;       /* List */
+static spinlock_t tmap_list_lock;  /* Spinlock for list access */
+
 /* Mapping pool */
 static addr_t  map_pool_base;      /* Mapping pool base address    */
 static mmu_pte *map_pool_pgtables; /* Page tables for mapping pool */
@@ -34,17 +41,70 @@ static mmu_pte *map_pool_pgtables; /* Page tables for mapping pool */
 /* Mapping pool size */
 #define MAP_POOL_SIZE                (MAP_POOL_PGTABLE_CHUNKS * MAP_POOL_PGTABLE_CHUNK_SIZE)
 
+/* Translation map operations */
+static void destroy_tmap(vm_translation_map_t *tmap);
+static status_t lock_tmap(vm_translation_map_t *tmap);
+static status_t unlock_tmap(vm_translation_map_t *tmap);
+static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes);
+static status_t unmap_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end);
+static status_t query_tmap(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags);
+static size_t get_mapped_size_tmap(vm_translation_map_t *tmap);
+static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes);
+static status_t clear_flags_tmap(vm_translation_map_t *tmap, addr_t va, uint flags);
+static void flush_tmap(vm_translation_map_t *tmap);
+static status_t get_physical_page_tmap(addr_t pa, addr_t *out_va, uint flags);
+static status_t put_physical_page_tmap(addr_t va);
+
+/* Structured translation map operations */
+static vm_translation_map_ops_t ops_tmap = {
+    destroy_tmap,            /* Destroy translation map                */
+    lock_tmap,               /* Acquire lock on translation map access */
+    unlock_tmap,             /* Release lock on translation map access */
+    map_tmap,                /* Map physical address                   */
+    unmap_tmap,              /* Unmap virtual address range            */
+    query_tmap,              /* Query physical address                 */
+    get_mapped_size_tmap,    /* Get mapped size                        */
+    protect_tmap,            /* Set protection attributes              */
+    clear_flags_tmap,        /* Clear page flags                       */
+    flush_tmap,              /* Flush internal page cache              */
+    get_physical_page_tmap,  /* Get physical page via mappings pool    */
+    put_physical_page_tmap   /* Put physical page                      */
+};
+
 
 /* init page directory entry */
 static inline void init_pdentry(mmu_pde *pdentry)
 {
-   pdentry->raw.dword0 = 0;
+    pdentry->raw.dword0 = 0;
 }
 
 /* init page table entry */
 static inline void init_ptentry(mmu_pte *ptentry)
 {
-   ptentry->raw.dword0 = 0;
+    ptentry->raw.dword0 = 0;
+}
+
+/* update page directories in all translation maps */
+static void update_all_pgdirs(uint index, mmu_pde pdentry)
+{
+    unsigned long irqs_state;
+    list_elem_t *le;
+    vm_translation_map_t *tm_e;
+
+    /* acquire lock before performing modifications */
+    irqs_state = spin_lock_irqsave(&tmap_list_lock);
+
+    /* walk throught list and update all translation maps */
+    le = xlist_peek_first(&tmap_list);
+    while (le) {
+        tm_e = containerof(le, vm_translation_map_t, list_node);
+        tm_e->arch.pgdir_virt[index] = pdentry;
+        
+        le = le->next; /* next item */
+    }
+
+    /* release lock*/
+    spin_unlock_irqrstor(&tmap_list_lock, irqs_state);
 }
 
 /* put page table into page directory entry */
@@ -60,6 +120,114 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint att
     pdentry->stru.us = 0;
     pdentry->stru.rw = 1;
     pdentry->stru.p  = 1;
+}
+
+/* destroy translation map */
+static void destroy_tmap(vm_translation_map_t *tmap)
+{
+    /* not implemented */
+}
+
+/* acquire translation map access lock */
+static status_t lock_tmap(vm_translation_map_t *tmap)
+{
+#warning "lock_tmap must be reimplemented!"
+    spin_lock(&tmap->lock);
+    tmap->arch.num_invalidate_pages = 0;
+
+    return NO_ERROR;
+}
+
+/* release translation map access lock */
+static status_t unlock_tmap(vm_translation_map_t *tmap)
+{
+#warning "unlock_tmap must be reimplemented!"
+    flush_tmap(tmap);
+    spin_unlock(&tmap->lock);
+
+    return NO_ERROR;
+}
+
+/* map physical address */
+static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes)
+{
+    /* not implemented */
+    return NO_ERROR;
+}
+
+/* unmap virtual address range */
+static status_t unmap_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end)
+{
+    /* not implemented */
+    return NO_ERROR;
+}
+
+/* query physical address */
+static status_t query_tmap(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags)
+{
+    /* not implemented */
+    return NO_ERROR;
+}
+
+/* return mapped size */
+static size_t get_mapped_size_tmap(vm_translation_map_t *tmap)
+{
+    return tmap->map_count;
+}
+
+/* set protection flags */
+static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes)
+{
+    /* not implemented */
+    return NO_ERROR;
+}
+
+/* clear page flags */
+static status_t clear_flags_tmap(vm_translation_map_t *tmap, addr_t va, uint flags)
+{
+    /* not implemented */
+    return NO_ERROR;
+}
+
+/* flush internal page cache */
+static void flush_tmap(vm_translation_map_t *tmap)
+{
+    unsigned long irqs_state;
+
+    /* return if no pages for invalidate */
+    if(tmap->arch.num_invalidate_pages <= 0)
+        return;
+
+    /* save current irqs state and disable them */
+    local_irqs_save_and_disable(irqs_state);
+
+    if(tmap->arch.num_invalidate_pages > PAGE_INVALIDATE_CACHE_SIZE) {
+      /* if count of pages for invalidate more than cache size then
+       * perform global invalidation.
+       */
+       invalidate_TLB();
+    } else {
+       /* invalidate pages from cache */
+       invalidate_TLB_list(tmap->arch.pages_to_invalidate,
+                           tmap->arch.num_invalidate_pages);
+    }
+
+    tmap->arch.num_invalidate_pages = 0;
+    
+    /* restore previous irqs state */
+    local_irqs_restore(irqs_state);
+}
+
+/* get physical page via mappings pool */
+static status_t get_physical_page_tmap(addr_t pa, addr_t *out_va, uint flags)
+{
+    return vm_pmap_get_ppage(pa, out_va, (bool)flags);
+}
+
+/* put physical page back */
+static status_t put_physical_page_tmap(addr_t va)
+{
+    return vm_pmap_put_ppage(va);
 }
 
 /* Allocate page hole and return index of page directory entry.
@@ -143,6 +311,10 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
     kernel_pgdir_phys = (mmu_pde *)kargs->arch_args.phys_pgdir;
     kernel_pgdir_virt = (mmu_pde *)kargs->arch_args.virt_pgdir;
 
+    /* init translation maps list */
+    xlist_init(&tmap_list);
+    spin_init(&tmap_list_lock);
+
     /* first of all, allocate page hole */
     page_hole_pdeidx = allocate_page_hole(kernel_pgdir_virt, (addr_t)kernel_pgdir_phys, true);
     if(!page_hole_pdeidx)
@@ -163,7 +335,7 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
     /* allocate area for set of page tables which covers mappings pool */
     map_pool_pgtables = (mmu_pte *)vm_alloc_from_kargs( kargs,
                                                         MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE,
-                                                        VM_LOCK_KERNEL | VM_LOCK_RW );
+                                                        VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
     if(!map_pool_pgtables)
         panic("arch_vm_translation_map_init: no memory for mappings pool pgtables.");
     /* init tables with zeroes */

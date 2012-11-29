@@ -9,6 +9,7 @@
 #include <phlox/processor.h>
 #include <phlox/spinlock.h>
 #include <phlox/errors.h>
+#include <phlox/vm_private.h>
 #include <phlox/vm.h>
 #include <phlox/vm_page.h>
 
@@ -202,7 +203,7 @@ status_t vm_page_init(kernel_args_t *kargs)
 
     /* allocate area for pages structures */
     all_pages = (vm_page_t *)vm_alloc_from_kargs(kargs, total_pages_count*sizeof(vm_page_t),
-                                                   VM_LOCK_KERNEL|VM_LOCK_RW);
+                                                VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
     /* init pages */
     for(i = 0; i < total_pages_count; i++) {
        all_pages[i].ppn       = physical_page_offset;

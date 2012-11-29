@@ -21,4 +21,15 @@
 /* page directory and page table entries to virtual address */
 #define PDPTENT_TO_VADDR(pde, pte)  (pde * MAX_PDENTS * PAGE_SIZE + pte * PAGE_SIZE)
 
+
+/* Architecture-dependend translation map data */
+#define PAGE_INVALIDATE_CACHE_SIZE  64
+typedef struct arch_vm_translation_map_struct {
+    mmu_pde  *pgdir_virt;           /* Page directory virtual address  */
+    mmu_pde  *pgdir_phys;           /* Page directory physical address */
+    uint     num_invalidate_pages;  /* Number of pages to invalidate   */
+    addr_t   pages_to_invalidate[PAGE_INVALIDATE_CACHE_SIZE];
+} arch_vm_translation_map_t;
+
+
 #endif

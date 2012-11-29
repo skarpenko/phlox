@@ -8,6 +8,7 @@
 #include <phlox/avl_tree.h>
 #include <phlox/list.h>
 #include <phlox/mutex.h>
+#include <phlox/vm_private.h>
 #include <phlox/vm.h>
 #include <phlox/vm_page_mapper.h>
 
@@ -135,7 +136,7 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
     /* allocate memory for mapping descriptors */
     mappings = (mapping_desc_t *)vm_alloc_from_kargs( kargs,
                        mappings_count * sizeof(mapping_desc_t),
-                       VM_LOCK_KERNEL | VM_LOCK_RW );
+                       VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
     if (!mappings)
         return ERR_NO_MEMORY;
 

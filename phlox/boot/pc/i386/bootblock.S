@@ -47,13 +47,13 @@
 #define READ_RETR_COUNT       3    /* read retry count on error         */
 
 /* other parameters */
-#define TARGET                0x10000  /* target where image be loaded */
+#define TARGET                0x11000  /* target where image be loaded */
 #define BUFFER                0x8000   /* read buffer                  */
 #define BOOTSEG               0x7c00   /* first part of this boot      */
 #define BOOTSEG2              0x7e00   /* its second part              */
 #define STACK                 0x10000  /* stack                        */
 #define MEMINFO               0x7000   /* target for memory info data  */
-#define VESAINFO              0x30000  /* target for vesainfo data     */
+#define VESAINFO              0x10000  /* target for vesainfo data     */
 
 /* org is 0x7c00
  */
@@ -411,7 +411,7 @@ done_mem_real:
 
 /* fool around with vesa mode */
 enable_vesa:
-    /* put the VBEInfo struct at 0x30000 */
+    /* put the VBEInfo struct at VESAINFO address */
     mov     $VESAINFO, %eax
     mov     %eax, vesa_info
     mov     $0x3000, %dx

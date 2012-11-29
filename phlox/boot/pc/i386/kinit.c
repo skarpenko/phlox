@@ -26,14 +26,14 @@ static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
 
 /* address of temporary page with kernel arguments */
-kernel_args_t *kargs = (kernel_args_t *)0x10000;
+kernel_args_t *kargs = (kernel_args_t *)0x11000;
 
 /* page directory and page table */
 static mmu_pde *pgdir   = NULL;
 static mmu_pte *pgtable = NULL;
 
 /* address of temporary MMU storage */
-#define MMU_TMPDATA  0x11000 /* next page after kernel args */
+#define MMU_TMPDATA  0x12000 /* next page after kernel args */
 
 /* MMU operations (stolen from NewOS's stage2) */
 static int mmu_init(kernel_args_t *ka, uint32 *next_physaddr);

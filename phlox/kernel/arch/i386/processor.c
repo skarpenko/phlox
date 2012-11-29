@@ -33,14 +33,45 @@ static const struct i386_cpu_vendor_info cpu_vendor_info[I386_VENDORS_COUNT] = {
     { "NSC",       { "Geode by NSC" } }   /* National Semiconductor */
 };
 
+
+/*** Externals need to be initialized ***/
+
+#if CPU_i386
+/* CPU-dependend MMU routines */
+extern uint32 __arch_invalidate_TLB_entry_link;
+void cpu_i386_arch_invalidate_TLB_entry(addr_t virt_addr);
+void cpu_i486_arch_invalidate_TLB_entry(addr_t virt_addr);
+    
+extern uint32 __arch_invalidate_TLB_range_link;
+void cpu_i386_arch_invalidate_TLB_range(addr_t start, size_t size);
+void cpu_i486_arch_invalidate_TLB_range(addr_t start, size_t size);
+
+extern uint32 __arch_invalidate_TLB_list_link;
+void cpu_i386_arch_invalidate_TLB_list(addr_t pages[], size_t count);
+void cpu_i486_arch_invalidate_TLB_list(addr_t pages[], size_t count);
+#endif
+
 /* architecture specific processor module init */
 void arch_processor_mod_init(arch_processor_t *bsp) {
-    kprint("arch_processor_mod_init\n");
+#if CPU_i386
+    /* init MMU routines */
+    if(bsp->family<4) {
+       /* init CPU i386 compatible links */
+       __arch_invalidate_TLB_entry_link = (uint32)&cpu_i386_arch_invalidate_TLB_entry;
+       __arch_invalidate_TLB_range_link = (uint32)&cpu_i386_arch_invalidate_TLB_range;
+       __arch_invalidate_TLB_list_link  = (uint32)&cpu_i386_arch_invalidate_TLB_list;
+    } else {
+       /* init CPU i486+ compatible links */
+       __arch_invalidate_TLB_entry_link = (uint32)&cpu_i486_arch_invalidate_TLB_entry;
+       __arch_invalidate_TLB_range_link = (uint32)&cpu_i486_arch_invalidate_TLB_range;
+       __arch_invalidate_TLB_list_link  = (uint32)&cpu_i486_arch_invalidate_TLB_list;
+    }
+#endif
 }
 
 /* architecture specific processor set init */
 void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu) {
-    kprint("arch_processor_set_init\n");
+    /* do nothing for now */
 }
 
 /* architecture specific processor init */
@@ -370,4 +401,30 @@ void i386_cpu_feature_str(arch_processor_t *p, char *str) {
         strcat(str, "skinit ");
     if(p->features[I386_AMD_FEATURE_C] & X86_CPUID_AMD_WDT)
         strcat(str, "wdt ");
+}
+
+/* invalidate TLB entries refered to given address range */
+#if CPU_i386
+void cpu_i486_arch_invalidate_TLB_range(addr_t start, size_t size) {
+#else
+void arch_invalidate_TLB_range(addr_t start, size_t size) {
+#endif
+    int32 num_pages = (start+size)/PAGE_SIZE - start/PAGE_SIZE;
+
+    while(num_pages-- >= 0) {
+       arch_invalidate_TLB_entry(start); /* invalidate */
+       start += PAGE_SIZE;               /* switch to next page */
+    }
+}
+
+/* invalidate list of TLB entries */
+#if CPU_i386
+void cpu_i486_arch_invalidate_TLB_list(addr_t pages[], size_t count) {
+#else
+void arch_invalidate_TLB_list(addr_t pages[], size_t count) {
+#endif
+    uint32 i;
+
+    for(i=0; i<count; i++)
+       arch_invalidate_TLB_entry(pages[i]);
 }

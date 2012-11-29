@@ -4,6 +4,7 @@
 */
 
 #define FUNCTION(x) .global x; .type x,@function; x
+#define GLOBAL(x) .global x; x
 
 /* Arguments */
 #define ARG0   4(%esp)
@@ -73,3 +74,37 @@ FUNCTION(i386_cpuid_edx):
 FUNCTION(i386_rdtsc):
     rdtsc   /* read processor time-stamp counter into edx:eax */
     ret
+
+#if CPU_i386
+/*
+ * CPU i386 compatible versions.
+ * Routines invalidates whole TLB by reloading CR3. It is not
+ * possible to invalidate single TLB entry because INVLPG
+ * instruction supported only by i486+ CPUs.
+ */
+FUNCTION(cpu_i386_arch_invalidate_TLB_entry):
+FUNCTION(cpu_i386_arch_invalidate_TLB_range):
+FUNCTION(cpu_i386_arch_invalidate_TLB_list):
+    movl  %cr3,  %eax   /* copy %cr3 to %eax */
+    movl  %eax,  %cr3   /* copy %eax back to %cr3 */
+    ret
+
+/* i486+ CPUs version */
+FUNCTION(cpu_i486_arch_invalidate_TLB_entry):
+    movl    ARG0,  %eax
+    invlpg  (%eax)  /* invalidate single TLB entry */
+    ret
+
+/* Links to correct routines will be set during CPU identification */
+GLOBAL(__arch_invalidate_TLB_entry_link): .long 0
+FUNCTION(arch_invalidate_TLB_entry):
+    jmp *__arch_invalidate_TLB_entry_link
+    
+GLOBAL(__arch_invalidate_TLB_range_link): .long 0
+FUNCTION(arch_invalidate_TLB_range):
+    jmp *__arch_invalidate_TLB_range_link
+
+GLOBAL(__arch_invalidate_TLB_list_link): .long 0
+FUNCTION(arch_invalidate_TLB_list):
+    jmp *__arch_invalidate_TLB_list_link
+#endif

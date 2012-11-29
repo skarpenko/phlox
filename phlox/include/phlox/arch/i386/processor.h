@@ -321,19 +321,28 @@ static inline void arch_invalidate_TLB() {
 
 /*
  * Invalidate single entry in Translation Lookaside Buffer
- * Note that INVLPG instruction supported only by 486+ CPUs
+ * Note: Due to support of INVLPG instruction only by 486+ CPUs
+ * different approach used when compatibility with 386 CPUs needed.
  */
 #if CPU_i386
-  #warning IVLPG instruction is not supported on i386 CPU!
-  /* invalidate all TLB entries */
-  #define arch_invalidate_TLB_entry(virt_addr)  arch_invalidate_TLB()
+void arch_invalidate_TLB_entry(addr_t virt_addr);
 #else
-static inline void invalidate_TLB_entry(addr_t virt_addr) {
+static inline void arch_invalidate_TLB_entry(addr_t virt_addr) {
     __asm__ __volatile__ (
        " invlpg (%0); "
        : :"r" (virt_addr));
 }
 #endif
+
+/*
+ * Invalidate TLB entries refered to given address range
+ */
+void arch_invalidate_TLB_range(addr_t start, size_t size);
+
+/*
+ * Invalidate list of TLB entries
+ */
+void arch_invalidate_TLB_list(addr_t pages[], size_t count);
 
 /* No Operation instruction */
 #define arch_nop() __asm__ __volatile__ ("nop")

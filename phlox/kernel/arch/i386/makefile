@@ -5,7 +5,7 @@ $(shell mkdir -p $(KERNEL_ARCH_OUT_DIR))
 KERNEL_ARCH_I386_O_FILES += \
 	atomic_init.o \
 	atomic.o \
-	i386.o \
+	arch_i386.o \
 	processor.o
 
 KERNEL_ARCH_I386_O_FILES := $(addprefix $(KERNEL_ARCH_OUT_DIR)/,$(KERNEL_ARCH_I386_O_FILES))

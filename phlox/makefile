@@ -44,8 +44,12 @@ help:
 	@echo "  final    - build Phlox boot image;"
 	@echo "  clean    - remove results of compilation;"
 	@echo "  allclean - remove target dir;"
-	@echo "  mrproper - clean up Phlox source tree."
+	@echo "  mrproper - clean up Phlox source tree;"
+	@echo "  bochs    - start Bochs virtual machine."
 	@echo
 	@echo "Additional options:"
 	@echo "  CPU=<cpu type>  - specifies CPU type to optimize for."
 	@echo
+
+bochs: final
+	bochs -q 'boot:a' 'floppya: 1_44=$(PHLOXZ), status=inserted'

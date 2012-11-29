@@ -15,9 +15,13 @@ processor_set_t  ProcessorSet;
 /* pointer to module init routine */
 typedef void (*mod_init_t)(arch_processor_t *bsp);
 
+/*** external module initialization routines ***/
+void arch_atomic_mod_init(arch_processor_t *bsp);
+
 /* modules init list */
 static mod_init_t mod_inits[] = {
     &arch_processor_mod_init,   /* processor module init */
+    &arch_atomic_mod_init,      /* atomic module init */
 
     NULL /* last entry */
 };

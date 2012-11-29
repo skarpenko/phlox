@@ -3,6 +3,7 @@ KERNEL_ARCH_OUT_DIR := $(KERNEL_OUT_DIR)/arch
 $(shell mkdir -p $(KERNEL_ARCH_OUT_DIR))
 
 KERNEL_ARCH_I386_O_FILES += \
+	atomic_init.o \
 	atomic.o \
 	i386.o \
 	processor.o

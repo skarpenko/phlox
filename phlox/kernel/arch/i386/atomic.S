@@ -52,11 +52,12 @@ FUNCTION(cpu_i386_atomic_test_and_set):
     movl   ARG1, %ecx
     movl   ARG2, %eax
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl               /* store flags */
     cli                  /* disable interrupts */
     cmpl   %eax, (%edx)  /* compare %eax and (%edx) */
     jnz    1f
     xchg   %ecx, (%edx)  /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                  /* enable interrupts again */
+1:  popfl                /* restore flags */
     movl   $0,   %eax
     sete   %al           /* Set %eax = 1 if %ecx written to (%edx) */
     ret
@@ -129,11 +130,12 @@ FUNCTION(cpu_i386_atomic_add_ret):
     movl   ARG0,   %edx
     movl   ARG1,   %eax
     /* cpu i386 implementation of xadd instruction */
+    pushfl                 /* store flags */
     cli                    /* disable interrupts */
     movl   (%edx), %ecx
     addl   %ecx,   %eax    /* add */
     xchg   %eax,   (%edx)  /* exchange */
-    sti                    /* enable interrupts */
+    popfl                  /* restore flags */
     ret
 
 FUNCTION(cpu_i486_atomic_add_ret):
@@ -156,11 +158,12 @@ FUNCTION(atomic_sub_ret):
 FUNCTION(cpu_i386_atomic_sub_ret):
     movl   ARG0,   %edx
     movl   ARG1,   %ecx
+    pushfl                 /* store flags */
     cli                    /* disable interrupts */
     movl   (%edx), %eax
     subl   %ecx,   %eax    /* subtract */
     xchg   %eax,   (%edx)  /* exchange */
-    sti                    /* enable interrupts */
+    popfl                  /* restore flags */
     ret
 
 FUNCTION(cpu_i486_atomic_sub_ret):
@@ -185,11 +188,12 @@ FUNCTION(cpu_i386_atomic_inc_ret):
     movl   ARG0,   %edx
     movl   $1,     %eax    /* Write 1 to %eax */
     /* cpu i386 implementation of xadd instruction */
+    pushfl                 /* store flags */
     cli                    /* disable interrupts */
     movl   (%edx), %ecx
     addl   %ecx,   %eax    /* add */
     xchg   %eax,   (%edx)  /* exchange */
-    sti                    /* enable interrupts */
+    popfl                  /* restore flags */
     ret
 
 FUNCTION(cpu_i486_atomic_inc_ret):
@@ -213,11 +217,12 @@ FUNCTION(cpu_i386_atomic_dec_ret):
     movl   ARG0,   %edx
     movl   $-1,    %eax    /* Write -1 to %eax */
     /* cpu i386 implementation of xadd instruction */
+    pushfl                 /* store flags */
     cli                    /* disable interrupts */
     movl   (%edx), %ecx
     addl   %ecx,   %eax    /* add */
     xchg   %eax,   (%edx)  /* exchange */
-    sti                    /* enable interrupts */
+    popfl                  /* restore flags */
     ret
 
 FUNCTION(cpu_i486_atomic_dec_ret):
@@ -244,11 +249,12 @@ _cpu_i386_atomic_neg_ret1:
     movl   %eax,   %ecx    /* Make a copy of %eax in %ecx */
     negl   %ecx            /* Change sign of %ecx */
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl                 /* store flags */
     cli                    /* disable interrupts */
     cmpl   %eax,   (%edx)  /* compare %eax and (%edx) */
     jnz    1f
     xchg   %ecx,   (%edx)  /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                    /* enable interrupts */
+1:  popfl                  /* restore flags */
     jnz    _cpu_i386_atomic_neg_ret1  /* else try again */
     ret
 
@@ -311,11 +317,12 @@ _cpu_i386_atomic_not_ret1:
     movl   %eax,   %ecx      /* Make a copy of %eax in %ecx */
     notl   %ecx              /* Logical NOT */
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl                   /* store flags */
     cli                      /* disable interrupts */
     cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
     jnz    1f
     xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                      /* enable interrupts */
+1:  popfl                    /* restore flags */
     jnz    _cpu_i386_atomic_not_ret1  /* else try again */
     ret
 
@@ -347,11 +354,12 @@ _cpu_i386_atomic_and_ret1:
     movl    (%edx), %eax      /* Copy (%edx) to %eax */
     andl    %eax,   %ecx      /* Logical AND */
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl                    /* store flags */
     cli                       /* disable interrupts */
     cmpl    %eax,   (%edx)    /* compare %eax and (%edx) */
     jnz    1f
     xchg   %ecx,    (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                       /* enable interrupts */
+1:  popfl                     /* restore flags */
     jnz    _cpu_i386_atomic_and_ret1  /* else try again */
     ret
 
@@ -383,11 +391,12 @@ _cpu_i386_atomic_or_ret1:
     movl   (%edx), %eax      /* Copy (%edx) to %eax */
     orl    %eax,   %ecx      /* Logical OR */
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl                   /* store flags */
     cli                      /* disable interrupts */
     cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
     jnz 1f
     xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                      /* enable interrupts */
+1:  popfl                    /* restore flags */
     jnz    _cpu_i386_atomic_or_ret1   /* else try again */
     ret
 
@@ -419,11 +428,12 @@ _cpu_i386_atomic_xor_ret1:
     movl   (%edx), %eax      /* Copy (%edx) to %eax */
     xorl   %eax,   %ecx      /* Logical XOR */
     /* cpu i386 implementation of cmpxchg instruction */
+    pushfl                   /* store flags */
     cli                      /* disable interrupts */
     cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
     jnz    1f
     xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
-1:  sti                      /* enable interrupts */
+1:  popfl                    /* restore flags */
     jnz    _cpu_i386_atomic_xor_ret1  /* else try again */
     ret
 

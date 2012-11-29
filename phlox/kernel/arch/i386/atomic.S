@@ -3,16 +3,13 @@
 * Distributed under the terms of the PhloxOS License.
 */
 
-/*** Stop compilation with error if i386 CPU selected.
- *** Currently support for i386 is not implemented.
- ***
- *** Instructions XADD and CMPXCHG supported only by i486+.
- ***/
+/* Print warning if compiling for i386 CPU */
 #if CPU_i386
-#error Not all functions compatible with i386 CPU
+#warning Compiling for i386 CPU
 #endif
 
 #define FUNCTION(x) .global x; .type x,@function; x
+#define GLOBAL(x) .global x; x
 
 /* Use lock prefix if compiling for SMP */
 #if SYSCFG_SMP_SUPPORT
@@ -44,7 +41,30 @@ FUNCTION(atomic_set_ret):
     ret
 
 /* int atomic_test_and_set(atomic_t *a, int set_to, int test_val) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_test_and_set_link): .long 0
 FUNCTION(atomic_test_and_set):
+    jmp *__atomic_test_and_set_link
+
+FUNCTION(cpu_i386_atomic_test_and_set):
+    movl   ARG0, %edx
+    movl   ARG1, %ecx
+    movl   ARG2, %eax
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                  /* disable interrupts */
+    cmpl   %eax, (%edx)  /* compare %eax and (%edx) */
+    jnz    1f
+    xchg   %ecx, (%edx)  /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                  /* enable interrupts again */
+    movl   $0,   %eax
+    sete   %al           /* Set %eax = 1 if %ecx written to (%edx) */
+    ret
+
+FUNCTION(cpu_i486_atomic_test_and_set):
+#else
+FUNCTION(atomic_test_and_set):
+#endif
     movl      ARG0, %edx
     movl      ARG1, %ecx
     movl      ARG2, %eax
@@ -99,7 +119,27 @@ FUNCTION(atomic_neg):
     ret
 
 /* int atomic_add_ret(atomic_t *a, int v) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_add_ret_link): .long 0
 FUNCTION(atomic_add_ret):
+    jmp *__atomic_add_ret_link
+
+FUNCTION(cpu_i386_atomic_add_ret):
+    movl   ARG0,   %edx
+    movl   ARG1,   %eax
+    /* cpu i386 implementation of xadd instruction */
+    cli                    /* disable interrupts */
+    movl   (%edx), %ecx
+    addl   %ecx,   %eax    /* add */
+    xchg   %eax,   (%edx)  /* exchange */
+    sti                    /* enable interrupts */
+    ret
+
+FUNCTION(cpu_i486_atomic_add_ret):
+#else
+FUNCTION(atomic_add_ret):
+#endif
     movl   ARG0, %edx
     movl   ARG1, %eax
     LOCK                 /* Lock bus */
@@ -107,7 +147,26 @@ FUNCTION(atomic_add_ret):
     ret
 
 /* int atomic_sub_ret(atomic_t *a, int v) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_sub_ret_link): .long 0
 FUNCTION(atomic_sub_ret):
+    jmp *__atomic_sub_ret_link
+
+FUNCTION(cpu_i386_atomic_sub_ret):
+    movl   ARG0,   %edx
+    movl   ARG1,   %ecx
+    cli                    /* disable interrupts */
+    movl   (%edx), %eax
+    subl   %ecx,   %eax    /* subtract */
+    xchg   %eax,   (%edx)  /* exchange */
+    sti                    /* enable interrupts */
+    ret
+
+FUNCTION(cpu_i486_atomic_sub_ret):
+#else
+FUNCTION(atomic_sub_ret):
+#endif
     movl   ARG0, %edx
     movl   ARG1, %eax
     negl   %eax          /* Change sign of %eax */
@@ -116,7 +175,27 @@ FUNCTION(atomic_sub_ret):
     ret
 
 /* int atomic_inc_ret(atomic_t *a) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_inc_ret_link): .long 0
 FUNCTION(atomic_inc_ret):
+    jmp *__atomic_inc_ret_link
+
+FUNCTION(cpu_i386_atomic_inc_ret):
+    movl   ARG0,   %edx
+    movl   $1,     %eax    /* Write 1 to %eax */
+    /* cpu i386 implementation of xadd instruction */
+    cli                    /* disable interrupts */
+    movl   (%edx), %ecx
+    addl   %ecx,   %eax    /* add */
+    xchg   %eax,   (%edx)  /* exchange */
+    sti                    /* enable interrupts */
+    ret
+
+FUNCTION(cpu_i486_atomic_inc_ret):
+#else
+FUNCTION(atomic_inc_ret):
+#endif
     movl   ARG0, %edx
     movl   $1,   %eax    /* Write 1 to %eax */
     LOCK                 /* Lock bus */
@@ -124,7 +203,27 @@ FUNCTION(atomic_inc_ret):
     ret
 
 /* int atomic_dec_ret(atomic_t *a) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_dec_ret_link): .long 0
 FUNCTION(atomic_dec_ret):
+    jmp *__atomic_dec_ret_link
+
+FUNCTION(cpu_i386_atomic_dec_ret):
+    movl   ARG0,   %edx
+    movl   $-1,    %eax    /* Write -1 to %eax */
+    /* cpu i386 implementation of xadd instruction */
+    cli                    /* disable interrupts */
+    movl   (%edx), %ecx
+    addl   %ecx,   %eax    /* add */
+    xchg   %eax,   (%edx)  /* exchange */
+    sti                    /* enable interrupts */
+    ret
+
+FUNCTION(cpu_i486_atomic_dec_ret):
+#else
+FUNCTION(atomic_dec_ret):
+#endif
     movl   ARG0, %edx
     movl   $-1,  %eax    /* Write -1 to %eax */
     LOCK                 /* Lock bus */
@@ -132,7 +231,31 @@ FUNCTION(atomic_dec_ret):
     ret
 
 /* int atomic_neg_ret(atomic_t *a) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_neg_ret_link): .long 0
 FUNCTION(atomic_neg_ret):
+    jmp *__atomic_neg_ret_link
+
+FUNCTION(cpu_i386_atomic_neg_ret):
+    movl   ARG0,   %edx
+_cpu_i386_atomic_neg_ret1:
+    movl   (%edx), %eax    /* Write (%edx) to %eax */
+    movl   %eax,   %ecx    /* Make a copy of %eax in %ecx */
+    negl   %ecx            /* Change sign of %ecx */
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                    /* disable interrupts */
+    cmpl   %eax,   (%edx)  /* compare %eax and (%edx) */
+    jnz    1f
+    xchg   %ecx,   (%edx)  /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                    /* enable interrupts */
+    jnz    _cpu_i386_atomic_neg_ret1  /* else try again */
+    ret
+
+FUNCTION(cpu_i486_atomic_neg_ret):
+#else
+FUNCTION(atomic_neg_ret):
+#endif
     movl      ARG0,   %edx
 _atomic_neg_ret1:
     movl      (%edx), %eax      /* Write (%edx) to %eax */
@@ -175,7 +298,31 @@ FUNCTION(atomic_xor):
     ret
 
 /* int atomic_not_ret(atomic_t *a) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_not_ret_link): .long 0
 FUNCTION(atomic_not_ret):
+    jmp *__atomic_not_ret_link
+
+FUNCTION(cpu_i386_atomic_not_ret):
+    movl   ARG0,   %edx
+_cpu_i386_atomic_not_ret1:
+    movl   (%edx), %eax      /* Write (%edx) to %eax */
+    movl   %eax,   %ecx      /* Make a copy of %eax in %ecx */
+    notl   %ecx              /* Logical NOT */
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                      /* disable interrupts */
+    cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
+    jnz    1f
+    xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                      /* enable interrupts */
+    jnz    _cpu_i386_atomic_not_ret1  /* else try again */
+    ret
+
+FUNCTION(cpu_i486_atomic_not_ret):
+#else
+FUNCTION(atomic_not_ret):
+#endif
     movl      ARG0,   %edx
 _atomic_not_ret1:
     movl      (%edx), %eax      /* Write (%edx) to %eax */
@@ -187,7 +334,31 @@ _atomic_not_ret1:
     ret
 
 /* int atomic_and_ret(atomic_t *a, int v) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_and_ret_link): .long 0
 FUNCTION(atomic_and_ret):
+    jmp *__atomic_and_ret_link
+
+FUNCTION(cpu_i386_atomic_and_ret):
+    movl    ARG0,   %edx
+_cpu_i386_atomic_and_ret1:
+    movl    ARG1,   %ecx
+    movl    (%edx), %eax      /* Copy (%edx) to %eax */
+    andl    %eax,   %ecx      /* Logical AND */
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                       /* disable interrupts */
+    cmpl    %eax,   (%edx)    /* compare %eax and (%edx) */
+    jnz    1f
+    xchg   %ecx,    (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                       /* enable interrupts */
+    jnz    _cpu_i386_atomic_and_ret1  /* else try again */
+    ret
+
+FUNCTION(cpu_i486_atomic_and_ret):
+#else
+FUNCTION(atomic_and_ret):
+#endif
     movl      ARG0,   %edx
 _atomic_and_ret1:
     movl      ARG1,   %ecx
@@ -199,7 +370,31 @@ _atomic_and_ret1:
     ret
 
 /* int atomic_or_ret(atomic_t *a, int v) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_or_ret_link): .long 0
 FUNCTION(atomic_or_ret):
+    jmp *__atomic_or_ret_link
+
+FUNCTION(cpu_i386_atomic_or_ret):
+    movl   ARG0,   %edx
+_cpu_i386_atomic_or_ret1:
+    movl   ARG1,   %ecx
+    movl   (%edx), %eax      /* Copy (%edx) to %eax */
+    orl    %eax,   %ecx      /* Logical OR */
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                      /* disable interrupts */
+    cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
+    jnz 1f
+    xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                      /* enable interrupts */
+    jnz    _cpu_i386_atomic_or_ret1   /* else try again */
+    ret
+
+FUNCTION(cpu_i486_atomic_or_ret):
+#else
+FUNCTION(atomic_or_ret):
+#endif
     movl      ARG0,   %edx
 _atomic_or_ret1:
     movl      ARG1,   %ecx
@@ -211,7 +406,31 @@ _atomic_or_ret1:
     ret
 
 /* int atomic_xor_ret(atomic_t *a, int v) */
+#if CPU_i386
+/* NOTE: Link to correct routine will be set during cpu detection stage. */
+GLOBAL(__atomic_xor_ret_link): .long 0
 FUNCTION(atomic_xor_ret):
+    jmp *__atomic_xor_ret_link
+
+FUNCTION(cpu_i386_atomic_xor_ret):
+    movl   ARG0,   %edx
+_cpu_i386_atomic_xor_ret1:
+    movl   ARG1,   %ecx
+    movl   (%edx), %eax      /* Copy (%edx) to %eax */
+    xorl   %eax,   %ecx      /* Logical XOR */
+    /* cpu i386 implementation of cmpxchg instruction */
+    cli                      /* disable interrupts */
+    cmpl   %eax,   (%edx)    /* compare %eax and (%edx) */
+    jnz    1f
+    xchg   %ecx,   (%edx)    /* exchange %ecx and (%edx) if %eax = (%edx) */
+1:  sti                      /* enable interrupts */
+    jnz    _cpu_i386_atomic_xor_ret1  /* else try again */
+    ret
+
+FUNCTION(cpu_i486_atomic_xor_ret):
+#else
+FUNCTION(atomic_xor_ret):
+#endif
     movl      ARG0,   %edx
 _atomic_xor_ret1:
     movl      ARG1,   %ecx

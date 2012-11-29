@@ -194,7 +194,12 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
         kprint("system stopped.\n");
         while(1);
      }
-     
+
+     i = 0;
+     #if CPU_i386
+       i = 3; /* optimized for 80386 */
+     #endif
+
      #if CPU_i486
        i = 4; /* optimized for 80486 */
      #endif

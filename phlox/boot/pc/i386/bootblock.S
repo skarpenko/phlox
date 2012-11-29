@@ -26,7 +26,7 @@
  */
 
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -156,7 +156,7 @@ no_vesa:
 
 code32:
     /* load descriptors and set up the stack */
-    mov     $0x10, %ax        /* load descriptor 2 in all segment selectors (except cs) */
+    mov     $0x10, %eax        /* load descriptor 2 in all segment selectors (except cs) */
     mov     %ax, %ds
     mov     %ax, %es
     mov     %ax, %fs
@@ -164,6 +164,7 @@ code32:
     mov     %ax, %ss
     mov     $STACK,%ebp
     mov     %ebp, %esp
+    /* NOTE: After loading selectors only %al is not zero */
 
     /* push some arguments to the boot image */
     pushl   vesa_info

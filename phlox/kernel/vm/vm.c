@@ -93,6 +93,10 @@ status_t vm_init(kernel_args_t *kargs)
     if(err)
        panic("vm_objects_init: failed!\n");
 
+    /* create initial kernel space */
+    if(vm_create_kernel_aspace("kernel_space", KERNEL_BASE, KERNEL_SIZE) == VM_INVALID_ASPACEID)
+       panic("vm_init: failed to create initial kernel space!\n");
+
     return NO_ERROR;
 }
 

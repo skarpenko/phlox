@@ -8,6 +8,7 @@
 #include <phlox/ktypes.h>
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
+#include <phlox/vm_types.h>
 
 
 /*
@@ -26,8 +27,14 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
  * Allocate memory block of given size form kernel args structure.
  * Protection parameter specifies access rights to allocated block.
  * Used on system init, do not use after!
-*/
+ */
 addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection);
+
+
+/* Create kernel address space.
+ * Called only once during system init stage.
+ */
+aspace_id vm_create_kernel_aspace(const char* name, addr_t base, size_t size);
 
 
 #endif

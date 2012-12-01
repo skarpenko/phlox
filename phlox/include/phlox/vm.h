@@ -10,6 +10,8 @@
 #include <phlox/kargs.h>
 #include <phlox/arch/vm.h>
 #include <phlox/platform/vm.h>
+#include <phlox/vm_types.h>
+
 
 /* Memory protection attributes */
 #define VM_PROT_READ     0x01  /* Read permission            */
@@ -57,7 +59,7 @@ typedef struct {
 /*
  * This routine called during system init stage
  * for virtual memory initialization.
-*/
+ */
 status_t vm_init(kernel_args_t *kargs);
 
 

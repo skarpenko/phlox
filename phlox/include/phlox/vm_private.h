@@ -55,5 +55,54 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection);
  */
 aspace_id vm_create_kernel_aspace(const char* name, addr_t base, size_t size);
 
+/*
+ * Create mapping of specified size and put it into memory map of address space.
+ * Address space access lock must be acquired before call!
+ */
+status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_mapping_t **mapping);
+
+/*
+ * Create mapping of specified size at given address and put it into
+ * memory map of address space. Memory gap at given address must be free.
+ * Address space access lock must be acquired before call!
+ */
+status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t base, size_t size, vm_mapping_t **mapping);
+
+/*
+ * Get mapping by address that is covered by in memory map.
+ * Address space access lock must be acquired before call!
+ */
+status_t vm_aspace_get_mapping(vm_address_space_t *aspace, addr_t vaddr, vm_mapping_t **mapping);
+
+/*
+ * Create new universal page at given offset within memory object.
+ * Object access lock must be acquired before call!
+ */
+status_t vm_object_add_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage);
+
+/*
+ * Get or create universal page at given offset within memory object.
+ * Object access lock must be acquired before call!
+ */
+status_t vm_object_get_or_add_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage);
+
+/*
+ * Get universal page at given offset within memory object.
+ * Object access lock must be acquired before call!
+ */
+status_t vm_object_get_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage);
+
+/*
+ * Put mapping wired with object into its internal list of mappings.
+ * Object access lock must be acquired before call!
+ */
+void vm_object_put_mapping(vm_object_t *object, vm_mapping_t *mapping);
+
+/*
+ * Remove mapping wired with object from its internal list of mappings.
+ * Object access lock must be acquired before call!
+ */
+void vm_object_remove_mapping(vm_object_t *object, vm_mapping_t *mapping);
+
 
 #endif

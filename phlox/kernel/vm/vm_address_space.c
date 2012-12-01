@@ -224,6 +224,58 @@ static bool locate_memory_gap(vm_memory_map_t *mmap, size_t size, addr_t *base_v
     return false;
 }
 
+/* puts mapping into mappings tree and list, keeping list sorted
+ * (no lock acquired for address space access)
+ */
+static bool put_mapping_to_aspace(vm_address_space_t *aspace, vm_mapping_t *mapping)
+{
+    avl_tree_index_t where;
+    vm_mapping_t *parent;
+
+    /* get "where" index and ensure that add of mapping is permitted */
+    if(avl_tree_find(&aspace->mmap.mappings_tree, mapping, &where) != NULL)
+        return false;
+
+    /* put mapping into tree */
+    avl_tree_insert(&aspace->mmap.mappings_tree, mapping, where);
+
+    /* if that is the only mapping in address space,
+     * just add to list and exit.
+     */
+    if(!where.node) {
+        xlist_add_first(&aspace->mmap.mappings_list, &mapping->list_node);
+        return true;
+    }
+
+    /* fetch parent tree node from "where" index */
+    parent = containerof(where.node, vm_mapping_t, tree_node);
+
+    /* add to a proper position in list */
+    if(!where.child) {
+        xlist_insert_before_unsafe(&aspace->mmap.mappings_list, &parent->list_node,
+                                   &mapping->list_node);
+    } else {
+        xlist_insert_after_unsafe(&aspace->mmap.mappings_list, &parent->list_node,
+                                  &mapping->list_node);
+    }
+
+    return true;
+}
+
+/* removes mapping from address space (no lock acquired before) */
+static bool remove_mapping_from_aspace(vm_address_space_t *aspace, vm_mapping_t *mapping)
+{
+    /* remove from the tree */
+    if(avl_tree_remove(&aspace->mmap.mappings_tree, mapping) == NULL)
+        return false;
+
+    /* ... and from the list */
+    if(!xlist_remove(&aspace->mmap.mappings_list, &mapping->list_node))
+        return false;
+
+    return true;
+}
+
 
 /*** Public routines ***/
 
@@ -244,6 +296,73 @@ status_t vm_address_spaces_init(kernel_args_t *kargs)
                      sizeof(vm_address_space_t),
                      offsetof(vm_address_space_t, tree_node) );
 
+    return NO_ERROR;
+}
+
+/* creates mapping structure and puts it into memory map of address space */
+status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_mapping_t **mapping)
+{
+    addr_t base_addr;
+
+    /* locate gap of requested size */
+    if(!locate_memory_gap(&aspace->mmap, size, &base_addr))
+        return ERR_VM_NO_MAPPING_GAP;
+
+    /* create mapping exactly */
+    return vm_aspace_create_mapping_exactly(aspace, base_addr, size, mapping);
+}
+
+/* creates mapping structure with fixed base address and puts it into memory map of address space */
+status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t base, size_t size, vm_mapping_t **mapping)
+{
+    /* check arguments */
+    if(base < aspace->mmap.base || size > aspace->mmap.size)
+        return ERR_INVALID_ARGS;
+
+    /* allocate memory for structure */
+    *mapping = (vm_mapping_t *)kmalloc(sizeof(vm_mapping_t));
+    ASSERT_MSG(*mapping != NULL, "vm_aspace_create_mapping_exactly(): no memory!");
+    if(*mapping == NULL)
+        return ERR_NO_MEMORY;
+
+    /* init structure fields */
+    (*mapping)->start  = base;
+    (*mapping)->end    = base + size - 1;
+    (*mapping)->mmap   = &aspace->mmap;
+    (*mapping)->object = NULL;
+    (*mapping)->offset = 0;
+    xlist_elem_init(&(*mapping)->list_node);
+    xlist_elem_init(&(*mapping)->obj_list_node);
+
+    /* put it into memory map of address space */
+    if(!put_mapping_to_aspace(aspace, *mapping)) {
+        kfree(*mapping);
+        return ERR_VM_BAD_ADDRESS;
+    }
+
+    /* success */
+    return NO_ERROR;
+}
+
+/* get mapping by virtual address within address space */
+status_t vm_aspace_get_mapping(vm_address_space_t *aspace, addr_t vaddr, vm_mapping_t **mapping)
+{
+    vm_mapping_t dummy;
+
+    /* check specified address */
+    if(vaddr < aspace->mmap.base || vaddr > aspace->mmap.base + aspace->mmap.size + 1)
+        return ERR_VM_BAD_ADDRESS;
+
+    /* fill dummy fields */
+    dummy.start = vaddr;
+    dummy.end   = vaddr;
+
+    /* search tree */
+    *mapping = avl_tree_find(&aspace->mmap.mappings_tree, &dummy, NULL);
+    if(*mapping == NULL)
+        return ERR_VM_NO_MAPPING;
+
+    /* success */
     return NO_ERROR;
 }
 

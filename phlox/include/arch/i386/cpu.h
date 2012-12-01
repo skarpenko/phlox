@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_CPU_H
@@ -12,6 +12,9 @@
 
 /* Align the pointer to the (next) page boundary */
 #define PAGE_ALIGN(a)   (((a)+PAGE_SIZE-1)&PAGE_MASK)
+
+/* Extract page number from address */
+#define PAGE_NUMBER(a)  (a>>PAGE_SHIFT)
 
 /* Max. limit of Global Descriptor Table */
 #define MAX_GDT_LIMIT  0x800

@@ -3,6 +3,7 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/heap.h>
 #include <phlox/list.h>
@@ -153,6 +154,42 @@ error:
     return NULL; /* failed to create object */
 }
 
+/* put upage into tree and list of the object keeping list sorted
+ * (no lock acquired before)
+ */
+static bool put_upage_to_object(vm_object_t *object, vm_upage_t *upage)
+{
+    avl_tree_index_t where;
+    vm_upage_t *parent;
+
+    /* get "where" index and ensure we can add this upage */
+    if(avl_tree_find(&object->upages_tree, upage, &where) != NULL)
+        return false;
+
+    /* put upage into tree */
+    avl_tree_insert(&object->upages_tree, upage, where);
+
+    /* if no other upages present - just add to list and exit */
+    if(!where.node) {
+        xlist_add_first(&object->upages_list, &upage->list_node);
+        return true;
+    }
+
+    /* get parent node */
+    parent = containerof(where.node, vm_upage_t, tree_node);
+
+    /* add to proper position in list */
+    if(!where.child) {
+        xlist_insert_before(&object->upages_list, &parent->list_node,
+                            &upage->list_node);
+    } else {
+        xlist_insert_after(&object->upages_list, &parent->list_node,
+                           &upage->list_node);
+    }
+
+    return true;
+}
+
 
 /*** Public routines ***/
 
@@ -174,6 +211,125 @@ status_t vm_objects_init(kernel_args_t *kargs)
                      offsetof(vm_object_t, tree_node) );
 
     return NO_ERROR;
+}
+
+/* create new upage at given offset and add it to object (no lock acquired before) */
+status_t vm_object_add_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage)
+{
+    uint upn = PAGE_NUMBER(offset);
+
+    /* check offset */
+    if(offset >= object->size)
+        return ERR_VM_BAD_OFFSET;
+
+    /* allocate memory for new upage */
+    *upage = (vm_upage_t *)kmalloc(sizeof(vm_upage_t));
+    ASSERT_MSG(*upage != NULL, "vm_object_add_upage(): no memory!");
+    if(*upage == NULL)
+        return ERR_NO_MEMORY;
+
+    /* init upage fields */
+    (*upage)->upn    = upn;
+    (*upage)->ppn    = 0;
+    (*upage)->state  = VM_UPAGE_STATE_UNWIRED;
+    (*upage)->object = object;
+    xlist_elem_init(&(*upage)->list_node);
+
+    /* try to put into object */
+    if(!put_upage_to_object(object, *upage)) {
+        kfree(*upage);
+        return ERR_VM_UPAGE_EXISTS;
+    }
+
+    return NO_ERROR;
+}
+
+/* returns or creates upage at given offset (no lock acquired before) */
+status_t vm_object_get_or_add_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage)
+{
+    uint upn = PAGE_NUMBER(offset);
+    avl_tree_index_t where;
+    vm_upage_t dummy, *parent;
+
+    /* check offset */
+    if(offset >= object->size)
+        return ERR_VM_BAD_OFFSET;
+
+    /* fill dummy */
+    dummy.upn = upn;
+    /* .. and try to locate upage first */
+    *upage = avl_tree_find(&object->upages_tree, &dummy, &where);
+    if(*upage != NULL)
+        return NO_ERROR;
+
+    /* no upage here. so... allocate memory for new one */
+    *upage = (vm_upage_t *)kmalloc(sizeof(vm_upage_t));
+    ASSERT_MSG(*upage != NULL, "vm_object_get_or_add_upage(): no memory!");
+    if(*upage == NULL)
+        return ERR_NO_MEMORY;
+
+    /* init upage fields */
+    (*upage)->upn    = upn;
+    (*upage)->ppn    = 0;
+    (*upage)->state  = VM_UPAGE_STATE_UNWIRED;
+    (*upage)->object = object;
+    xlist_elem_init(&(*upage)->list_node);
+    
+    /* put it into tree */
+    avl_tree_insert(&object->upages_tree, *upage, where);
+
+    /* if no other upages present just add and exit */
+    if(!where.node) {
+        xlist_add_first(&object->upages_list, &(*upage)->list_node);
+        return NO_ERROR;
+    }
+
+    /* get parent node */
+    parent = containerof(where.node, vm_upage_t, tree_node);
+
+    /* add upage to proper position in list */
+    if(!where.child) {
+        xlist_insert_before(&object->upages_list, &parent->list_node,
+                            &(*upage)->list_node);
+    } else {
+        xlist_insert_after(&object->upages_list, &parent->list_node,
+                           &(*upage)->list_node);
+    }
+
+    return NO_ERROR;
+}
+
+/* returns upage at given offset if exists (no lock acquired before) */
+status_t vm_object_get_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage)
+{
+    vm_upage_t dummy;
+
+    /* check offset */
+    if(offset >= object->size)
+        return ERR_VM_BAD_OFFSET;
+
+    /* fill dummy for search */
+    dummy.upn = PAGE_NUMBER(offset);
+
+    /* search for upage */
+    *upage = avl_tree_find(&object->upages_tree, &dummy, NULL);
+    if(*upage == NULL)
+        return ERR_VM_NO_UPAGE;
+
+    return NO_ERROR;
+}
+
+/* puts mapping wired with object into its mappings list (no lock acquired before) */
+void vm_object_put_mapping(vm_object_t *object, vm_mapping_t *mapping)
+{
+    xlist_add_last(&object->mappings_list, &mapping->obj_list_node);
+}
+
+/* removes mapping wired with object from its mappings list (no lock acquired before) */
+void vm_object_remove_mapping(vm_object_t *object, vm_mapping_t *mapping)
+{
+    if(!xlist_remove(&object->mappings_list, &mapping->obj_list_node))
+        panic("vm_object_remove_mapping(): no mapping!");
 }
 
 /* create virtual memory object */

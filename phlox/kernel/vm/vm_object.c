@@ -154,6 +154,36 @@ error:
     return NULL; /* failed to create object */
 }
 
+/* common delete routine for memory objects.
+ * releases all occupied memory by object structures.
+ */
+static void delete_object_common(vm_object_t *object)
+{
+    list_elem_t *item;
+    vm_upage_t *upage;
+
+    /* ensure that object is not in objects list */
+    if(object->list_node.prev != NULL || object->list_node.next != NULL)
+        panic("delete_object_common(): object still in list!");
+
+    /* ensure that there is no mappings of this object */
+    if(xlist_peek_first(&object->mappings_list) != NULL)
+        panic("delete_object_common(): object has mappings!");
+
+    /* remove all universal pages */
+    while( (item = xlist_extract_first(&object->upages_list)) != NULL ) {
+        upage = containerof(item, vm_upage_t, list_node);
+        if(upage->state != VM_UPAGE_STATE_UNWIRED)
+            panic("delete_object_common(): upage with wired data!");
+        kfree(upage);
+    }
+
+    /* delete object structure */
+    if(object->name)
+        kfree(object->name);
+    kfree(object);
+}
+
 /* put upage into tree and list of the object keeping list sorted
  * (no lock acquired before)
  */
@@ -185,6 +215,24 @@ static bool put_upage_to_object(vm_object_t *object, vm_upage_t *upage)
     } else {
         xlist_insert_after(&object->upages_list, &parent->list_node,
                            &upage->list_node);
+    }
+
+    return true;
+}
+
+/* adds all missing universal pages into object */
+static bool add_all_upages_to_object(vm_object_t *object)
+{
+    vm_upage_t *dummy;
+    addr_t offset;
+    status_t err;
+
+    /* walk through object and add upages */
+    for(offset = 0; offset < object->size; offset += PAGE_SIZE) {
+        err = vm_object_add_upage(object, offset, &dummy);
+        ASSERT_MSG(err != ERR_NO_MEMORY, "add_all_upages_to_object(): no memory!");
+        if(err == ERR_NO_MEMORY)
+            return false;
     }
 
     return true;
@@ -338,6 +386,10 @@ object_id vm_create_object(const char *name, size_t size, uint protection)
     vm_object_t *object;
     object_id id;
 
+    /* check that name is unique */
+    if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)
+        return VM_INVALID_OBJECTID;
+
     /* create object */
     object = create_object_common(name, size, protection);
     if(!object)
@@ -349,6 +401,154 @@ object_id vm_create_object(const char *name, size_t size, uint protection)
     put_object_to_list(object);
 
     return id; /* return id */
+}
+
+/* create object with assigned physical memory chunk */
+object_id vm_create_physmem_object(const char *name, addr_t phys_addr, size_t size, uint protection)
+{
+    vm_object_t *object;
+    vm_page_t *pages, *page;
+    uint page_num, first_page_num, n_pages;
+    addr_t offset;
+    vm_upage_t *upage;
+
+    /* check that name is unique */
+    if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)
+        return VM_INVALID_OBJECTID;
+
+    /* align address and size on page boundary */
+    phys_addr = ROUNDOWN(phys_addr, PAGE_SIZE);
+    size = PAGE_ALIGN(size);
+    /* first physical page and pages count */
+    first_page_num = PAGE_NUMBER(phys_addr);
+    n_pages = PAGE_NUMBER(size);
+
+    /* create object structure */
+    object = create_object_common(name, size, protection);
+    if(object == NULL)
+        return VM_INVALID_OBJECTID;
+
+    /* ... and add all upages to it */
+    if(!add_all_upages_to_object(object))
+        goto error;
+
+    /* try to allocate specified physical pages range */
+    pages = vm_page_alloc_specific_range(first_page_num, n_pages, VM_PAGE_STATE_FREE);
+    if(pages == NULL)
+        goto error;
+
+    /* assign allocated physical pages to universal pages of the object */
+    for(offset = 0, page_num = first_page_num, page = pages; offset < size;
+      offset += PAGE_SIZE, page_num++, page++) {
+        vm_object_get_upage(object, offset, &upage);
+        ASSERT_MSG(upage != NULL, "vm_create_physmem_object(): upage = NULL!");
+        /* physical page is now wired */
+        vm_page_set_state(page, VM_PAGE_STATE_WIRED);
+        upage->state = VM_UPAGE_STATE_RESIDENT;
+        upage->ppn = page_num;
+    }
+
+    /* put object into bookkeeping structures */
+    put_object_to_list(object);
+
+    /* return id to caller */
+    return object->id;
+
+error:
+    /* release memory on error */
+    delete_object_common(object);
+
+    return VM_INVALID_OBJECTID;
+}
+
+/* create object with assigned physical memory that is queried from virtual memory range */
+object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_addr, size_t size, uint protection)
+{
+    vm_address_space_t *aspace;
+    vm_object_t *object;
+    vm_upage_t *upage;
+    vm_page_t *page;
+    list_elem_t *item;
+    status_t err;
+    addr_t offset;
+    addr_t vaddr, paddr;
+    uint flags;
+
+    /* check that name is unique */
+    if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)
+        return VM_INVALID_OBJECTID;
+
+    /* round to page boundary */
+    virt_addr = ROUNDOWN(virt_addr, PAGE_SIZE);
+    size = PAGE_ALIGN(size);
+
+    /* get specified address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return VM_INVALID_OBJECTID;
+
+    /* create object structures */
+    object = create_object_common(name, size, protection);
+    if(object == NULL) {
+        vm_put_aspace(aspace);
+        return VM_INVALID_OBJECTID;
+    }
+
+    /* lock translation map */
+    (*aspace->tmap.ops->lock)(&aspace->tmap);
+
+    /* and start querying physical pages */
+    for(offset = 0, vaddr = virt_addr; offset < size; offset += PAGE_SIZE, vaddr += PAGE_SIZE) {
+        /* query physical page */
+        (*aspace->tmap.ops->query)(&aspace->tmap, vaddr, &paddr, &flags);
+        /* page must present in address space */
+        if( !(flags & VM_FLAG_PAGE_PRESENT) )
+            goto error;
+        /* add new universal page into object */
+        err = vm_object_add_upage(object, offset, &upage);
+        ASSERT_MSG(err != ERR_NO_MEMORY, "vm_create_virtmem_object(): no memory for upage!");
+        if(err == ERR_NO_MEMORY)
+            goto error;
+        /* now allocate recieved physical page */
+        page = vm_page_alloc_specific(PAGE_NUMBER(paddr), VM_PAGE_STATE_FREE);
+        if(page == NULL)
+            goto error;
+        /* page is now be wired and assigned to upage of the object */
+        vm_page_set_state(page, VM_PAGE_STATE_WIRED);
+        upage->state = VM_UPAGE_STATE_RESIDENT;
+        upage->ppn = page->ppn;
+    }
+
+    /* unlock translation map */
+    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+    /* ... and put address space back */
+    vm_put_aspace(aspace);
+
+    /* add object to bookkeeping structures */
+    put_object_to_list(object);
+
+    /* return its id to caller */
+    return object->id;
+
+error:
+    /* releas lock and put address space back */
+    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+    vm_put_aspace(aspace);
+
+    /* return allocated physical pages back */
+    while( (item = xlist_peek_first(&object->upages_list)) != NULL) {
+        upage = containerof(item, vm_upage_t, list_node);
+        upage->state = VM_UPAGE_STATE_UNWIRED;
+        page = vm_page_lookup(upage->ppn);
+        ASSERT_MSG(page != NULL, "vm_create_virtmem_object(): on error page is NULL!");
+        vm_page_set_state(page, VM_PAGE_STATE_UNUSED);
+        xlist_peek_next(item);
+    }
+
+    /* destroy object structures */
+    delete_object_common(object);
+
+    return VM_INVALID_OBJECTID;
 }
 
 /* returns object by its id */

@@ -331,6 +331,7 @@ status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t bas
     (*mapping)->mmap   = &aspace->mmap;
     (*mapping)->object = NULL;
     (*mapping)->offset = 0;
+    (*mapping)->type   = VM_MAPPING_TYPE_HOLE;
     xlist_elem_init(&(*mapping)->list_node);
     xlist_elem_init(&(*mapping)->obj_list_node);
 
@@ -342,6 +343,14 @@ status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t bas
 
     /* success */
     return NO_ERROR;
+}
+
+/* deletes mapping from address space */
+void vm_aspace_delete_mapping(vm_address_space_t *aspace, vm_mapping_t *mapping)
+{
+    if(!remove_mapping_from_aspace(aspace, mapping))
+        panic("vm_aspace_delete_mapping(): failed to remove mapping!");
+    kfree(mapping);
 }
 
 /* get mapping by virtual address within address space */
@@ -395,6 +404,10 @@ aspace_id vm_create_aspace(const char* name, addr_t base, size_t size)
 {
     vm_address_space_t *aspace;
     aspace_id id;
+
+    /* check that name is unique */
+    if(vm_find_aspace_by_name(name) != VM_INVALID_ASPACEID)
+        return VM_INVALID_ASPACEID;
 
     /* create address space */
     aspace = create_aspace_common(name, base, size, false);
@@ -504,4 +517,67 @@ aspace_id vm_find_aspace_by_name(const char *name)
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 
     return id;
+}
+
+/* creates memory hole */
+status_t vm_create_memory_hole(aspace_id aid, addr_t base, size_t size)
+{
+    vm_address_space_t *aspace;
+    vm_mapping_t *mapping;
+    unsigned long irqs_state;
+    status_t err;
+
+    /* try to get address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&aspace->lock);
+
+    /* create mapping, by default it is memory hole */
+    err = vm_aspace_create_mapping_exactly(aspace, base, size, &mapping);
+
+    /* release lock */
+    spin_unlock_irqrstor(&aspace->lock, irqs_state);
+
+    /* put address space back */
+    vm_put_aspace(aspace);
+
+    return err;
+}
+
+/* deletes memory hole */
+status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr)
+{
+    vm_address_space_t *aspace;
+    vm_mapping_t *mapping;
+    unsigned long irqs_state;
+    status_t err;
+
+    /* get specified address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* acquire lock */
+    irqs_state = spin_lock_irqsave(&aspace->lock);
+
+    /* get mapping at specified address. it must be memory hole. */
+    err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
+    if(err == NO_ERROR) {
+        if(mapping->type != VM_MAPPING_TYPE_HOLE) {
+           err = ERR_VM_BAD_ADDRESS;
+        } else {
+            vm_aspace_delete_mapping(aspace, mapping);
+        }
+    }
+
+    /* release lock */
+    spin_unlock_irqrstor(&aspace->lock, irqs_state);
+
+    /* put address space back */
+    vm_put_aspace(aspace);
+
+    return err;
 }

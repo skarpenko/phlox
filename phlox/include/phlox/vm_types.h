@@ -52,10 +52,18 @@ typedef struct vm_mapping {
     struct vm_memory_map *mmap;           /* Parent memory map */
     struct vm_object     *object;         /* Mapped object */
     addr_t                offset;         /* Offset into object */
+    uint                  type;           /* Mapping type */
     list_elem_t           list_node;      /* Node of mappings list */
     avl_tree_node_t       tree_node;      /* Node of mappings AVL tree */
     list_elem_t           obj_list_node;  /* Node of mappings list in VM Object */
 } vm_mapping_t;
+
+/* Mapping types */
+enum {
+    VM_MAPPING_TYPE_HOLE = 0,  /* Memory hole (nothing is mapped) */
+    VM_MAPPING_TYPE_OBJECT,    /* Mapped memory object */
+    VM_MAPPING_TYPE_SUBMAP     /* Submap */
+};
 
 /* Address space */
 typedef struct vm_address_space {
@@ -73,8 +81,8 @@ typedef struct vm_address_space {
 
 /* Address space states */
 enum {
-    VM_ASPACE_STATE_NORMAL,    /* Normal state */
-    VM_ASPACE_STATE_DELETION   /* Deleting address space */
+    VM_ASPACE_STATE_NORMAL = 0,  /* Normal state */
+    VM_ASPACE_STATE_DELETION     /* Deleting address space */
 };
 
 /* Memory object */
@@ -96,8 +104,8 @@ typedef struct vm_object {
 
 /* Object states */
 enum {
-    VM_OBJECT_STATE_NORMAL,    /* Normal state */
-    VM_OBJECT_STATE_DELETION   /* Deleting object */
+    VM_OBJECT_STATE_NORMAL = 0,  /* Normal state */
+    VM_OBJECT_STATE_DELETION     /* Deleting object */
 };
 
 /* Object protection flags */
@@ -110,7 +118,7 @@ enum {
 typedef struct vm_upage {
     uint              upn;        /* Universal page number within object */
     uint              ppn;        /* Refered physical page number */
-    int               state : 2;  /* Universal page state */
+    uint              state : 2;  /* Universal page state */
     struct vm_object *object;     /* Parent object */
     list_elem_t       list_node;  /* Node of universal pages list */
     avl_tree_node_t   tree_node;  /* Node of universal pages tree */

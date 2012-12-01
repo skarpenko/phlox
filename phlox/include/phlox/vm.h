@@ -112,6 +112,23 @@ aspace_id vm_find_aspace_by_name(const char *name);
 object_id vm_create_object(const char *name, size_t size, uint protection);
 
 /*
+ * Creates memory object with given name, size and protection and
+ * assigns chunk of physical pages to it starting from phys_addr.
+ * Returns id of newly created object or VM_INVALID_OBJECTID
+ * on error.
+*/
+object_id vm_create_physmem_object(const char *name, addr_t phys_addr, size_t size, uint protection);
+
+/* Creates memory object with given properties and assigns physical
+ * pages to it that is queried from virtual addresses within given
+ * address space.
+ * Returns id of newly created object or VM_INVALID_OBJECTID
+ * on error.
+ * This routine used on system start up. Do not use later.
+*/
+object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_addr, size_t size, uint protection);
+
+/*
  * Get object by its id.
  * Returns object or NULL if no object
  * found with given id.
@@ -128,6 +145,16 @@ void vm_put_object(vm_object_t *object);
  * If no object found returns VM_INVALID_OBJECTID.
 */
 object_id vm_find_object_by_name(const char *name);
+
+/*
+ * Creates memory hole of specified size at given address.
+*/
+status_t vm_create_memory_hole(aspace_id aid, addr_t base, size_t size);
+
+/*
+ * Deletes memory hole at given address.
+*/
+status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr);
 
 
 /*

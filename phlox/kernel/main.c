@@ -42,7 +42,7 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
           panic("Kernel args damaged or incorrect!\n");
 
       /* put hello into klog */
-      kprint("\nWelcome to Phlox Kernel!\n");
+      kprint("\nWelcome to Phlox Kernel! (built at: %s %s)\n", __DATE__, __TIME__);
     } else {
        /* wait until BSP completes its job? */
     }

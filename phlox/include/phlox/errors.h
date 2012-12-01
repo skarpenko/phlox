@@ -15,6 +15,7 @@ enum PhloxGeneralErrors {
     ERR_INVALID_ARGS,
     ERR_NO_MEMORY,
     ERR_OUT_OF_RANGE,
+    ERR_NAME_NOT_UNIQUE,
     ERR_GENERAL_LIMIT
 };
 

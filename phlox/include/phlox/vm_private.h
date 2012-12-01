@@ -69,6 +69,12 @@ status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_ma
 status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t base, size_t size, vm_mapping_t **mapping);
 
 /*
+ * Delete mapping from address space.
+ * Address space access lock must be acquired before call!
+ */
+void vm_aspace_delete_mapping(vm_address_space_t *aspace, vm_mapping_t *mapping);
+
+/*
  * Get mapping by address that is covered by in memory map.
  * Address space access lock must be acquired before call!
  */

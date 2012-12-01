@@ -20,6 +20,12 @@
 /* Redefinition for convenience */
 typedef xlist_t threads_list_t;
 
+/* Thread lists types */
+enum list_types {
+    ALIVE_THREADS_LIST,  /* List of alive threads */
+    DEAD_THREADS_LIST    /* List of dead threads */
+};
+
 /* Next available thread id */
 static vuint next_thread_id;
 
@@ -62,89 +68,98 @@ static thread_id get_next_thread_id(void)
     return retval;
 }
 
-/* put thread to the end of threads list */
-static void put_thread_to_list(thread_t *thread)
+/* put new thread into threads list (no lock acquired) */
+static void put_thread_to_list_nolock(thread_t *thread)
 {
-    unsigned long irqs_state;
+    /* thread must be in Birth state */
+    ASSERT_MSG(thread->state == THREAD_STATE_BIRTH,
+        "put_thread_to_list_nolock(): Wrong thread state!");
 
-    ASSERT_MSG(thread->state == THREAD_STATE_BIRTH, "Wrong thread state!");
-
-    /* acquire lock before touching list */
-    irqs_state = spin_lock_irqsave(&threads_lock);
-
-    /* add item */
+    /* add thread to list */
     xlist_add_last(&threads_list, &thread->threads_list_node);
 
     /* put thread into avl tree */
     if(!avl_tree_add(&threads_tree, thread))
-      panic("put_thread_to_list(): failed to add thread into tree!\n");
-
-    /* update thread state */
-    thread->state = THREAD_STATE_BIRTH;
-
-    /* release lock */
-    spin_unlock_irqrstor(&threads_lock, irqs_state);
+      panic("put_thread_to_list_nolock(): failed to add thread into tree!\n");
 }
 
-/* remove thread from list */
-static void remove_thread_from_list(thread_t *thread)
+/* put new thread into threads list */
+static void put_thread_to_list(thread_t *thread)
 {
     unsigned long irqs_state;
 
-    ASSERT_MSG( thread->state == THREAD_STATE_BIRTH ||
-                thread->state == THREAD_STATE_DEATH,
-                "Wrong thread state!" );
-
-    /* acquire lock before list access */
+    /* acquire lock before call to non-lock version */
     irqs_state = spin_lock_irqsave(&threads_lock);
 
-    /* remove thread */
-    xlist_remove_unsafe(&threads_list, &thread->threads_list_node);
-
-    /* remove thread from tree */
-    if(!avl_tree_remove(&threads_tree, thread))
-      panic("remove_thread_from_list(): failed to remove thread from tree!\n");
+    /* call non-lock version */
+    put_thread_to_list_nolock(thread);
 
     /* release lock */
     spin_unlock_irqrstor(&threads_lock, irqs_state);
 }
 
-/* put thread into dead threads list */
-static void put_thread_to_dead_list(thread_t *thread)
+/* move thread from one list to another (non-lock version) */
+static void move_thread_to_list_nolock(thread_t *thread, enum list_types dest_list)
+{
+    if(dest_list == ALIVE_THREADS_LIST) { /* Destination is alive threads list */
+        /* Only dead threads can be moved to alive list */
+        ASSERT_MSG(thread->state == THREAD_STATE_DEAD,
+            "move_thread_to_list_nolock(): Wrong thread state!");
+
+        /* remove thread from the deads */
+        xlist_remove_unsafe(&dead_threads_list, &thread->threads_list_node);
+
+        /* set birth state */
+        thread->state = THREAD_STATE_BIRTH;
+
+        /* put to alive threads list and tree */
+        put_thread_to_list_nolock(thread);
+    } else if(dest_list == DEAD_THREADS_LIST) { /* Destination is dead threads list */
+        /* Only threads in Death and Birth state can be moved here */
+        ASSERT_MSG(thread->state == THREAD_STATE_DEATH ||
+                   thread->state == THREAD_STATE_BIRTH,
+            "move_thread_to_list_nolock(): Wrong thread state!");
+
+        /* remove thread from list */
+        xlist_remove_unsafe(&threads_list, &thread->threads_list_node);
+        /* remove thread from tree */
+        if(!avl_tree_remove(&threads_tree, thread))
+            panic("move_thread_to_list_nolock(): failed to remove thread from tree!\n");
+
+        /* set as dead */
+        thread->state = THREAD_STATE_DEAD;
+
+        /* add to deads list */
+        xlist_add_last(&dead_threads_list, &thread->threads_list_node);
+    }
+#ifdef __DEBUG__
+    else
+        panic("move_thread_to_list_nolock(): wrong list type passed!\n");
+#endif
+}
+
+/* move thread from one list to another */
+static void move_thread_to_list(thread_t *thread, enum list_types dest_list)
 {
     unsigned long irqs_state;
 
-    ASSERT_MSG( thread->state == THREAD_STATE_BIRTH ||
-                thread->state == THREAD_STATE_DEATH,
-                "Wrong thread state!" );
-
-    /* acquire lock */
+    /* acquire lock before calling non-lock version */
     irqs_state = spin_lock_irqsave(&threads_lock);
 
-    /* add item */
-    xlist_add_last(&dead_threads_list, &thread->threads_list_node);
-
-    /* update thread state */
-    thread->state = THREAD_STATE_DEAD;
+    /* call to non-lock version */
+    move_thread_to_list_nolock(thread, dest_list);
 
     /* release lock */
     spin_unlock_irqrstor(&threads_lock, irqs_state);
 }
 
-/* extracts first item from dead threads list */
-static thread_t *get_thread_from_dead_list(void)
+/* peeks the head of dead threads list (no lock acquired) */
+static thread_t *peek_dead_list_nolock(void)
 {
-    unsigned long irqs_state;
     list_elem_t *item;
 
-    /* get lock */
-    irqs_state = spin_lock_irqsave(&threads_lock);
-
-    /* extract thread from list */
-    item = xlist_extract_first(&dead_threads_list);
-
-    /* release lock */
-    spin_unlock_irqrstor(&threads_lock, irqs_state);
+    /* peek dead threads list */
+    item = xlist_peek_first(&dead_threads_list);
 
     /* return result */
     if(item)

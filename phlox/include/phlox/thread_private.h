@@ -9,6 +9,26 @@
  * THREADING INTERNALS. DO NOT USE!
  *******************************************************************/
 
+/* Thread kernel-side stack size */
+#define THREAD_KSTACK_SIZE  (8192)
+/* Thread kernel-side stack warning value */
+#define THREAD_KSTACK_WARN  (THREAD_KSTACK_SIZE/8)
+/*
+ * Thread kernel-side stack layout
+ *
+ * |-------| <- Top = Base + THREAD_KSTACK_SIZE - 1
+ * |-------|
+ * |-------|
+ * |-------|
+ * |-------|
+ * |-------|
+ * |-------| <- Danger stack usage barrier (Base + THREAD_KSTACK_WARN)
+ * |--Ptr--| <- Base
+ *
+ * Ptr - pointer to thread_t structure.
+*/
+
+
 /*
  * Per CPU threading initialization stages.
  * Called within threading init.

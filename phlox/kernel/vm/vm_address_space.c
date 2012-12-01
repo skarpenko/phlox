@@ -359,7 +359,7 @@ status_t vm_aspace_get_mapping(vm_address_space_t *aspace, addr_t vaddr, vm_mapp
     vm_mapping_t dummy;
 
     /* check specified address */
-    if(vaddr < aspace->mmap.base || vaddr > aspace->mmap.base + aspace->mmap.size + 1)
+    if(vaddr < aspace->mmap.base || vaddr > aspace->mmap.base + aspace->mmap.size - 1)
         return ERR_VM_BAD_ADDRESS;
 
     /* fill dummy fields */

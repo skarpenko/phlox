@@ -117,66 +117,6 @@ static void remove_aspace_from_list(vm_address_space_t *aspace)
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 }
 
-/* common routine for creating kernel or user address space */
-static vm_address_space_t *create_aspace_common(const char* name, addr_t base, size_t size, bool kernel)
-{
-    vm_address_space_t *aspace;
-
-    /* address space must have size */
-    if(size == 0)
-        return NULL;
-
-    /* allocate address space structure in heap */
-    aspace = (vm_address_space_t *)kmalloc(sizeof(vm_address_space_t));
-    if(!aspace)
-        return NULL;
-
-    /* if address space has name - copy it to structure field */
-    if(name) {
-        aspace->name = kstrdup(name);
-        if(!aspace->name)
-            goto error;
-    } else {
-        aspace->name = NULL;
-    }
-
-    /* create proper translation map */
-    if(kernel) {
-       if(vm_tmap_kernel_create(&aspace->tmap) != NO_ERROR)
-           goto error;
-    } else {
-       if(vm_tmap_create(&aspace->tmap) != NO_ERROR)
-           goto error;
-    }
-
-    /* init memory map fields */
-    aspace->mmap.base = base;
-    aspace->mmap.size = size;
-    xlist_init(&aspace->mmap.mappings_list);
-    avl_tree_create( &aspace->mmap.mappings_tree, compare_mapping,
-                     sizeof(vm_mapping_t),
-                     offsetof(vm_mapping_t, tree_node) );
-    aspace->mmap.aspace = aspace;
-
-    /* init address space fields */
-    spin_init(&aspace->lock);
-    aspace->state = VM_ASPACE_STATE_NORMAL;
-    aspace->ref_count = 0;
-    aspace->faults_count = 0;
-    aspace->id = get_next_aspace_id();
-
-    /* return to caller */
-    return aspace;
-
-error:
-    /* return memory to heap on error */
-    if(aspace->name)
-        kfree(aspace->name);
-    kfree(aspace);
-
-    return NULL; /* failed */
-}
-
 /* locates free gap in memory map of address space (no lock acquired for access) */
 static bool locate_memory_gap(vm_memory_map_t *mmap, size_t size, addr_t *base_vaddr)
 {
@@ -280,6 +220,98 @@ static bool remove_mapping_from_aspace(vm_address_space_t *aspace, vm_mapping_t 
         return false;
 
     return true;
+}
+
+/* common routine for creating kernel or user address space */
+static vm_address_space_t *create_aspace_common(const char* name, addr_t base, size_t size, bool kernel)
+{
+    vm_address_space_t *aspace;
+
+    /* address space must have size */
+    if(size == 0)
+        return NULL;
+
+    /* allocate address space structure in heap */
+    aspace = (vm_address_space_t *)kmalloc(sizeof(vm_address_space_t));
+    if(!aspace)
+        return NULL;
+
+    /* if address space has name - copy it to structure field */
+    if(name) {
+        aspace->name = kstrdup(name);
+        if(!aspace->name)
+            goto error;
+    } else {
+        aspace->name = NULL;
+    }
+
+    /* create proper translation map */
+    if(kernel) {
+       if(vm_tmap_kernel_create(&aspace->tmap) != NO_ERROR)
+           goto error;
+    } else {
+       if(vm_tmap_create(&aspace->tmap) != NO_ERROR)
+           goto error;
+    }
+
+    /* init memory map fields */
+    aspace->mmap.base = base;
+    aspace->mmap.size = size;
+    xlist_init(&aspace->mmap.mappings_list);
+    avl_tree_create( &aspace->mmap.mappings_tree, compare_mapping,
+                     sizeof(vm_mapping_t),
+                     offsetof(vm_mapping_t, tree_node) );
+    aspace->mmap.aspace = aspace;
+
+    /* init address space fields */
+    spin_init(&aspace->lock);
+    aspace->state = VM_ASPACE_STATE_NORMAL;
+    aspace->ref_count = 0;
+    aspace->faults_count = 0;
+    aspace->id = get_next_aspace_id();
+
+    /* return to caller */
+    return aspace;
+
+error:
+    /* return memory to heap on error */
+    if(aspace->name)
+        kfree(aspace->name);
+    kfree(aspace);
+
+    return NULL; /* failed */
+}
+
+/* common routine for deleting address space and freeing occupied memory */
+static void delete_aspace_common(vm_address_space_t *aspace)
+{
+    list_elem_t *item;
+    vm_mapping_t *mapping;
+
+    /* ensure that address space is not in bookkeeping structures */
+    if(aspace->list_node.prev != NULL || aspace->list_node.next != NULL)
+        panic("delete_aspace_common(): aspace still in list!");
+
+    /* check references count */
+    if(aspace->ref_count != 0)
+        panic("delete_aspace_common(): references count is not zero!");
+
+    /* destroy translation map for address space */
+    aspace->tmap.ops->destroy(&aspace->tmap);
+
+    /* destroy all mapping structures */
+    while( (item = xlist_peek_first(&aspace->mmap.mappings_list)) != NULL ) {
+        mapping = containerof(item, vm_mapping_t, list_node);
+        if(mapping->type != VM_MAPPING_TYPE_HOLE)
+            panic("delete_aspace_common(): mapping of wrong type discovered!");
+        /* release memory occupied by mapping */
+        vm_aspace_delete_mapping(aspace, mapping);
+    }
+
+    /* delete address space structure */
+    if(aspace->name)
+        kfree(aspace->name);
+    kfree(aspace);
 }
 
 
@@ -454,7 +486,29 @@ aspace_id vm_create_aspace(const char* name, addr_t base, size_t size)
     return id; /* return id */
 }
 
-/* TODO: status_t vm_delete_aspace(aspace_id aid) */
+/* delete address space by its id */
+status_t vm_delete_aspace(aspace_id aid)
+{
+    vm_address_space_t *aspace;
+
+    /* it is not possible to delete kernels address space */
+    if(aid == vm_get_kernel_aspace_id())
+        return ERR_VM_INVALID_ASPACE;
+
+    /* get address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(!aspace)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* set DELETION state */
+    aspace->state = VM_ASPACE_STATE_DELETION;
+
+    /* put address space back, this can force actual destruction */
+    vm_put_aspace(aspace);
+
+    /* success */
+    return NO_ERROR;
+}
 
 /* returns kernel address space */
 vm_address_space_t *vm_get_kernel_aspace(void)
@@ -524,9 +578,11 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
     /* search tree */
     aspace = avl_tree_find(&aspaces_tree, &temp_aspace, NULL);
 
-    /* increase references count */
-    if(aspace)
+    /* increase references count if aspace found and in proper state */
+    if(aspace && aspace->state == VM_ASPACE_STATE_NORMAL)
         atomic_inc(&aspace->ref_count);
+    else
+        aspace = NULL;
 
     /* release lock */
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
@@ -539,7 +595,42 @@ void vm_put_aspace(vm_address_space_t *aspace)
 {
     /* decrease references count */
     atomic_dec(&aspace->ref_count);
-    /* TODO: implement additional functionality */
+
+    /* if state is DELETION and no more referers exists, start
+     * destruction stage or exit.
+    */
+    if(aspace->state != VM_ASPACE_STATE_DELETION || aspace->ref_count != 0)
+        return;
+
+    /* remove address space from all control structures */
+    remove_aspace_from_list(aspace);
+
+    /* put all memory objects taken previously for mappings */
+    {
+        list_elem_t *iter;
+        vm_mapping_t *mapping;
+
+        /* walk through mappings list */
+        for(iter = aspace->mmap.mappings_list.first; iter != NULL; iter = iter->next) {
+            mapping = containerof(iter, vm_mapping_t, list_node);
+            /* if object mapped here - put it and set mapping type to HOLE */
+            if(mapping->type == VM_MAPPING_TYPE_OBJECT) {
+                /* acquire object lock */
+                spin_lock(&mapping->object->lock);
+                /* remove mapping from object mappings list */
+                vm_object_remove_mapping(mapping->object, mapping);
+                /* release lock */
+                spin_unlock(&mapping->object->lock);
+                /* put object and set new mapping type */
+                vm_put_object(mapping->object);
+                mapping->type = VM_MAPPING_TYPE_HOLE;
+            }
+        }
+    }
+    /***/
+
+    /* release memory occupied by address space structures */
+    delete_aspace_common(aspace);
 }
 
 /* returns address space id by its name */

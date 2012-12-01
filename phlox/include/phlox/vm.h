@@ -77,6 +77,12 @@ size_t vm_phys_mem_size(void);
 aspace_id vm_create_aspace(const char* name, addr_t base, size_t size);
 
 /*
+ * Deletes address space by its id.
+ * Returns ERR_VM_INVALID_ASPACE or NO_ERROR.
+*/
+status_t vm_delete_aspace(aspace_id aid);
+
+/*
  * Returns kernel address space
 */
 vm_address_space_t *vm_get_kernel_aspace(void);
@@ -139,6 +145,12 @@ object_id vm_create_physmem_object(const char *name, addr_t phys_addr, size_t si
  * This routine used on system start up. Do not use later.
 */
 object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_addr, size_t size, uint protection);
+
+/*
+ * Deletes memory object by its id.
+ * Returns ERR_VM_INVALID_OBJECT or NO_ERROR.
+*/
+status_t vm_delete_object(object_id oid);
 
 /*
  * Get object by its id.

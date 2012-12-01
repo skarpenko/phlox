@@ -69,8 +69,8 @@ typedef struct thread {
     int              preempt_count;      /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
     /* Fields used by scheduler */
-    int             jiffies;             /* Current jiffies count */
-    int             ijiffies;            /* Initial jiffies count */
+    int              jiffies;            /* Current jiffies count */
+    int              ijiffies;           /* Initial jiffies count */
     sched_policy_t   sched_policy;       /* Scheduling policy */
     int              s_prio;             /* Static priority */
     int              d_prio;             /* Current dynamic priority */
@@ -145,7 +145,7 @@ typedef struct process {
     list_elem_t         procs_list_node;  /* Processes list node */
     avl_tree_node_t     procs_tree_node;  /* Processes tree node */
     /* Hardware-dependend data */
-    arch_process_t       arch;             /* Architecture-dependend data */
+    arch_process_t      arch;             /* Architecture-dependend data */
 } process_t;
 
 /* Process states */

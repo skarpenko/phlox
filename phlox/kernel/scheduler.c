@@ -71,6 +71,9 @@ static void rq_put_thread(runqueue_t *rq, thread_t *th)
 
     ASSERT_MSG(th->state == THREAD_STATE_READY,
         "rq_put_thread(): wrong thread state!");
+    ASSERT_MSG(th->sched_list_node.next == NULL &&
+        th->sched_list_node.prev == NULL,
+        "rq_put_thread(): thread already assigned to list!");
 
    /* put to specified runqueue */
    xlist_add_last(&rq->queue[th->d_prio], &th->sched_list_node);

@@ -106,6 +106,112 @@ static void remove_object_from_list(vm_object_t *object)
     spin_unlock_irqrstor(&objects_lock, irqs_state);
 }
 
+/* put upage into tree and list of the object keeping list sorted
+ * (no lock acquired before)
+ */
+static bool put_upage_to_object(vm_object_t *object, vm_upage_t *upage)
+{
+    avl_tree_index_t where;
+    vm_upage_t *parent;
+
+    /* get "where" index and ensure we can add this upage */
+    if(avl_tree_find(&object->upages_tree, upage, &where) != NULL)
+        return false;
+
+    /* put upage into tree */
+    avl_tree_insert(&object->upages_tree, upage, where);
+
+    /* if no other upages present - just add to list and exit */
+    if(!where.node) {
+        xlist_add_first(&object->upages_list, &upage->list_node);
+        return true;
+    }
+
+    /* get parent node */
+    parent = containerof(where.node, vm_upage_t, tree_node);
+
+    /* add to proper position in list */
+    if(!where.child) {
+        xlist_insert_before(&object->upages_list, &parent->list_node,
+                            &upage->list_node);
+    } else {
+        xlist_insert_after(&object->upages_list, &parent->list_node,
+                           &upage->list_node);
+    }
+
+    return true;
+}
+
+/* adds all missing universal pages into object */
+static bool add_all_upages_to_object(vm_object_t *object)
+{
+    vm_upage_t *dummy;
+    addr_t offset;
+    status_t err;
+
+    /* walk through object and add upages */
+    for(offset = 0; offset < object->size; offset += PAGE_SIZE) {
+        err = vm_object_add_upage(object, offset, &dummy);
+        ASSERT_MSG(err != ERR_NO_MEMORY, "add_all_upages_to_object(): no memory!");
+        if(err == ERR_NO_MEMORY)
+            return false;
+    }
+
+    return true;
+}
+
+/* removes universal page from memory object (no lock acquired before) */
+static bool remove_upage_from_object(vm_object_t *object, vm_upage_t *upage)
+{
+    /* remove from the tree */
+    if(avl_tree_remove(&object->upages_tree, upage) == NULL)
+        return false;
+
+    /* ... and from the list */
+    if(!xlist_remove(&object->upages_list, &upage->list_node))
+        return false;
+
+    return true;
+}
+
+/* unwire single universal page
+ * (no locks acquired, object must not be in use!)
+*/
+static void unwire_single_upage(vm_upage_t *upage)
+{
+    vm_page_t *ppage; /* physical page */
+
+    ASSERT_MSG(upage->object->list_node.prev == NULL &&
+        upage->object->list_node.next == NULL,
+        "unwire_single_upage(): object is in use!");
+
+    /* return if already unwired */
+    if(upage->state == VM_UPAGE_STATE_UNWIRED)
+        return;
+
+    /* set free state to corresponding physical page */
+    ppage = vm_page_lookup(upage->ppn);
+    vm_page_set_state(ppage, VM_PAGE_STATE_FREE);
+    /* set upage unwired */
+    upage->ppn = 0;
+    upage->state = VM_UPAGE_STATE_UNWIRED;
+}
+
+/* unwire all universal pages from object
+ * (no locks acquired, object must not be in use!)
+*/
+static void unwire_upages_from_object(vm_object_t *object)
+{
+    vm_upage_t *upage;
+    list_elem_t *iter;
+
+    /* walk through list of universal pages and set them unwired */
+    for(iter = object->upages_list.first; iter != NULL; iter = iter->next) {
+        upage = containerof(iter, vm_upage_t, list_node);
+        unwire_single_upage(upage);
+    }
+}
+
 /* common routine for creating virtual memory objects */
 static vm_object_t *create_object_common(const char *name, size_t size, uint protection)
 {
@@ -180,10 +286,12 @@ static void delete_object_common(vm_object_t *object)
         panic("delete_object_common(): references count is not zero!");
 
     /* remove all universal pages */
-    while( (item = xlist_extract_first(&object->upages_list)) != NULL ) {
+    while( (item = xlist_peek_first(&object->upages_list)) != NULL ) {
         upage = containerof(item, vm_upage_t, list_node);
         if(upage->state != VM_UPAGE_STATE_UNWIRED)
             panic("delete_object_common(): upage with wired data!");
+        /* remove from structures and free */
+        remove_upage_from_object(object, upage);
         kfree(upage);
     }
 
@@ -191,60 +299,6 @@ static void delete_object_common(vm_object_t *object)
     if(object->name)
         kfree(object->name);
     kfree(object);
-}
-
-/* put upage into tree and list of the object keeping list sorted
- * (no lock acquired before)
- */
-static bool put_upage_to_object(vm_object_t *object, vm_upage_t *upage)
-{
-    avl_tree_index_t where;
-    vm_upage_t *parent;
-
-    /* get "where" index and ensure we can add this upage */
-    if(avl_tree_find(&object->upages_tree, upage, &where) != NULL)
-        return false;
-
-    /* put upage into tree */
-    avl_tree_insert(&object->upages_tree, upage, where);
-
-    /* if no other upages present - just add to list and exit */
-    if(!where.node) {
-        xlist_add_first(&object->upages_list, &upage->list_node);
-        return true;
-    }
-
-    /* get parent node */
-    parent = containerof(where.node, vm_upage_t, tree_node);
-
-    /* add to proper position in list */
-    if(!where.child) {
-        xlist_insert_before(&object->upages_list, &parent->list_node,
-                            &upage->list_node);
-    } else {
-        xlist_insert_after(&object->upages_list, &parent->list_node,
-                           &upage->list_node);
-    }
-
-    return true;
-}
-
-/* adds all missing universal pages into object */
-static bool add_all_upages_to_object(vm_object_t *object)
-{
-    vm_upage_t *dummy;
-    addr_t offset;
-    status_t err;
-
-    /* walk through object and add upages */
-    for(offset = 0; offset < object->size; offset += PAGE_SIZE) {
-        err = vm_object_add_upage(object, offset, &dummy);
-        ASSERT_MSG(err != ERR_NO_MEMORY, "add_all_upages_to_object(): no memory!");
-        if(err == ERR_NO_MEMORY)
-            return false;
-    }
-
-    return true;
 }
 
 
@@ -573,7 +627,24 @@ error:
     return VM_INVALID_OBJECTID;
 }
 
-/* TODO: status_t vm_delete_object(object_id oid) */
+/* delete object by its id */
+status_t vm_delete_object(object_id oid)
+{
+    vm_object_t *object = vm_get_object_by_id(oid); /* get object */
+
+    /* return error if object not found */
+    if(object == NULL)
+        return ERR_VM_INVALID_OBJECT;
+
+    /* set deletion state */
+    object->state = VM_OBJECT_STATE_DELETION;
+
+    /* put object back, this can force actual destruction of the object */
+    vm_put_object(object);
+
+    /* return success */
+    return NO_ERROR;
+}
 
 /* returns object by its id */
 vm_object_t *vm_get_object_by_id(object_id oid)
@@ -589,9 +660,11 @@ vm_object_t *vm_get_object_by_id(object_id oid)
     /* search tree */
     object = avl_tree_find(&objects_tree, &temp_object, NULL);
 
-    /* if object found - increase references count */
-    if(object)
+    /* if object found and in proper state - increase references count */
+    if(object && object->state == VM_OBJECT_STATE_NORMAL)
         atomic_inc(&object->ref_count);
+    else
+        object = NULL;
 
     /* release lock */
     spin_unlock_irqrstor(&objects_lock, irqs_state);
@@ -604,7 +677,19 @@ void vm_put_object(vm_object_t *object)
 {
     /* decrease references count */
     atomic_dec(&object->ref_count);
-    /* TODO: implement additional functionality */
+
+    /* if state is DELETION and no more referers exists, start object
+     * destruction stage or exit.
+    */
+    if(object->state != VM_OBJECT_STATE_DELETION || object->ref_count != 0)
+        return;
+
+    /* remove object from all control structures */
+    remove_object_from_list(object);
+    /* unwire all of its universal pages and free physical ones */
+    unwire_upages_from_object(object);
+    /* release memory occupied by object structures */
+    delete_object_common(object);
 }
 
 /* returns object id by its name */

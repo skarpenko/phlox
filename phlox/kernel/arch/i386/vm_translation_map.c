@@ -165,9 +165,13 @@ static void destroy_tmap(vm_translation_map_t *tmap)
             }
         }
         kfree(tmap->arch.pgdir_virt);
+        tmap->arch.pgdir_virt = NULL;
     }
 
-    /* TODO: other clean ups goes here */
+    /* unlink translation map operations */
+    tmap->ops = NULL;
+
+    /* TODO: other clean ops goes here */
 }
 
 /* acquire translation map access lock */

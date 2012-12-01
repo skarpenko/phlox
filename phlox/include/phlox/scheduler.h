@@ -8,8 +8,8 @@
 #include <phlox/types.h>
 #include <phlox/ktypes.h>
 #include <phlox/kargs.h>
-#include <phlox/arch/scheduler.h>
 #include <phlox/thread_types.h>
+#include <phlox/arch/scheduler.h>
 
 
 /*

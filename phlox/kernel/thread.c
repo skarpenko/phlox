@@ -243,3 +243,20 @@ status_t threading_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
     return NO_ERROR;
 }
 
+/* returns current thread structure */
+thread_t *thread_get_current_thread(void)
+{
+    /* pointer to thread struct stored in a bottom
+     * of a thread kernel-side stack. So... Just get
+     * a pointer to the bottom of current stack and
+     * return it.
+    */
+    addr_t stack_ptr = arch_current_stack_pointer();
+    return (thread_t *)(stack_ptr & (~(THREAD_KSTACK_SIZE-1)));
+}
+
+/* returns current thread id */
+thread_id thread_get_current_thread_id(void)
+{
+    return thread_get_current_thread()->id;
+}

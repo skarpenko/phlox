@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -163,3 +163,25 @@ FUNCTION(i386_fpu_context_load):
 GLOBAL(__i386_fpu_context_swap_link): .long 0
 FUNCTION(i386_fpu_context_swap):
     jmp *__i386_fpu_context_swap_link
+
+/* void i386_context_switch(arch_thread_t *t_from, arch_thread_t *t_to) */
+FUNCTION(i386_context_switch):
+    pusha                /* push current registers frame onto the stack */
+    /* Note: "pusha" pushes 8 registers into stack, so.. first function
+     *       argument now has offset 36 and second arg is 40.
+     */
+    movl 36(%esp), %eax  /* get pointer to current_stack field */
+    movl %esp, (%eax)    /* save stack pointer (esp) to current_stack */
+    pushl %ss            /* push current ss */
+    popl %edx            /* pop it back off the stack */
+    movl %edx, 4(%eax)   /* save it into the current_stack field */
+    movl 40(%esp), %eax  /* get new current_stack */
+    lss (%eax), %esp     /* load ss/esp pair */
+    popa                 /* pop new registers frame from stack */
+    ret
+
+/* void i386_pgdir_switch(addr_t new_pgdir) */
+FUNCTION(i386_pgdir_switch):
+    movl ARG0, %eax  /* copy new_pgdir to eax */
+    movl %eax, %cr3  /* load new page directory */
+    ret

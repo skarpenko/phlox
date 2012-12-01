@@ -579,3 +579,10 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count)
     for(i=0; i<count; i++)
        arch_invalidate_TLB_entry(pages[i]);
 }
+
+/* set kernel stack for next task switch */
+void i386_set_kstack(addr_t kstack_top)
+{
+    int cpu_no = get_current_processor();
+    tss[cpu_no]->esp0 = kstack_top;
+}

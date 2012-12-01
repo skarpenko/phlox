@@ -5,6 +5,9 @@
 #ifndef _PHLOX_ARCH_I386_PROCESSOR_H_
 #define _PHLOX_ARCH_I386_PROCESSOR_H_
 
+#include <phlox/arch/i386/thread_types.h>
+
+
 /*
  * NOTE: Names with prefix "arch_" may be redefined in upper level processor.h
  * as common for all architectures without this prefix. Or used by routines
@@ -340,10 +343,23 @@ typedef struct {
     __asm__ __volatile__ ("cpuid" : : : "ax", "bx", "cx", "dx")
 
 /*
+ * Get current stack pointer
+ */
+static inline addr_t arch_current_stack_pointer(void)
+{
+    addr_t __esp;
+    __asm__ __volatile__ (
+       " movl %%esp, %0; "
+       : "=r" (__esp)
+    );
+    return __esp;
+}
+
+/*
  * Invalidate all entries in Translation Lookaside Buffer of MMU
  * by reloading CR3
  */
-static inline void arch_invalidate_TLB()
+static inline void arch_invalidate_TLB(void)
 {
     __asm__ __volatile__ (
        " movl %%cr3, %%eax; "  /* read CR3 */
@@ -491,5 +507,15 @@ void i386_fpu_fxsr_swap(fpu_state *old_state, fpu_state *new_state);
 void i386_fpu_context_save(fpu_state *state);
 void i386_fpu_context_load(fpu_state *state);
 void i386_fpu_context_swap(fpu_state *old_state, fpu_state *new_state);
+
+/*
+ * Routines used for context switch
+ */
+/* context switch */
+void i386_context_switch(arch_thread_t *t_from, arch_thread_t *t_to);
+/* page directory switch */
+void i386_pgdir_switch(addr_t new_pgdir);
+/* set kernel stack for next context switch */
+void i386_set_kstack(addr_t kstack_top);
 
 #endif

@@ -51,8 +51,8 @@ status_t vm_init(kernel_args_t *kargs)
               heap_size = SYSCFG_KERNEL_HEAP_MAX;
 
         /* allocate heap area */
-        heap_base = vm_alloc_from_kargs(kargs, heap_size,
-                                  VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
+        heap_base = vm_alloc_from_kargs(kargs, heap_size, VM_PROT_KERNEL_DEFAULT);
+
         /* init heap */
         heap_init(heap_base, heap_size);
         /* Fuf... Now kmalloc and kfree is available */
@@ -128,7 +128,7 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size)
 }
 
 /* allocates memory block of given size form kernel args */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes)
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection)
 {
     addr_t vspot;
     addr_t pspot;
@@ -142,7 +142,7 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes)
         pspot = vm_alloc_ppage_from_kargs(kargs);
         if(pspot == 0)
             panic("error allocating physical page from globalKargs!\n");
-        vm_tmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, attributes);
+        vm_tmap_quick_map_page(kargs, vspot + i*PAGE_SIZE, pspot * PAGE_SIZE, protection);
     }
 
     /* return start address of allocated block */

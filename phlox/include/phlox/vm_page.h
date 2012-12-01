@@ -26,7 +26,7 @@ typedef struct {
 
 /* Page types */
 enum {
-    VM_PAGE_TYPE_PHYS = 0 /* Physical page */
+    VM_PAGE_TYPE_PHYSICAL = 0 /* Physical page */
 };
 
 /* Page states */

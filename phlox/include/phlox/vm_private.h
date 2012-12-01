@@ -24,10 +24,10 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
 
 /*
  * Allocate memory block of given size form kernel args structure.
- * Attributes parameter specifies access rights to allocated block.
+ * Protection parameter specifies access rights to allocated block.
  * Used on system init, do not use after!
 */
-addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint attributes);
+addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection);
 
 
 #endif

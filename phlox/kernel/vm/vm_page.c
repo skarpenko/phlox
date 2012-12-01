@@ -3,6 +3,7 @@
 * Copyright 2001-2004, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
+#include <string.h>
 #include <phlox/kernel.h>
 #include <phlox/list.h>
 #include <phlox/arch/vm_translation_map.h>
@@ -11,6 +12,7 @@
 #include <phlox/errors.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm.h>
+#include <phlox/vm_page_mapper.h>
 #include <phlox/vm_page.h>
 
 /* type redefinition for convenience */
@@ -157,11 +159,11 @@ static void clear_page(addr_t pa)
     addr_t va;
 
     /* ask mapper to map page */
-/*    vm_pmap_get_ppage(pa, &va, true); */
+    vm_pmap_get_ppage(pa, &va, true);
     /* clear it */
-/*    memset((void *)va, 0, PAGE_SIZE); */
+    memset((void *)va, 0, PAGE_SIZE);
     /* and tell mapper that we are done */
-/*    vm_pmap_put_ppage(va);*/
+    vm_pmap_put_ppage(va);
 }
 
 
@@ -203,11 +205,12 @@ status_t vm_page_init(kernel_args_t *kargs)
 
     /* allocate area for pages structures */
     all_pages = (vm_page_t *)vm_alloc_from_kargs(kargs, total_pages_count*sizeof(vm_page_t),
-                                                VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
+                                                VM_PROT_KERNEL_DEFAULT);
+
     /* init pages */
     for(i = 0; i < total_pages_count; i++) {
        all_pages[i].ppn       = physical_page_offset;
-       all_pages[i].type      = VM_PAGE_TYPE_PHYS;
+       all_pages[i].type      = VM_PAGE_TYPE_PHYSICAL;
        all_pages[i].state     = VM_PAGE_STATE_FREE;
        all_pages[i].ref_count = 0;
        VM_State.free_pages++;

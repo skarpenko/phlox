@@ -136,7 +136,8 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
     /* allocate memory for mapping descriptors */
     mappings = (mapping_desc_t *)vm_alloc_from_kargs( kargs,
                        mappings_count * sizeof(mapping_desc_t),
-                       VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
+                       VM_PROT_KERNEL_DEFAULT);
+
     if (!mappings)
         return ERR_NO_MEMORY;
 

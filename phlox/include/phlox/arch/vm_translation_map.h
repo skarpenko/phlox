@@ -34,11 +34,11 @@ typedef struct vm_translation_map_ops_struct {
     void     (*destroy)(vm_translation_map_t *tmap);
     status_t (*lock)(vm_translation_map_t *tmap);
     status_t (*unlock)(vm_translation_map_t *tmap);
-    status_t (*map)(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes);
+    status_t (*map)(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint protection);
     status_t (*unmap)(vm_translation_map_t *tmap, addr_t start, addr_t end);
     status_t (*query)(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags);
     size_t   (*get_mapped_size)(vm_translation_map_t *tmap);
-    status_t (*protect)(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes);
+    status_t (*protect)(vm_translation_map_t *tmap, addr_t start, addr_t end, uint protection);
     status_t (*clear_flags)(vm_translation_map_t *tmap, addr_t va, uint flags);
     void     (*flush)(vm_translation_map_t *tmap);
     status_t (*get_physical_page)(addr_t pa, addr_t *out_va, uint flags);
@@ -62,7 +62,7 @@ status_t vm_translation_map_init_final(kernel_args_t *kargs);
  * Map a page directly without using any of Virtual Memory Manager objects.
  * This routine used only during system start up. Do not use after.
 */
-status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint attributes);
+status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t va, addr_t pa, uint protection);
 
 /*
  * Returns physical address of a page overriding Virtual Memory Manager.

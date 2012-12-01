@@ -52,11 +52,11 @@ static mmu_pte *map_pool_pgtables; /* Page tables for mapping pool */
 static void destroy_tmap(vm_translation_map_t *tmap);
 static status_t lock_tmap(vm_translation_map_t *tmap);
 static status_t unlock_tmap(vm_translation_map_t *tmap);
-static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes);
+static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint protection);
 static status_t unmap_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end);
 static status_t query_tmap(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa, uint *out_flags);
 static size_t get_mapped_size_tmap(vm_translation_map_t *tmap);
-static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes);
+static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint protection);
 static status_t clear_flags_tmap(vm_translation_map_t *tmap, addr_t va, uint flags);
 static void flush_tmap(vm_translation_map_t *tmap);
 static status_t get_physical_page_tmap(addr_t pa, addr_t *out_va, uint flags);
@@ -115,7 +115,7 @@ static void update_all_pgdirs(uint index, mmu_pde pdentry)
 }
 
 /* put page table into page directory entry */
-static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint attributes)
+static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint protection)
 {
     /* put it in the page directory */
     init_pdentry(pdentry);
@@ -189,7 +189,7 @@ static status_t unlock_tmap(vm_translation_map_t *tmap)
 }
 
 /* map physical address */
-static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint attributes)
+static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint protection)
 {
     mmu_pde *pgdir = pgdir = tmap->arch.pgdir_virt;
     mmu_pte *pgtbl;
@@ -211,7 +211,7 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
         pgtable = page->ppn * PAGE_SIZE;
 
         /* put it in the page directory */
-        put_pgtable_in_pgdir(&pgdir[index], pgtable, attributes | VM_LOCK_RW);
+        put_pgtable_in_pgdir(&pgdir[index], pgtable, protection | VM_PROT_READ | VM_PROT_WRITE);
 
         /* update any other page directories, if it maps kernel space */
         if(index >= FIRST_KERNEL_PGDIR_ENTRY &&
@@ -233,8 +233,8 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
     /* init page table entry */
     init_ptentry(&pgtbl[index]);
     pgtbl[index].stru.base = ADDR_SHIFT(pa);
-    pgtbl[index].stru.us = !(attributes & VM_LOCK_KERNEL);
-    pgtbl[index].stru.rw = attributes & VM_LOCK_RW;
+    pgtbl[index].stru.us = !(protection & VM_PROT_KERNEL) != 0;
+    pgtbl[index].stru.rw = (protection & VM_PROT_WRITE) != 0;
     pgtbl[index].stru.p = 1;
     if(is_kernel_address(va))
         pgtbl[index].stru.g = 1; /* global bit set for all kernel addresses */
@@ -337,9 +337,9 @@ static status_t query_tmap(vm_translation_map_t *tmap, addr_t va, addr_t *out_pa
 
     /* read in the page state flags */
     *out_flags = 0;
-    *out_flags |= pgtbl[index].stru.rw ? VM_LOCK_RW : VM_LOCK_RO;
-    *out_flags |= pgtbl[index].stru.us ? VM_LOCK_USER : VM_LOCK_KERNEL;
-    *out_flags |= VM_LOCK_EX; /* all pages is executable on IA-32 */
+    *out_flags |= pgtbl[index].stru.rw ? (VM_PROT_READ | VM_PROT_WRITE) : VM_PROT_READ;
+    *out_flags |= pgtbl[index].stru.us ? 0 : VM_PROT_KERNEL;
+    *out_flags |= VM_PROT_EXECUTE; /* all pages is executable on IA-32 */
     *out_flags |= pgtbl[index].stru.d ? VM_FLAG_PAGE_MODIFIED : 0;
     *out_flags |= pgtbl[index].stru.a ? VM_FLAG_PAGE_ACCESSED : 0;
     *out_flags |= pgtbl[index].stru.p ? VM_FLAG_PAGE_PRESENT : 0;
@@ -358,7 +358,7 @@ static size_t get_mapped_size_tmap(vm_translation_map_t *tmap)
 }
 
 /* set protection flags */
-static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint attributes)
+static status_t protect_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end, uint protection)
 {
     mmu_pte *pgtbl;
     mmu_pde *pgdir = tmap->arch.pgdir_virt;
@@ -394,8 +394,8 @@ restart:
         }
 
         /* set flags */
-        pgtbl[index].stru.us = !(attributes & VM_LOCK_KERNEL);
-        pgtbl[index].stru.rw = attributes & VM_LOCK_RW;
+        pgtbl[index].stru.us = !(protection & VM_PROT_KERNEL) != 0;
+        pgtbl[index].stru.rw = (protection & VM_PROT_WRITE) != 0;
 
         /* put address into invalidation cache */
         if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {
@@ -645,7 +645,7 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
     /* allocate area for set of page tables which covers mappings pool */
     map_pool_pgtables = (mmu_pte *)vm_alloc_from_kargs( kargs,
                                                         MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE,
-                                                        VM_LOCK_KERNEL | VM_LOCK_RW | VM_LOCK_NOEX);
+                                                        VM_PROT_KERNEL_DEFAULT);
     if(!map_pool_pgtables)
         panic("arch_vm_translation_map_init: no memory for mappings pool pgtables.");
     /* init tables with zeroes */
@@ -665,7 +665,7 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
         for(i = 0; i < MAP_POOL_PGTABLE_CHUNKS; i++, virt_pgtable += PAGE_SIZE) {
             vm_tmap_quick_query(virt_pgtable, &phys_pgtable);
             ent = &page_hole_pgdir[base_ent + i];
-            put_pgtable_in_pgdir(ent, phys_pgtable, VM_LOCK_KERNEL | VM_LOCK_RW);
+            put_pgtable_in_pgdir(ent, phys_pgtable, VM_PROT_KERNEL_DEFAULT);
         }
     } /* end of page mapper init */
 
@@ -770,7 +770,7 @@ status_t vm_translation_map_init_final(kernel_args_t *kargs)
  * 4Mb of page tables into a 4Mb region.
  * This routine used only during system start up. Do not use after.
  */
-status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint attributes)
+status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t phys_addr, uint protection)
 {
     mmu_pte *pgentry;
     uint pgtable_idx;
@@ -793,7 +793,7 @@ status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t p
 
         /* put it in the pgdir */
         pdentry = &page_hole_pgdir[pgtable_idx];
-        put_pgtable_in_pgdir(pdentry, pgtable, attributes);
+        put_pgtable_in_pgdir(pdentry, pgtable, protection);
 
         /* zero it out in it's new mapping */
         memset((uint32 *)((uint32)page_hole + VADDR_TO_PDENT(virt_addr) * PAGE_SIZE), 0, PAGE_SIZE);
@@ -803,9 +803,9 @@ status_t vm_tmap_quick_map_page(kernel_args_t *kargs, addr_t virt_addr, addr_t p
     init_ptentry(pgentry);
     /* map physical address to virtual */
     pgentry->stru.base = ADDR_SHIFT(phys_addr);
-    /* set page attributes */
-    pgentry->stru.us = !(attributes & VM_LOCK_KERNEL);
-    pgentry->stru.rw = attributes & VM_LOCK_RW;
+    /* set page protection attributes */
+    pgentry->stru.us = !(protection & VM_PROT_KERNEL) != 0;
+    pgentry->stru.rw = (protection & VM_PROT_WRITE) != 0;
     pgentry->stru.p  = 1;
     if(is_kernel_address(virt_addr))
         pgentry->stru.g = 1; /* global bit set for all kernel addresses */

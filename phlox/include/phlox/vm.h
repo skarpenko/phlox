@@ -11,19 +11,24 @@
 #include <phlox/arch/vm.h>
 #include <phlox/platform/vm.h>
 
-/* Memory access attributes */
-#define VM_LOCK_RO      0x0  /* Read-only       */
-#define VM_LOCK_RW      0x1  /* Read and write  */
-#define VM_LOCK_NOEX    0x0  /* Not executable  */
-#define VM_LOCK_EX      0x2  /* Executable      */
-#define VM_LOCK_USER    0x0  /* User's memory   */
-#define VM_LOCK_KERNEL  0x4  /* Kernel's memory */
-#define VM_LOCK_MASK    0x7  /* Mask            */
+/* Memory protection attributes */
+#define VM_PROT_READ     0x01  /* Read permission            */
+#define VM_PROT_WRITE    0x02  /* Write permission           */
+#define VM_PROT_EXECUTE  0x04  /* Execute permission         */
+#define VM_PROT_KERNEL   0x08  /* Kernel's memory            */
+#define VM_PROT_MASK     0x0F  /* Protection attributes mask */
+#define VM_PROT_KERNEL_ALL      (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+#define VM_PROT_KERNEL_DEFAULT  (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE)
+#define VM_PROT_KERNEL_NONE     (VM_PROT_KERNEL)
+#define VM_PROT_USER_ALL        (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+#define VM_PROT_USER_DEFAULT    (VM_PROT_READ | VM_PROT_WRITE)
+#define VM_PROT_USER_NONE       (0)
+
 /* Page state flags */
-#define VM_FLAG_PAGE_PRESENT   0x08  /* Page present  */
-#define VM_FLAG_PAGE_MODIFIED  0x10  /* Page modified */
-#define VM_FLAG_PAGE_ACCESSED  0x20  /* Page accessed */
-#define VM_FLAG_PAGE_MASK      0x38  /* Mask          */
+#define VM_FLAG_PAGE_PRESENT   0x10  /* Page present  */
+#define VM_FLAG_PAGE_MODIFIED  0x20  /* Page modified */
+#define VM_FLAG_PAGE_ACCESSED  0x40  /* Page accessed */
+#define VM_FLAG_PAGE_MASK      0x70  /* Mask          */
 
 
 /*

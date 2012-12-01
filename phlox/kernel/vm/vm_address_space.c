@@ -465,12 +465,12 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
     /* search tree */
     aspace = avl_tree_find(&aspaces_tree, &temp_aspace, NULL);
 
-    /* release lock */
-    spin_unlock_irqrstor(&aspaces_lock, irqs_state);
-
     /* increase references count */
     if(aspace)
         atomic_inc(&aspace->ref_count);
+
+    /* release lock */
+    spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 
     return aspace;
 }

@@ -71,6 +71,7 @@ typedef struct process {
     /* Process state params */
     int                 state;            /* Process state */
     uint                flags;            /* Process flags */
+    vuint               ref_count;        /* Reference count */
     /* Process memory */
     aspace_id           aid;              /* Address space id */
     vm_address_space_t  *aspace;          /* Address space */
@@ -80,8 +81,9 @@ typedef struct process {
     xlist_t             threads;          /* Threads associated with process */
     xlist_t             children;         /* List of child processes */
     list_elem_t         sibling_node;     /* Node in parent process */
-    /* Node of global processes list */
-    list_elem_t         procs_list_node;  /* Pocesses list node */
+    /* Node of global processes list and tree */
+    list_elem_t         procs_list_node;  /* Processes list node */
+    avl_tree_node_t     procs_tree_node;  /* Processes tree node */
     /* Hardware-dependend data */
     arch_process_t       arch;             /* Architecture-dependend data */
 } process_t;

@@ -128,20 +128,25 @@ static void put_thread_to_dead_list(thread_t *thread)
     spin_unlock_irqrstor(&threads_lock, irqs_state);
 }
 
-/* remove thread from dead threads list */
-static void remove_thread_from_dead_list(thread_t *thread)
+/* extracts first item from dead threads list */
+static thread_t *get_thread_from_dead_list(void)
 {
     unsigned long irqs_state;
-
-    ASSERT_MSG(thread->state == THREAD_STATE_DEAD, "Wrong thread state!");
+    list_elem_t *item;
 
     /* get lock */
     irqs_state = spin_lock_irqsave(&threads_lock);
 
-    /* remove thread */
-    xlist_remove_unsafe(&dead_threads_list, &thread->threads_list_node);
+    /* extract thread from list */
+    item = xlist_extract_first(&dead_threads_list);
 
     /* release lock */
     spin_unlock_irqrstor(&threads_lock, irqs_state);
+
+    /* return result */
+    if(item)
+      return containerof(item, thread_t, threads_list_node);
+    else
+      return NULL; /* list is empty */
 }
 

@@ -576,12 +576,12 @@ vm_object_t *vm_get_object_by_id(object_id oid)
     /* search tree */
     object = avl_tree_find(&objects_tree, &temp_object, NULL);
 
-    /* release lock */
-    spin_unlock_irqrstor(&objects_lock, irqs_state);
-
     /* if object found - increase references count */
     if(object)
         atomic_inc(&object->ref_count);
+
+    /* release lock */
+    spin_unlock_irqrstor(&objects_lock, irqs_state);
 
     return object;
 }

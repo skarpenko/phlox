@@ -23,4 +23,14 @@ proc_id proc_get_kernel_proc_id(void);
 */
 process_t *proc_get_kernel_proc(void);
 
+/*
+ * Returns process structure by its id
+*/
+process_t *proc_get_proc_by_id(proc_id pid);
+
+/*
+ * Put previously taken process structure
+*/
+void proc_put_proc(process_t *proc);
+
 #endif

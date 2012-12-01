@@ -6,6 +6,7 @@
 #include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/heap.h>
+#include <phlox/avl_tree.h>
 #include <phlox/list.h>
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
@@ -22,7 +23,10 @@ static vuint next_process_id;
 /* Processes list */
 static processes_list_t processes_list;
 
-/* Spinlock for operations on processes list */
+/* Processes tree for fast search by id */
+static avl_tree_t processes_tree;
+
+/* Spinlock for operations on processes list / tree */
 static spinlock_t processes_lock;
 
 /* Kernel process */
@@ -30,6 +34,16 @@ static process_t *kernel_process = NULL;
 
 
 /*** Locally used routines ***/
+
+/* compare routine for processes AVL tree */
+static int compare_process_id(const void *p1, const void *p2)
+{
+    if( ((process_t *)p1)->id > ((process_t *)p2)->id )
+        return 1;
+    if( ((process_t *)p1)->id < ((process_t *)p2)->id )
+        return -1;
+    return 0;
+}
 
 /* returns available process id */
 static proc_id get_next_process_id(void)
@@ -51,11 +65,50 @@ static proc_id get_next_process_id(void)
 /* returns kernel process id */
 proc_id proc_get_kernel_proc_id(void)
 {
+    ASSERT_MSG(kernel_process, "Kernel process is not created!");
+
     return kernel_process->id;
 }
 
 /* returns kernel process structure */
 process_t *proc_get_kernel_proc(void)
 {
+    ASSERT_MSG(kernel_process, "Kernel process is not created!");
+
+    /* atomically increment reference count */
+    atomic_inc(&kernel_process->ref_count);
+    /* return to caller */
     return kernel_process;
+}
+
+/* returns process structure by its id */
+process_t *proc_get_proc_by_id(proc_id pid)
+{
+    process_t temp_proc, *proc;
+    unsigned int irqs_state;
+
+    temp_proc.id = pid;
+
+    /* acquire lock before tree-search */
+    irqs_state = spin_lock_irqsave(&processes_lock);
+
+    /* search */
+    proc = avl_tree_find(&processes_tree, &temp_proc, NULL);
+
+    /* increment refs count on success search */
+    if(proc) atomic_inc(&proc->ref_count);
+
+    /* release lock */
+    spin_unlock_irqrstor(&processes_lock, irqs_state);
+
+    return proc;
+}
+
+/* put previously taken process structure */
+void proc_put_proc(process_t *proc)
+{
+    /* decrement references count */
+    atomic_dec(&proc->ref_count);
+
+    /* TODO: implement additional functionality */
 }

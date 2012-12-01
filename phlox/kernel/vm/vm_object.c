@@ -116,3 +116,74 @@ status_t vm_objects_init(kernel_args_t *kargs)
 
     return NO_ERROR;
 }
+
+/* returns object by its id */
+vm_object_t *vm_get_object_by_id(object_id oid)
+{
+    vm_object_t temp_object, *object;
+    unsigned long irqs_state;
+
+    temp_object.id = oid;
+
+    /* acquire lock before accessing tree */
+    irqs_state = spin_lock_irqsave(&objects_lock);
+
+    /* search tree */
+    object = avl_tree_find(&objects_tree, &temp_object, NULL);
+
+    /* release lock */
+    spin_unlock_irqrstor(&objects_lock, irqs_state);
+
+    /* if object found - increase references count */
+    if(object)
+        atomic_inc(&object->ref_count);
+
+    return object;
+}
+
+/* put previously taken object */
+void vm_put_object(vm_object_t *object)
+{
+    /* decrease references count */
+    atomic_dec(&object->ref_count);
+    /* TODO: implement additional functionality */
+}
+
+/* returns object id by its name */
+object_id vm_find_object_by_name(const char *name)
+{
+    unsigned long irqs_state;
+    list_elem_t *item;
+    vm_object_t *object;
+    object_id id = VM_INVALID_OBJECTID;
+
+    /* return invalid id if NULL passed */
+    if(!name)
+        return VM_INVALID_OBJECTID;
+
+    /* acquire lock before touching list */
+    irqs_state = spin_lock_irqsave(&objects_lock);
+
+    /* start search from first list item */
+    item = xlist_peek_first(&objects_list);
+    while(item) {
+        /* convert node to object structure */
+        object = containerof(item, vm_object_t, list_node);
+
+        /* we skip unnamed and in deletion state */
+        if(object->state != VM_OBJECT_STATE_DELETION &&
+           object->name && !strcmp(object->name, name))
+        {
+            id = object->id;
+            break; /* search successful */
+        }
+
+        /* step to next item */
+        item = xlist_peek_next(item);
+    }
+
+    /* release lock */
+    spin_unlock_irqrstor(&objects_lock, irqs_state);
+
+    return id;
+}

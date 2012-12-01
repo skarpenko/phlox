@@ -103,6 +103,24 @@ void vm_put_aspace(vm_address_space_t *aspace);
 */
 aspace_id vm_find_aspace_by_name(const char *name);
 
+/*
+ * Get object by its id.
+ * Returns object or NULL if no object
+ * found with given id.
+*/
+vm_object_t *vm_get_object_by_id(object_id oid);
+
+/*
+ * Put previously taken object
+*/
+void vm_put_object(vm_object_t *object);
+
+/*
+ * Returns object id by its name.
+ * If no object found returns VM_INVALID_OBJECTID.
+*/
+object_id vm_find_object_by_name(const char *name);
+
 
 /*
  * Global variable with Virtual Memory State

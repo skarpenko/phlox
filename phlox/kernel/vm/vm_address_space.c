@@ -279,6 +279,10 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
     /* release lock */
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 
+    /* increase references count */
+    if(aspace)
+        atomic_inc(&aspace->ref_count);
+
     return aspace;
 }
 
@@ -286,7 +290,7 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
 void vm_put_aspace(vm_address_space_t *aspace)
 {
     /* decrease references count */
-    atomic_dec(&kernel_aspace->ref_count);
+    atomic_dec(&aspace->ref_count);
     /* TODO: implement additional functionality */
 }
 
@@ -311,7 +315,7 @@ aspace_id vm_find_aspace_by_name(const char *name)
         /* convert node to address space structure */
         aspace = containerof(item, vm_address_space_t, list_node);
 
-        /* we skeep unnamed address spaces and spaces with
+        /* we skip unnamed address spaces and spaces with
          * deletion state.
          */
         if(aspace->state != VM_ASPACE_STATE_DELETION &&
@@ -328,6 +332,5 @@ aspace_id vm_find_aspace_by_name(const char *name)
     /* release lock */
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 
-    /* nothing was found */
     return id;
 }

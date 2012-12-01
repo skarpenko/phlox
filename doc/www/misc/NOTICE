@@ -1,0 +1,22 @@
+IMPORTANT NOTICE
+----------------
+
+  Due to sources snapshot tarballs are published very rarely it is strongly
+recommended to use Subversion (SVN) repository of the project for obtaining
+latest sources.
+  To obtain sources using command-line SVN client it is enough to perform
+checkout operation by the following command:
+
+    "svn co https://phlox-os.svn.sourceforge.net/svnroot/phlox-os phlox-os"
+
+  Folder named "phlox-os" will be created inside the folder where operation was
+executed and the sources will be downloaded into it.
+
+Also sources browsing are available via Web access at:
+    http://phlox-os.svn.sourceforge.net/viewvc/phlox-os/
+
+For more information about Subversion visit:
+    http://subversion.apache.org/ or http://subversion.tigris.org/
+
+Windows users may download SVN client with graphical interface at:
+    http://www.open.collab.net/downloads/subversion/

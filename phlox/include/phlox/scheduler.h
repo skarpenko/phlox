@@ -12,6 +12,16 @@
 #include <phlox/thread_types.h>
 
 
+/*
+ * Called only from timer interrupt handler.
+ * Returns true if reschedule needed, false if not.
+*/
+bool scheduler_timer(void);
+
+/*
+ * Performs rescheduling and context switch.
+*/
+void scheduler_resched(void);
 
 
 #endif

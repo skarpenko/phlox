@@ -37,3 +37,14 @@ status_t scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
 
     return NO_ERROR;
 }
+
+/* called from timer tick handler */
+bool scheduler_timer(void)
+{
+    return false;
+}
+
+/* reschedules and performs context switch */
+void scheduler_resched(void)
+{
+}

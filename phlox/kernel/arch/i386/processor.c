@@ -34,7 +34,8 @@ static const struct i386_cpu_vendor_info cpu_vendor_info[I386_VENDORS_COUNT] = {
                      "TransmetaCPU" } },
     { "Rise",      { "RiseRiseRise" } },  /* Rise Technology */
     { "UMC",       { "UMC UMC UMC" } },   /* United Microelectronics Corporation */
-    { "NSC",       { "Geode by NSC" } }   /* National Semiconductor */
+    { "NSC",       { "Geode by NSC" } },  /* National Semiconductor */
+    { "VIA",       { "VIA VIA VIA" } }    /* VIA Technologies */
 };
 
 /* Global Descriptors Table */

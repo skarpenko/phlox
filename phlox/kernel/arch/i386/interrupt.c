@@ -12,6 +12,7 @@
 #include <phlox/processor.h>
 #include <phlox/kernel.h>
 #include <phlox/vm_private.h>
+#include <phlox/scheduler.h>
 #include <phlox/interrupt.h>
 
 
@@ -193,6 +194,8 @@ static void print_int_frame(i386_int_frame_t *frame)
 void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t *frame)
 {
+    bool resched_needed = false;
+
     switch(frame->vector) {
         /* Divide Error Exception */
         case 0:
@@ -341,15 +344,24 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
         /* Here starts handling of hardware interrupts */
         default: {
+            flags_t res;
+
             /* ensure that hardware interrupt occured */
             if(frame->vector >= IRQS_BASE_VECTOR &&
                frame->vector <  IRQS_BASE_VECTOR + IRQS_NUMBER) {
                 /* acknowledge hardware interrupt */
                 interrupt_ack(frame->vector);
                 /* start interrupt handling */
-                handle_hw_interrupt(frame->vector-IRQS_BASE_VECTOR);
+                res = handle_hw_interrupt(frame->vector-IRQS_BASE_VECTOR);
+                /* check result */
+                if(res & INT_FLAGS_RESCHED)
+                    resched_needed = true;
             }
         }
          break;
     }
+
+    /* reschedule if needed */
+    if(resched_needed)
+        scheduler_resched();
 }

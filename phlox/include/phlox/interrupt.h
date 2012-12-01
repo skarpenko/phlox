@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_INTERRUPT_H_
@@ -15,6 +15,7 @@
 
 /* Flags returned by interrupt handlers */
 #define INT_FLAGS_NOFLAGS  0x00000000  /* no flags set */
+#define INT_FLAGS_RESCHED  0x00000001  /* reschedule needed */
 
 /* Hardware interrupt handling routine */
 typedef flags_t (hw_int_handler_t)(void *);

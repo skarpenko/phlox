@@ -4,6 +4,7 @@
 */
 #include <phlox/errors.h>
 #include <phlox/interrupt.h>
+#include <phlox/scheduler.h>
 #include <phlox/timer.h>
 
 
@@ -28,5 +29,11 @@ status_t timer_init(kernel_args_t *kargs)
 /* timer tick event handler */
 flags_t timer_tick(void)
 {
-    return INT_FLAGS_NOFLAGS;
+    flags_t ret = INT_FLAGS_NOFLAGS;
+
+    /* call scheduler */
+    if(scheduler_timer())
+        ret |= INT_FLAGS_RESCHED;
+
+    return ret;
 }

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_PROCESSOR_H_
@@ -39,6 +39,7 @@ enum i386_vendors {
     I386_VENDOR_RISE,       /* Rise Technology                     */
     I386_VENDOR_UMC,        /* United Microelectronics Corporation */
     I386_VENDOR_NSC,        /* National Semiconductor              */
+    I386_VENDOR_VIA,        /* VIA Technologies                    */
 
     I386_VENDORS_COUNT      /* Total count of known vendors        */
 };

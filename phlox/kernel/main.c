@@ -137,10 +137,10 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
         tid = thread_create_kernel_thread("kernel_thread0", &thread0, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread0!\n");
         /* thread 1 */
-        tid = thread_create_kernel_thread("kernel_thread1", &thread1, NULL, false);
+        tid = thread_create_kernel_thread("kernel_thread1", &thread1, (void *)tid, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread1!\n");
         /* thread 2 */
-        tid = thread_create_kernel_thread("kernel_thread2", &thread2, NULL, false);
+        tid = thread_create_kernel_thread("kernel_thread2", &thread2, (void *)tid, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread2!\n");
         /* threads controller */
         tid = thread_create_kernel_thread("kernel_thread_ctl", &thread_ctl, NULL, false);
@@ -215,13 +215,12 @@ void wait(long msec)
         ;
 }
 
-
 /* thread 0 routine */
 int thread0(void *data)
 {
-    thread_t *me = thread_get_current_thread();
+    thread_id me = thread_get_current_thread_id();
 
-    kprint("Thread0 (id = %d): started...\n", me->id);
+    kprint("Thread0 (id = %d): started...\n", me);
 
     while(1) {
         thread0_ctr++;
@@ -233,12 +232,39 @@ int thread0(void *data)
 /* thread 1 routine */
 int thread1(void *data)
 {
-    thread_t *me = thread_get_current_thread();
+    thread_id me = thread_get_current_thread_id();
+    thread_id slave = (thread_id)data;
+    bool slave_active = true;
+    bigtime_t curr_time;
+    bigtime_t time = timer_get_time();
+    bigtime_t self_suspend = time;
 
-    kprint("Thread1 (id = %d): started...\n", me->id);
+    kprint("Thread1 (id = %d): started...\n", me);
 
     while(1) {
         thread1_ctr++;
+
+        /* current time */
+        curr_time = timer_get_time();
+
+        /* simulate slave thread controlling */
+        if(curr_time-time > 5000) {
+           if(slave_active) {
+              slave_active = false;
+              thread_suspend(slave);
+           } else {
+              slave_active = true;
+              thread_resume(slave);
+           }
+           time = timer_get_time();
+        }
+
+        /* suspend current thread periodically */
+        if(curr_time-self_suspend > 22000) {
+            thread_suspend_current();
+            self_suspend = timer_get_time();
+        }
+
         /* wait a little */
         wait(50);
     }
@@ -246,12 +272,21 @@ int thread1(void *data)
 /* thread 2 routine */
 int thread2(void *data)
 {
-    thread_t *me = thread_get_current_thread();
+    thread_id me = thread_get_current_thread_id();
+    thread_id slave = (thread_id)data;
+    bigtime_t time = timer_get_time();
 
-    kprint("Thread2 (id = %d): started...\n", me->id);
+    kprint("Thread2 (id = %d): started...\n", me);
 
     while(1) {
         thread2_ctr++;
+
+        /* wake up our slave thread periodically */
+        if(timer_get_time()-time > 40000) {
+            thread_resume(slave);
+            time = timer_get_time();
+        }
+
         /* wait a little */
         wait(50);
     }

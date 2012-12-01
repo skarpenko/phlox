@@ -755,6 +755,8 @@ void thread_exit(int exitcode)
     thread_unlock_thread(thread);
     sched_reschedule();
     /* NOTE: interrupts will be enabled during rescheduling */
+
+    /** control never goes here **/
 }
 
 /* suspend currently running thread */
@@ -773,6 +775,8 @@ status_t thread_suspend_current(void)
     thread_unlock_thread(thread);
     sched_reschedule();
     /* NOTE: interrupts will be reenabled during rescheduling */
+
+    return NO_ERROR;
 }
 
 /* suspend specified thread */
@@ -794,9 +798,17 @@ status_t thread_suspend(thread_id tid)
        thread->state == THREAD_STATE_RUNNING)
           thread->next_state = THREAD_STATE_SUSPENDED;
 
-    /* unlock thread and enable interrupts */
+    /* unlock thread */
     thread_unlock_thread(thread);
-    local_irqs_enable();
+
+    /* check if suspending currently running thread
+     * if true - reschedule immediately, interrupts will be
+     * reenabled during rescheduling.
+    */
+    if(thread_get_current_thread_id() == tid)
+        sched_reschedule();
+    else
+        local_irqs_enable();
 
     return NO_ERROR;
 }

@@ -128,7 +128,7 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
     map_pool_base = vm_alloc_vspace_from_kargs(kargs, map_pool_size + pool_align - PAGE_SIZE);
     if (!map_pool_base)
         return ERR_NO_MEMORY;
-        
+
     /* align the base address to pool_align */
     map_pool_base = (map_pool_base + pool_align - 1) / pool_align * pool_align;
     *pool_base = map_pool_base;

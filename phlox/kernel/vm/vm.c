@@ -37,6 +37,11 @@ status_t vm_init(kernel_args_t *kargs)
     if(err)
        panic("arch_vm_init: failed!\n");
 
+    /* start platform-specific init */
+    err = platform_vm_init(kargs);
+    if(err)
+       panic("platform_vm_init: failed!\n");
+
     /* init memory size */
     err = vm_page_preinit(kargs);
     if(err)
@@ -81,6 +86,11 @@ status_t vm_init(kernel_args_t *kargs)
     err = arch_vm_init_final(kargs);
     if(err)
        panic("arch_vm_init_final: final stage failed!\n");
+
+    /* final stages of platform-specific init */
+    err = platform_vm_init_final(kargs);
+    if(err)
+       panic("platform_vm_init_final: final stage failed!\n");
 
     /* init address spaces module */
     err = vm_address_spaces_init(kargs);

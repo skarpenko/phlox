@@ -540,7 +540,8 @@ error:
     vm_put_aspace(aspace);
 
     /* return allocated physical pages back */
-    while( (item = xlist_peek_first(&object->upages_list)) != NULL) {
+    item = xlist_peek_first(&object->upages_list);
+    while(item != NULL) {
         upage = containerof(item, vm_upage_t, list_node);
         upage->state = VM_UPAGE_STATE_UNWIRED;
         page = vm_page_lookup(upage->ppn);

@@ -97,6 +97,13 @@ void sched_add_thread(thread_t *thread);
 void sched_remove_thread(thread_t *thread);
 
 /*
+ * Called from thread stub to inform scheduler that
+ * new thread started. Scheduler performs last steps of
+ * context switch within this routine.
+*/
+void sched_new_thread_started(thread_t *thread);
+
+/*
  * Capture cpu by current thread. Thread cannot be rescheduled.
  * Returns current value of preemt_count for thread.
 */

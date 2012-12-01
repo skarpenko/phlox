@@ -259,6 +259,9 @@ static int stub_for_kernel_thread(void)
     if( arch_thread_first_start_init(thread) != NO_ERROR )
         panic("\nFailed to start thread id = %d\n", thread->id);
 
+    /* notify scheduler about new thread start */
+    sched_new_thread_started(thread);
+
     /* call entry and pass user-data into it */
     func = (void *)thread->entry;
     retcode = func(thread->data);
@@ -289,7 +292,7 @@ static status_t create_thread_kstack_area(thread_t *thread, const char *name)
 
     /* map created object into kernel address space */
     err = vm_map_object_aligned(vm_get_kernel_aspace_id(), thread->kstack_id,
-                        VM_PROT_KERNEL_ALL, THREAD_KSTACK_SIZE, &thread->kstack_base);
+                        VM_PROT_KERNEL_ALL, KERNEL_STACK_SIZE, &thread->kstack_base);
     /*
      * IMPORTANT NOTE: Alignment of mapped kernel-side stack to its size
      * boundary is very important for thread_get_current_thread() routine.
@@ -539,4 +542,13 @@ exit_on_error:
 
     /* return error state */
     return INVALID_THREADID;
+}
+
+/* transfer control to another thread */
+void thread_yield(void)
+{
+    /* do reschedule for stop current thread
+     * and select new one for execution.
+     */
+    sched_reschedule();
 }

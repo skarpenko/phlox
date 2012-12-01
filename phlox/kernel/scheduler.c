@@ -434,10 +434,20 @@ int sched_release_cpu(void)
     return t->preempt_count;
 }
 
+/* this called from thread stub */
+void sched_new_thread_started(thread_t *thread)
+{
+    /* get runqueue for this thread */
+    runqueue_t *rq = &runqueues[thread->cpu->cpu_num];
+
+    /* unlock runqueue */
+    spin_unlock(&rq->lock);
+    local_irqs_enable();
+}
+
 /* reschedules and performs context switch */
 void sched_reschedule(void)
 {
-    uint irqs_state;
     int cpu;
     int prio;
     bool is_idle;
@@ -452,7 +462,8 @@ void sched_reschedule(void)
     is_idle = (idle_threads[cpu] == curr_thrd); /* is current thread is per cpu idle thread? */
 
     /* acquire lock for runqueue and start */
-    irqs_state = spin_lock_irqsave(&rq->lock);
+    local_irqs_disable();
+    spin_lock(&rq->lock);
 
     /* adjust current thread */
     curr_thrd->state = THREAD_STATE_READY;                   /* switch to ready state */
@@ -511,9 +522,14 @@ void sched_reschedule(void)
         next_thrd->sched_stamp = SCHED_TICKS2MSEC(sched_ticks);
     }
 
-    /* release lock */
-    spin_unlock_irqrstor(&rq->lock, irqs_state);
-
     /* switch to next thread */
     arch_sched_context_switch(curr_thrd, next_thrd);
+    /* NOTE: For new threads control never goes here after switch at the first
+     * time. But thread stub routine calls sched_new_thread_started() routine,
+     * so unlock steps performed inside this routine.
+     */
+
+    /* release lock */
+    spin_unlock(&rq->lock);
+    local_irqs_enable();
 }

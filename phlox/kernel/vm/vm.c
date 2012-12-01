@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <phlox/errors.h>
+#include <phlox/param.h>
 #include <phlox/spinlock.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
@@ -129,10 +130,9 @@ status_t vm_init(kernel_args_t *kargs)
 
     /* init memory structures */
     {
-#       define _NAME_LEN  30
         aspace_id kid = vm_get_kernel_aspace_id();
         object_id id;
-        char name[_NAME_LEN];
+        char name[SYS_MAX_OS_NAME_LEN];
         int i;
 
         /* create kernel_image memory object and its mapping */
@@ -153,7 +153,7 @@ status_t vm_init(kernel_args_t *kargs)
 
         /* create kernel stacks memory objects and mappings */
         for(i = 0; i < SYSCFG_MAX_CPUS; i++) {
-            snprintf(name, _NAME_LEN, "kernel_cpu%d_stack", i);
+            snprintf(name, SYS_MAX_OS_NAME_LEN, "kernel_cpu%d_stack", i);
             id = vm_create_physmem_object(name, kargs->phys_cpu_kstack[i].start,
                                           kargs->phys_cpu_kstack[i].size, VM_OBJECT_PROTECT_ALL);
             if(id == VM_INVALID_OBJECTID)
@@ -189,8 +189,6 @@ status_t vm_init(kernel_args_t *kargs)
                                       kargs->btfs_image_addr.size, VM_OBJECT_PROTECT_ALL);
         if(id == VM_INVALID_OBJECTID)
             panic("vm_init: failed to create bootfs_image object!\n");
-
-#       undef _NAME_LEN
     }
     /* end of init memory structures */
 

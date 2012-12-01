@@ -41,5 +41,10 @@ thread_id thread_get_current_thread_id(void);
 */
 thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data), void *data);
 
+/*
+ * Transfer control to another thread
+*/
+void thread_yield(void);
+
 
 #endif

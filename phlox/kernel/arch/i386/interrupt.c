@@ -127,10 +127,10 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
 
 
 /* main interrupt handling routine */
-void i386_handle_interrupt(i386_int_frame_t frame); /* lets compiler be happy */
-void i386_handle_interrupt(i386_int_frame_t frame)
+void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
+void i386_handle_interrupt(i386_int_frame_t *frame)
 {
-    switch(frame.vector) {
+    switch(frame->vector) {
         /* Divide Error Exception */
         case 0:
          break;
@@ -189,10 +189,10 @@ void i386_handle_interrupt(i386_int_frame_t frame)
 
         /* Page-Fault Exception */
         case 14: {
-            vm_hard_page_fault( read_cr2(), frame.eip,
-                                (frame.err_code & 0x02) != 0,   /* is write ? */
-                                (frame.err_code & 0x10) != 0,   /* is exec ?  */
-                                (frame.err_code & 0x04) != 0 ); /* is user ?  */
+            vm_hard_page_fault( read_cr2(), frame->eip,
+                                (frame->err_code & 0x02) != 0,   /* is write ? */
+                                (frame->err_code & 0x10) != 0,   /* is exec ?  */
+                                (frame->err_code & 0x04) != 0 ); /* is user ?  */
         }
          break;
 
@@ -223,12 +223,12 @@ void i386_handle_interrupt(i386_int_frame_t frame)
         /* Here starts handling of hardware interrupts */
         default: {
             /* ensure that hardware interrupt occured */
-            if(frame.vector >= IRQS_BASE_VECTOR &&
-               frame.vector <  IRQS_BASE_VECTOR + IRQS_NUMBER) {
+            if(frame->vector >= IRQS_BASE_VECTOR &&
+               frame->vector <  IRQS_BASE_VECTOR + IRQS_NUMBER) {
                 /* acknowledge hardware interrupt */
-                interrupt_ack(frame.vector);
+                interrupt_ack(frame->vector);
                 /* start interrupt handling */
-                handle_hw_interrupt(frame.vector-IRQS_BASE_VECTOR);
+                handle_hw_interrupt(frame->vector-IRQS_BASE_VECTOR);
             }
         }
          break;

@@ -110,10 +110,13 @@ enum {
 };
 
 /* Object protection flags */
+#define VM_OBJECT_PROTECT_NONE     0x00
 #define VM_OBJECT_PROTECT_READ     0x01
 #define VM_OBJECT_PROTECT_WRITE    0x02
 #define VM_OBJECT_PROTECT_EXECUTE  0x04
-#define VM_OBJECT_PROTECT_ALL      0x07
+#define VM_OBJECT_PROTECT_ALL      ( VM_OBJECT_PROTECT_READ | \
+                                     VM_OBJECT_PROTECT_WRITE | \
+                                     VM_OBJECT_PROTECT_EXECUTE )
 #define VM_OBJECT_PROTECT_MASK     0x07
 
 /* Universal page */

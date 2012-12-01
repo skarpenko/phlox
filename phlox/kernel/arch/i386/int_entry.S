@@ -218,8 +218,16 @@ interrupt_start:
     movl    %eax, %ds
     movl    %eax, %es
 
+    /* We store pointer to a stack frame and do not provide it directly as
+     * a structure to avoid horrible GCC optimizations.
+     */
+    pushl   %esp
+     
     /* call to C-function */
     call    i386_handle_interrupt
+
+    /* remove pointer to stack frame */
+    addl    $4, %esp
 
     /* restore registers */
     popl    %gs

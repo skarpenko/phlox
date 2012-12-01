@@ -5,19 +5,15 @@
 #ifndef _PHLOX_THREAD_TYPES_H_
 #define _PHLOX_THREAD_TYPES_H_
 
-#include <phlox/ktypes.h>
-#include <phlox/list.h>
-#include <phlox/avl_tree.h>
-#include <phlox/vm_types.h>
-#include <phlox/processor.h>
-#include <phlox/spinlock.h>
-#include <phlox/arch/thread_types.h>
+#include <ktypes.h>
+#include <list.h>
+#include <spinlock.h>
 
 
 /* Scheduling policy */
 typedef union {
     struct {
-        uint type : 4;   /* Scheduling policy type */
+        uint type : 4;   /* Scheduling policy name */
     } policy;            /* Scheduling policy structure */
     uint raw;            /* Raw value of scheduling policy */
 } sched_policy_t;
@@ -35,18 +31,20 @@ enum {
   SCHED_POLICY_INTERRUPT,      /* Policy for low-priority interrupts handling */
   /* Count of scheduling policies */
   SCHED_POLICIES_COUNT
-};
+}; ////////// reordered!
 
 /* Thread static priorities */
 enum {
-  THREAD_PRIORITY_REAL_TIME = 104,
-  THREAD_PRIORITY_VERY_HIGH =  88,
-  THREAD_PRIORITY_HIGH      =  72,
-  THREAD_PRIORITY_NORMAL    =  56,
-  THREAD_PRIORITY_LOW       =  40,
-  THREAD_PRIORITY_VERY_LOW  =  24,
-  THREAD_PRIORITY_IDLE      =   8
-};
+  THREAD_PRIORITY_REAL_TIME = 112,
+  THREAD_PRIORITY_VERY_HIGH =  96,
+  THREAD_PRIORITY_HIGH      =  80,
+  THREAD_PRIORITY_NORMAL    =  64,
+  THREAD_PRIORITY_LOW       =  48,
+  THREAD_PRIORITY_VERY_LOW  =  32,
+  THREAD_PRIORITY_IDLE      =  16
+}; // shift down a little priorities?
+// use defines?
+// start from 8? see bonus/penalty
 
 /* Thread */
 typedef struct thread {
@@ -54,13 +52,13 @@ typedef struct thread {
     char             *name;              /* Thread name (can be NULL) */
     struct process   *process;           /* Thread owner process */
     /* Processor */
-    processor_t      *cpu;               /* CPU on which thread is executed */
+/*    processor_t      *cpu;   */            /* CPU on which thread is executed */
     /* Kernel-side stack data */
-    object_id        kstack_id;          /* Kernel stack vm_object id */
+/*    object_id        kstack_id;   */       /* Kernel stack vm_object id */
     addr_t           kstack_top;         /* Kernel stack top */
     addr_t           kstack_base;        /* Kernel stack base */
     /* User-side stack data */
-    object_id        ustack_id;          /* User stack vm_object id */
+/*    object_id        ustack_id;  */        /* User stack vm_object id */
     addr_t           ustack_top;         /* User stack top */
     addr_t           ustack_base;        /* User stack base */
     /* Thread state params */
@@ -69,13 +67,15 @@ typedef struct thread {
     int              preemt_count;       /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
     /* Fields used by scheduler */
-    int             jiffies;             /* Current jiffies count */
-    int             ijiffies;            /* Initial jiffies count */
+    int cpu_captured;
+    int             jiffies;            /* Current jiffies count */
+    int             ijiffies;           /* initial jiffies */
     sched_policy_t   sched_policy;       /* Scheduling policy */
     int              s_prio;             /* Static priority */
     int              d_prio;             /* Current dynamic priority */
-    bigtime_t        sched_stamp;        /* Scheduler's timestamp */
-    int              carrots_sticks;     /* Carrots and Sticks Policy value */
+    bigtime_t        sched_stamp;
+//    int              whip_cake; /* last penalty or bonus */
+    int              carrots_sticks;
     /* Thread timing */
     bigtime_t        kernel_time;        /* Kernel-side execution time */
     bigtime_t        user_time;          /* User-side execution time */
@@ -84,13 +84,25 @@ typedef struct thread {
     void             *data;              /* Optional data passed to thread */
     /* List nodes */
     list_elem_t      threads_list_node;  /* Threads list node */
-    avl_tree_node_t  threads_tree_node;  /* Threads tree node */
+/*    avl_tree_node_t  threads_tree_node; */ /* Threads tree node */
     list_elem_t      proc_list_node;     /* Process threads list node */
     list_elem_t      sched_list_node;    /* Scheduler's list node */
     /* Hardware-dependend data */
-    arch_thread_t    arch;               /* Architecture-dependend data */
-/* TODO: Semaphores */
+/*    arch_thread_t    arch;   */            /* Architecture-dependend data */
+/* TODO: Priorities, Semaphores */
+    // debug stat
+/*
+    bigtime_t last_acc;
+    bigtime_t last_exe;
+    bigtime_t last_exe_end;
+ */
+    bigtime_t max_wait;
+
+    bigtime_t max_exec;
+    bigtime_t min_exec;
+    uint exe_count;
 } thread_t;
+/*** PRIORITIES IS INT NOW, JIFFIES ARE INT **/
 
 /* Thread states */
 enum {
@@ -105,8 +117,8 @@ enum {
 
 /* Thread flags */
 enum {
-  THREAD_FLAG_NONE        = 0x0,  /* No flags set */
-  THREAD_FLAG_RESCHEDULE  = 0x1   /* Thread will be rescheduled soon */
+  THREAD_FLAG_NONE        = 0x0,
+  THREAD_FLAG_RESCHEDULE  = 0x1
 };
 
 /* Process */
@@ -123,14 +135,14 @@ typedef struct process {
     vuint               ref_count;        /* Reference count */
     /* Scheduling data */
     uint                process_role;     /* Process role */
-    int                 def_prio;         /* Default priority for new threads */
+    uint                def_prio;         /* Default priority for new threads */
     sched_policy_t      def_sched_policy; /* Default policy for new threads */
     /* Process timing */
     bigtime_t           kernel_time;      /* Kernel-side execution time */
     bigtime_t           user_time;        /* User-side execution time */
     /* Process memory */
-    aspace_id           aid;              /* Address space id */
-    vm_address_space_t  *aspace;          /* Address space */
+/*    aspace_id           aid;       */       /* Address space id */
+/*    vm_address_space_t  *aspace;   */       /* Address space */
     /* Internal data structures */
     spinlock_t          lock;             /* Lock for lists access */
     struct thread       *main;            /* Main thread */
@@ -139,9 +151,9 @@ typedef struct process {
     list_elem_t         sibling_node;     /* Node in parent process */
     /* Node of global processes list and tree */
     list_elem_t         procs_list_node;  /* Processes list node */
-    avl_tree_node_t     procs_tree_node;  /* Processes tree node */
+/*    avl_tree_node_t     procs_tree_node;*/  /* Processes tree node */
     /* Hardware-dependend data */
-    arch_process_t       arch;             /* Architecture-dependend data */
+/*    arch_process_t       arch;   */          /* Architecture-dependend data */
 } process_t;
 
 /* Process states */

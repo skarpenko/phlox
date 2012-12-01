@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="51">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="sched_model_3_4"
+                   displayName="Sched Model v3.4"
+                   projectFiles="true">
+      <logicalFolder name="include" displayName="include" projectFiles="true">
+        <itemPath>include/arch_ktypes.h</itemPath>
+        <itemPath>include/atomic.h</itemPath>
+        <itemPath>include/kernel.h</itemPath>
+        <itemPath>include/ktypes.h</itemPath>
+        <itemPath>include/list.h</itemPath>
+        <itemPath>include/spinlock.h</itemPath>
+        <itemPath>include/thread_private.h</itemPath>
+        <itemPath>include/thread_types.h</itemPath>
+        <itemPath>include/types.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="util" displayName="util" projectFiles="true">
+        <itemPath>util/list.c</itemPath>
+      </logicalFolder>
+      <itemPath>main.c</itemPath>
+      <itemPath>sched.c</itemPath>
+      <itemPath>sched.h</itemPath>
+      <itemPath>sched_private.h</itemPath>
+      <itemPath>thread.c</itemPath>
+      <itemPath>thread.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <compilerSet>MinGW|MinGW</compilerSet>
+        <platform>3</platform>
+      </toolsSet>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>make</buildCommand>
+          <cleanCommand>make clean</cleanCommand>
+          <executablePath>./sched34.exe</executablePath>
+        </makeTool>
+        <requiredProjects>
+        </requiredProjects>
+      </makefileType>
+      <item path="include/arch_ktypes.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/atomic.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/kernel.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/ktypes.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/list.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/spinlock.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/thread_private.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/thread_types.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="include/types.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="main.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="sched.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="sched.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="sched_private.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="thread.c">
+        <itemTool>0</itemTool>
+      </item>
+      <item path="thread.h">
+        <itemTool>3</itemTool>
+      </item>
+      <item path="util/list.c">
+        <itemTool>0</itemTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

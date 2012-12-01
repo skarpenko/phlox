@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SYSCONFIG_H
@@ -14,7 +14,7 @@
 #define SYSCFG_KERNEL_HEAP_MAX (16*1024*1024) /* 16Mbytes */
 
 /* Defines internal kernel timer frequency */
-#define SYSCFG_KERNEL_HZ  100 /* Hz */
+#define SYSCFG_KERNEL_HZ  250 /* Hz */
 
 /* Defines kernel log config */
 #define SYSCFG_KLOG_NROWS  128  /* Rows number */

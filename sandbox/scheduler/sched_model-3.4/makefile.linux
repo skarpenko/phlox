@@ -1,0 +1,23 @@
+all: sched34
+
+sched34: main.o sched.o list.o thread.o
+	gcc -o sched34 main.o sched.o list.o thread.o
+
+main.o: main.c
+	gcc -Iinclude -c main.c
+
+sched.o: sched.c sched.h sched_private.h
+	gcc -Iinclude -c sched.c
+
+thread.o: thread.c thread.h
+	gcc -Iinclude -c thread.c
+
+list.o: util/list.c
+	gcc -Iinclude -c util/list.c
+
+clean:
+	rm main.o
+	rm sched.o
+	rm list.o
+	rm thread.o
+	rm sched34

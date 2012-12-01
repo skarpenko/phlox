@@ -70,7 +70,7 @@ static void _dump_klog()
     addr_t va;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
-    char nl[1] = "\n";
+    char nl[2] = "\n";
 
     /* set zero terminator */
     tmp[SYSCFG_KLOG_NCOLS] = 0;
@@ -103,7 +103,7 @@ static int console_writer(void *data)
     addr_t console_addr;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
-    char nl[1] = "\n";
+    char nl[2] = "\n";
 
     /* notify */
     kprint("Console writer (id = %d): started...\n", me->id);

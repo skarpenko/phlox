@@ -4,11 +4,9 @@
 */
 #include <sys/debug.h>
 #include <phlox/errors.h>
-#include <phlox/list.h>
-#include <phlox/spinlock.h>
 #include <phlox/thread.h>
 #include <phlox/scheduler.h>
-#include <phlox/thread_private.h>
+#include <phlox/scheduler_private.h>
 
 
 /* Redefine for convenience */

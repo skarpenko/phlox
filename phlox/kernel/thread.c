@@ -516,6 +516,10 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     thread->entry = (addr_t)func;
     thread->data = data;
 
+    /* set default priority and scheduling policy */
+    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
+    thread->s_prio = thread->process->def_prio;
+
     /* attach to kernel process */
     proc_attach_thread(thread->process, thread);
 

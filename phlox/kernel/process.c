@@ -41,21 +41,21 @@ static struct {
   /* Kernel process role properties */
   {
      /* Default scheduling policy */
-     { .policy.name = SCHED_POLICY_KERNEL },
+     { .policy.type = SCHED_POLICY_KERNEL },
      /* Default priority */
      (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_KERNEL)
   },
   /* Service process role properties */
   {
      /* Default scheduling policy */
-     { .policy.name = SCHED_POLICY_SERVICE },
+     { .policy.type = SCHED_POLICY_SERVICE },
      /* Default priority */
      (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_SERVICE)
   },
   /* User process role properties */
   {
      /* Default scheduling policy */
-     { .policy.name = SCHED_POLICY_ORDINARY },
+     { .policy.type = SCHED_POLICY_ORDINARY },
      /* Default priority */
      (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_USER)
   }

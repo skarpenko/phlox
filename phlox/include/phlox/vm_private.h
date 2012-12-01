@@ -30,8 +30,8 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
  */
 addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection);
 
-
-/* Create kernel address space.
+/*
+ * Create kernel address space.
  * Called only once during system init stage.
  */
 aspace_id vm_create_kernel_aspace(const char* name, addr_t base, size_t size);

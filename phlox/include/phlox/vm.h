@@ -17,7 +17,7 @@
 #define VM_PROT_READ     0x01  /* Read permission            */
 #define VM_PROT_WRITE    0x02  /* Write permission           */
 #define VM_PROT_EXECUTE  0x04  /* Execute permission         */
-#define VM_PROT_KERNEL   0x08  /* Kernel's memory            */
+#define VM_PROT_KERNEL   0x08  /* Kernels memory             */
 #define VM_PROT_MASK     0x0F  /* Protection attributes mask */
 #define VM_PROT_KERNEL_ALL      (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_KERNEL_DEFAULT  (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE)
@@ -59,20 +59,57 @@ typedef struct {
 /*
  * This routine called during system init stage
  * for virtual memory initialization.
- */
+*/
 status_t vm_init(kernel_args_t *kargs);
 
-
-/* Returns available physical memory
+/*
+ * Returns available physical memory
  * size installed in the system.
- */
+*/
 size_t vm_phys_mem_size(void);
 
+/*
+ * Creates address space with given name, base address and size.
+ * Returns id of newly created address space or VM_INVALID_ASPACEID
+ * on error.
+*/
+aspace_id vm_create_aspace(const char* name, addr_t base, size_t size);
 
-/* Global variable with Virtual Memory State
+/*
+ * Returns kernel address space
+*/
+vm_address_space_t *vm_get_kernel_aspace(void);
+
+/*
+ * Returns kernel address space id
+*/
+aspace_id vm_get_kernel_aspace_id(void);
+
+/*
+ * Get address space by its id.
+ * Returns address space or NULL if no address space
+ * found with given id.
+*/
+vm_address_space_t* vm_get_aspace_by_id(aspace_id aid);
+
+/*
+ * Put previously taken address space
+*/
+void vm_put_aspace(vm_address_space_t *aspace);
+
+/*
+ * Returns address space id by its name.
+ * If no address space found returns VM_INVALID_ASPACEID.
+*/
+aspace_id vm_find_aspace_by_name(const char *name);
+
+
+/*
+ * Global variable with Virtual Memory State
  * Modified only by VM internals, use only
  * for information.
  */
 extern vm_stat_t VM_State;
+
 
 #endif

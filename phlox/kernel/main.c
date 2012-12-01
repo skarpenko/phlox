@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -34,6 +34,7 @@ vuint thread0_ctr = 0;
 vuint thread1_ctr = 0;
 vuint thread2_ctr = 0;
 vuint thread_ctl_ctr = 0;
+void wait(long msec);
 int thread0(void *data);
 int thread1(void *data);
 int thread2(void *data);
@@ -133,16 +134,16 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     {
         thread_id tid;
         /* thread 0 */
-        tid = thread_create_kernel_thread("kernel_thread0", &thread0, NULL);
+        tid = thread_create_kernel_thread("kernel_thread0", &thread0, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread0!\n");
         /* thread 1 */
-        tid = thread_create_kernel_thread("kernel_thread1", &thread1, NULL);
+        tid = thread_create_kernel_thread("kernel_thread1", &thread1, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread1!\n");
         /* thread 2 */
-        tid = thread_create_kernel_thread("kernel_thread2", &thread2, NULL);
+        tid = thread_create_kernel_thread("kernel_thread2", &thread2, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread2!\n");
         /* threads controller */
-        tid = thread_create_kernel_thread("kernel_thread_ctl", &thread_ctl, NULL);
+        tid = thread_create_kernel_thread("kernel_thread_ctl", &thread_ctl, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread_ctl!\n");
     }
 
@@ -206,18 +207,26 @@ void print_kernel_memory_map(void)
     vm_put_aspace(aspace);
 }
 
+/* cyclic wait */
+void wait(long msec)
+{
+    bigtime_t curr = timer_get_time();
+    while((timer_get_time()-curr)<msec)
+        ;
+}
+
+
 /* thread 0 routine */
 int thread0(void *data)
 {
     thread_t *me = thread_get_current_thread();
-    vuint *jiff = &me->jiffies;
 
     kprint("Thread0 (id = %d): started...\n", me->id);
 
     while(1) {
         thread0_ctr++;
-        /* wait till the end of my time slice */
-        while(*jiff != 1); /* HACK */
+        /* wait a little */
+        wait(50);
     }
 }
 
@@ -225,28 +234,26 @@ int thread0(void *data)
 int thread1(void *data)
 {
     thread_t *me = thread_get_current_thread();
-    vuint *jiff = &me->jiffies;
 
     kprint("Thread1 (id = %d): started...\n", me->id);
 
     while(1) {
         thread1_ctr++;
-        /* wait till the end of my time slice */
-        while(*jiff != 1); /* HACK */
+        /* wait a little */
+        wait(50);
     }
 }
 /* thread 2 routine */
 int thread2(void *data)
 {
     thread_t *me = thread_get_current_thread();
-    vuint *jiff = &me->jiffies;
 
     kprint("Thread2 (id = %d): started...\n", me->id);
 
     while(1) {
         thread2_ctr++;
-        /* wait till the end of my time slice */
-        while(*jiff != 1); /* HACK */
+        /* wait a little */
+        wait(50);
     }
 }
 
@@ -254,7 +261,6 @@ int thread2(void *data)
 int thread_ctl(void *data)
 {
     thread_t *me = thread_get_current_thread();
-    vuint *jiff = &me->jiffies;
 
     kprint("Threads controller (id = %d): started...\n", me->id);
     while(1) {
@@ -263,7 +269,7 @@ int thread_ctl(void *data)
             kprint("Threads controller message: ctr0 = %u  ctr1 = %u  ctr2 = %u\n",
                 thread0_ctr, thread1_ctr, thread2_ctr);
         }
-        /* wait for next thread */
-        while(*jiff != 1); /* HACK */
+        /* pass control to next thread */
+        thread_yield();
     }
 }

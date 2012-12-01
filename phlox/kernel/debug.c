@@ -139,7 +139,7 @@ void init_console_writer(void)
 
     /* create console output thread */
     tid = thread_create_kernel_thread("kernel_console_writer",
-                                      &console_writer, NULL);
+                                      &console_writer, NULL, false);
     if(tid == INVALID_THREADID)
         panic("\nFailed to create console writer thread!\n");
 }

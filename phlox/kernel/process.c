@@ -275,6 +275,9 @@ void proc_attach_thread(process_t *proc, thread_t *thread)
 {
     unsigned long irqs_state;
 
+    ASSERT_MSG(thread->lock != 0,
+        "proc_attach_thread(): thread was not locked before!");
+
     /* acquire lock before working with process data */
     irqs_state = spin_lock_irqsave(&proc->lock);
 
@@ -289,6 +292,9 @@ void proc_attach_thread(process_t *proc, thread_t *thread)
 void proc_detach_thread(process_t *proc, thread_t *thread)
 {
     unsigned long irqs_state;
+
+    ASSERT_MSG(thread->lock != 0,
+        "proc_detach_thread(): thread was not locked before!");
 
     /* acquire lock before touching process data */
     irqs_state = spin_lock_irqsave(&proc->lock);

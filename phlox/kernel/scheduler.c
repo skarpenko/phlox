@@ -204,6 +204,16 @@ static void sched_shuffle_runqueue_head(runqueue_t *rq, int tick_type)
         /* point to head thread */
         th = rq_peek_head_thread(rq, prio);
 
+        /* NOTE: Actually it is not needed to skip locked threads,
+         * because the only thing touched here is a dynamic priority
+         * which is managed only by scheduler and must not be touched
+         * outside.
+        */
+        /* try to lock thread */
+        /* if(!thread_trylock_thread(th))
+         *     continue;
+        */
+
         /* calculate bonus for queue */
         queue_bonus = rq->queue[prio].count >> SCHED_QUEUE_BONUS_THRESHOLD2;
 
@@ -224,6 +234,11 @@ static void sched_shuffle_runqueue_head(runqueue_t *rq, int tick_type)
             /* put thread back to proper queue */
             rq_put_thread(rq, th);
         }
+
+        /* NOTE: (see above)
+        */
+        /* unlock thread */
+        /* thread_unlock_thread(th); */
     }
 }
 
@@ -388,7 +403,12 @@ void sched_add_thread(thread_t *thread)
     unsigned long irqs_state;
     runqueue_t *rq;
 
-    ASSERT_MSG(thread->state == THREAD_STATE_BIRTH,
+    ASSERT_MSG(thread->lock != 0,
+        "sched_add_thread(): thread was not locked before!");
+
+    ASSERT_MSG(thread->state == THREAD_STATE_BIRTH ||
+               thread->state == THREAD_STATE_WAITING ||
+               thread->state == THREAD_STATE_SUSPENDED,
         "sched_add_thread(): thread in wrong state!");
 
     /* check static priority value */
@@ -445,12 +465,10 @@ int sched_release_cpu(void)
 /* performs last steps of context switch */
 void sched_complete_context_switch(void)
 {
-    thread_t *thread = thread_get_current_thread();
-    /* get runqueue for current thread */
-    runqueue_t *rq = &runqueues[thread->cpu->cpu_num];
+    /* unlock current thread */
+    thread_unlock_thread( thread_get_current_thread() );
 
-    /* unlock runqueue */
-    spin_unlock(&rq->lock);
+    /* enable interrupts */
     local_irqs_enable();
 }
 
@@ -463,16 +481,18 @@ void sched_reschedule(void)
     runqueue_t *rq;
     thread_t *curr_thrd, *next_thrd;
 
-    /* acquire lock for runqueue and start */
-    local_irqs_disable();                       /* disable interrupts */
-    cpu = get_current_processor();              /* current cpu */
-    rq = &runqueues[cpu];                       /* runqueue for this cpu */
-    spin_lock(&rq->lock);                       /* get lock */
+    /* disable interrupts */
+    local_irqs_disable();
 
     /* init some other important variables */
-    curr_thrd = thread_get_current_thread();    /* current thread */
-    next_thrd = NULL;                           /* next thread is unknown at this point */
-    is_idle = (idle_threads[cpu] == curr_thrd); /* is current thread is per cpu idle thread? */
+    cpu = get_current_processor();                  /* current cpu */
+    curr_thrd = thread_get_current_thread_locked(); /* current thread */
+    next_thrd = NULL;                               /* next thread is unknown at this point */
+    is_idle = (idle_threads[cpu] == curr_thrd);     /* is current thread is a per cpu idle thread? */
+
+    /* acquire lock for runqueue and start */
+    rq = &runqueues[cpu];                       /* runqueue for this cpu */
+    spin_lock(&rq->lock);                       /* get lock */
 
     /* adjust current thread */
     curr_thrd->sched_stamp = SCHED_TICKS2MSEC(sched_ticks);  /* put time stamp */
@@ -488,8 +508,9 @@ void sched_reschedule(void)
             /* init jiffies again */
             curr_thrd->jiffies = curr_thrd->ijiffies = SCHED_MSEC2TICKS(quanta);
 
-            /* unlock runqueue and return */
+            /* unlock runqueue, thread and return */
             spin_unlock(&rq->lock);
+            thread_unlock_thread(curr_thrd);
             local_irqs_enable();
             return;
 
@@ -518,6 +539,9 @@ void sched_reschedule(void)
             panic("sched_reschedule(): invalid thread state!");
     }
 
+    /* unlock current thread */
+    thread_unlock_thread(curr_thrd);
+
     /* search priority queues for better thread */
     for(prio=THREAD_NUM_PRIORITY_LEVELS-1; prio>=0; prio--) {
         /* start new iteration if current queue is empty */
@@ -544,6 +568,9 @@ void sched_reschedule(void)
         break;
     }
 
+    /* unlock runqueue */
+    spin_unlock(&rq->lock);
+
     /* if thread was found */
     if(next_thrd != NULL)
         /* init jiffies for new thread */
@@ -551,9 +578,11 @@ void sched_reschedule(void)
     else  /* if no thread found - take idle thread for this cpu */
         next_thrd = idle_threads[cpu];
 
-    /* set thread states and put timestamp */
+    /* lock discovered thread before switching state */
+    thread_lock_thread(next_thrd);
+
+    /* set thread state and put timestamp */
     next_thrd->state = THREAD_STATE_RUNNING;
-    next_thrd->next_state = THREAD_STATE_READY;
     next_thrd->sched_stamp = SCHED_TICKS2MSEC(sched_ticks);
 
     /* switch to next thread */

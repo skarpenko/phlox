@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SPINLOCK_H_
@@ -18,6 +18,11 @@ typedef atomic_t spinlock_t;
  * Set spinlock variable to initial state
 */
 void spin_init(spinlock_t *s);
+
+/*
+ * Set spinlock variable initially locked
+*/
+void spin_init_locked(spinlock_t *s);
 
 /*
  * Acquire lock

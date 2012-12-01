@@ -1,13 +1,19 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/processor.h>
 #include <phlox/spinlock.h>
 
+
 void spin_init(spinlock_t *s)
 {
     atomic_set(s, SPIN_UNLOCKED);
+}
+
+void spin_init_locked(spinlock_t *s)
+{
+    atomic_set(s, SPIN_LOCKED);
 }
 
 void spin_lock(spinlock_t *s)

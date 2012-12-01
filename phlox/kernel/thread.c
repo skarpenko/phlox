@@ -225,6 +225,7 @@ static thread_t *create_thread_struct(void)
     thread->in_kernel = true; /* initially thread is always executed
                                * at kernel side
                                */
+    spin_init_locked(&thread->lock); /* thread structure initially locked */
 
     return thread;
 }
@@ -248,6 +249,11 @@ static void deinit_thread_struct(thread_t *thread)
     thread->user_time   = 0;
     thread->entry       = 0;
     thread->data        = NULL;
+
+    /* set lock into locked state, so... on reuse the structure
+     * will be initially locked.
+     */
+    spin_init_locked(&thread->lock);
 
     /* TODO: deinit other fields */
 }
@@ -529,6 +535,9 @@ status_t thread_continue_as_idle(kernel_args_t *kargs, uint curr_cpu)
     /* add to scheduling */
     sched_add_idle_thread(thread, curr_cpu);
 
+    /* unlock thread struct */
+    thread_unlock_thread(thread);
+
     return NO_ERROR; /* all fine */
 
     /* error occurs */
@@ -575,6 +584,23 @@ thread_t *thread_get_thread_struct(thread_id tid)
     return thread;
 }
 
+/* get struct for specified thread with lock acquired */
+thread_t *thread_get_thread_struct_locked(thread_id tid)
+{
+    thread_t *thread = thread_get_thread_struct(tid);
+    if(thread)
+        thread_lock_thread(thread);
+    return thread;
+}
+
+/* get current thread struct with lock acquired */
+thread_t *thread_get_current_thread_locked(void)
+{
+    thread_t *thread = thread_get_current_thread();
+    thread_lock_thread(thread);
+    return thread;
+}
+
 /* returns current thread id */
 thread_id thread_get_current_thread_id(void)
 {
@@ -594,7 +620,8 @@ bool thread_is_kernel_thread(void)
 }
 
 /* create new kernel-side thread of execution */
-thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data), void *data)
+thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
+    void *data, bool suspended)
 {
     char tmp_name[SYS_MAX_OS_NAME_LEN];
     status_t err;
@@ -642,8 +669,18 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     /* attach to kernel process */
     proc_attach_thread(thread->process, thread);
 
-    /* add to scheduling scheme */
-    sched_add_thread(thread);
+    /* add to scheduling scheme if creating in
+     * not suspended state initially, or set proper
+     * state and skip adding to scheduling.
+     */
+    if(suspended) {
+        thread->state = THREAD_STATE_SUSPENDED;
+        thread->next_state = THREAD_STATE_READY;
+    } else
+       sched_add_thread(thread);
+
+    /* unlock thread struct */
+    thread_unlock_thread(thread);
 
     /* return new thread id to caller */
     return thread->id;
@@ -663,7 +700,7 @@ exit_on_error:
 /* transfer control to another thread */
 void thread_yield(void)
 {
-    /* do reschedule for stop current thread
+    /* perform rescheduling, stop current thread
      * and select new one for execution.
      */
     sched_reschedule();
@@ -700,27 +737,89 @@ void thread_exit(int exitcode)
      *   4. Reschedule
     */
 
-    /* detach thread from process */
-    proc_detach_thread(process, thread);
-
     /* disable irqs on this cpu */
     local_irqs_disable();
 
+    /* lock thread before */
+    thread_lock_thread(thread);
+
+    /* detach thread from process */
+    proc_detach_thread(process, thread);
+    /* move to death list */
     move_thread_to_list(thread, DEATH_THREADS_LIST);
 
     /* set next state for thread and reschedule */
     thread->next_state = THREAD_STATE_DEATH;
+
+    /* unlock and call reschedule */
+    thread_unlock_thread(thread);
     sched_reschedule();
+    /* NOTE: interrupts will be enabled during rescheduling */
+}
+
+/* suspend currently running thread */
+status_t thread_suspend_current(void)
+{
+    thread_t *thread;
+
+    /* disable interrupts and select current thread */
+    local_irqs_disable();
+    thread = thread_get_current_thread_locked();
+
+    /* set next state as suspended */
+    thread->next_state = THREAD_STATE_SUSPENDED;
+
+    /* unlock thread and reschedule */
+    thread_unlock_thread(thread);
+    sched_reschedule();
+    /* NOTE: interrupts will be reenabled during rescheduling */
 }
 
 /* suspend specified thread */
 status_t thread_suspend(thread_id tid)
 {
+    /* get thread data */
+    thread_t *thread = thread_get_thread_struct(tid);
+    if(thread == NULL)
+        return ERR_MT_INVALID_HANDLE;
+
+    /* disable interrupts on this cpu and lock thread */
+    local_irqs_disable();
+    thread_lock_thread(thread);
+
+    /* change next state for thread only if it is running or
+     * ready to run at that time.
+     */
+    if(thread->state == THREAD_STATE_READY ||
+       thread->state == THREAD_STATE_RUNNING)
+          thread->next_state = THREAD_STATE_SUSPENDED;
+
+    /* unlock thread and enable interrupts */
+    thread_unlock_thread(thread);
+    local_irqs_enable();
+
     return NO_ERROR;
 }
 
 /* resume specified thread */
 status_t thread_resume(thread_id tid)
 {
+    /* get thread data */
+    thread_t *thread = thread_get_thread_struct(tid);
+    if(thread == NULL)
+        return ERR_MT_INVALID_HANDLE;
+
+    /* disable interrupts on this cpu and lock thread */
+    local_irqs_disable();
+    thread_lock_thread(thread);
+
+    /* wake up only suspended threads */
+    if(thread->state == THREAD_STATE_SUSPENDED)
+        sched_add_thread(thread);
+
+    /* unlock thread and enable interrupts again */
+    thread_unlock_thread(thread);
+    local_irqs_enable();
+
     return NO_ERROR;
 }

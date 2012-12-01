@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_TYPES_H_
@@ -53,6 +53,8 @@ typedef struct thread {
     thread_id        id;                 /* Thread id */
     char             *name;              /* Thread name (can be NULL) */
     struct process   *process;           /* Thread owner process */
+    /* Self-preservation */
+    spinlock_t       lock;               /* Lock for rd/wr dynamic fields */
     /* Processor */
     processor_t      *cpu;               /* CPU on which thread is executed */
     /* Kernel-side stack data */

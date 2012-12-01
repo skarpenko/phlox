@@ -104,18 +104,6 @@ void sched_remove_thread(thread_t *thread);
 void sched_new_thread_started(thread_t *thread);
 
 /*
- * Capture cpu by current thread. Thread cannot be rescheduled.
- * Returns current value of preemt_count for thread.
-*/
-int sched_capture_cpu(void);
-
-/*
- * Release cpu captured by current thread.
- * Returns current value of preemt_count for thread.
-*/
-int sched_release_cpu(void);
-
-/*
  * Create kernel process.
  * Called only once during system init stage.
 */

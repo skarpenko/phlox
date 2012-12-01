@@ -11,6 +11,7 @@
 #include <phlox/avl_tree.h>
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
+#include <phlox/thread.h>
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
@@ -474,8 +475,40 @@ aspace_id vm_get_kernel_aspace_id(void)
     return kernel_aspace->id;
 }
 
-/* TODO: vm_address_space_t *vm_get_current_user_aspace(void) */
-/* TODO: aspace_id vm_get_current_user_aspace_id(void) */
+/* returns current user address space */
+vm_address_space_t *vm_get_current_user_aspace(void)
+{
+    thread_t *th;
+
+    /* kernel threads operates in kernel address space and
+     * owned by kernel process there is no user address space
+     * exists in this case.
+     */
+    if(thread_is_kernel_thread())
+        return NULL;
+
+    /* take current thread */
+    th = thread_get_current_thread();
+
+    /* locate and return address space to caller */
+    return vm_get_aspace_by_id(th->process->aid);
+}
+
+/* returns current user address space id */
+aspace_id vm_get_current_user_aspace_id(void)
+{
+    thread_t *th;
+
+    /* no user address space for kernel threads */
+    if(thread_is_kernel_thread())
+        return VM_INVALID_ASPACEID;
+
+    /* take current thread... */
+    th = thread_get_current_thread();
+
+    /* ... and return address space id stored inside process structure */
+    return th->process->aid;
+}
 
 /* returns address space by its id */
 vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)

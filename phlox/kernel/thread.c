@@ -479,6 +479,18 @@ thread_id thread_get_current_thread_id(void)
     return thread_get_current_thread()->id;
 }
 
+/* check that current thread is a kernel thread */
+bool thread_is_kernel_thread(void)
+{
+    thread_t *th = thread_get_current_thread(); /* get current thread */
+
+    /* compare process ids */
+    if (th->process->id == proc_get_kernel_process_id())
+        return true;
+    else
+        return false;
+}
+
 /* create new kernel-side thread of execution */
 thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data), void *data)
 {

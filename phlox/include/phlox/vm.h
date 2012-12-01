@@ -87,6 +87,18 @@ vm_address_space_t *vm_get_kernel_aspace(void);
 aspace_id vm_get_kernel_aspace_id(void);
 
 /*
+ * Returns current user address space.
+ * If called inside kernel thread returns NULL.
+*/
+vm_address_space_t *vm_get_current_user_aspace(void);
+
+/*
+ * Returns current user address space id.
+ * If called inside kernel thread returns VM_INVALID_ASPACEID.
+*/
+aspace_id vm_get_current_user_aspace_id(void);
+
+/*
  * Get address space by its id.
  * Returns address space or NULL if no address space
  * found with given id.

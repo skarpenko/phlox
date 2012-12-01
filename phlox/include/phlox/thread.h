@@ -33,6 +33,11 @@ thread_t *thread_get_current_thread(void);
 thread_id thread_get_current_thread_id(void);
 
 /*
+ * Returns TRUE if current thread is a kernel thread
+*/
+bool thread_is_kernel_thread(void);
+
+/*
  * Create new kernel-side thread of execution.
  * Returns new thread id or INVALID_THREADID on error.
  *

@@ -23,5 +23,17 @@ bool scheduler_timer(void);
 */
 void sched_reschedule(void);
 
+/*
+ * Capture cpu by current thread. Thread cannot be rescheduled.
+ * Returns current value of preemt_count for thread.
+*/
+int sched_capture_cpu(void);
+
+/*
+ * Release cpu captured by current thread.
+ * Returns current value of preemt_count for thread.
+*/
+int sched_release_cpu(void);
+
 
 #endif

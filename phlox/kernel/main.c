@@ -14,6 +14,7 @@
 #include <phlox/timer.h>
 #include <phlox/kargs.h>
 #include <phlox/vm.h>
+#include <phlox/heap.h>
 #include <phlox/thread.h>
 #include <phlox/klog.h>
 #include <phlox/debug.h>
@@ -108,6 +109,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
      * initialization goes only on bootstrap processor, others - waiting.
     */
     if(num_cpu==0) {
+        /* init heap */
+        err = heap_init_postthread(&globalKargs);
+        if(err != NO_ERROR)
+            panic("Heap post-threading init failed!\n");
+
         /* init timer module */
         err = timer_init_after_threading(&globalKargs);
         if(err != NO_ERROR)

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Copyright 2001, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -16,10 +16,10 @@
 #include <sys/debug.h>
 #include <string.h>
 #include <arch/cpu.h>
-#include <phlox/mutex.h>
+#include <phlox/errors.h>
+#include <phlox/simple_lock.h>
 #include <phlox/heap.h>
 
-#warning "TODO: Mutual exclusion is not completed here"
 
 /*** Debug flags ***/
 #define PARANOID_KFREE 1
@@ -99,13 +99,27 @@ static struct heap_bin bins[] = {
 };
 
 static const int bin_count = sizeof(bins) / sizeof(struct heap_bin);
-static mutex_t heap_lock;
+static simple_lock_t heap_lock;
+static bool threading = false;
+
+#define HEAP_LOCK(irq_state) \
+    if(threading) \
+        simple_lock(&heap_lock); \
+    else \
+        irq_state = spin_lock_irqsave(&heap_lock)
+        
+
+#define HEAP_UNLOCK(irq_state) \
+    if(threading) \
+        simple_unlock(&heap_lock); \
+    else \
+        spin_unlock_irqrstor(&heap_lock, irq_state)
 
 
 /* called from vm_init. The heap should already be mapped in at this point,
  * we just do a little housekeeping to set up the data structure.
 */
-uint32 heap_init(addr_t new_heap_base, size_t new_heap_size)
+status_t heap_init(addr_t new_heap_base, size_t new_heap_size)
 {
     const uint32 page_entries = PAGE_SIZE / sizeof(struct heap_page);
     /* set some global pointers */
@@ -114,7 +128,7 @@ uint32 heap_init(addr_t new_heap_base, size_t new_heap_size)
     /** heap_size = new_heap_size - PAGE_SIZE;
     *** use this for heaps less or equal 8Mb in size.
     ***/
-    heap_base = (uint32)heap_alloc_table + PAGE_ALIGN(heap_size / page_entries);
+    heap_base = (addr_t)heap_alloc_table + PAGE_ALIGN(heap_size / page_entries);
     heap_base_ptr = heap_base;
 #ifdef MAKE_NOISE
     kprint("heap_alloc_table = %p, heap_base = 0x%lx, heap_size = 0x%lx\n", heap_alloc_table, heap_base, heap_size);
@@ -123,28 +137,32 @@ uint32 heap_init(addr_t new_heap_base, size_t new_heap_size)
     /* zero out the heap alloc table at the base of the heap */
     memset((void *)heap_alloc_table, 0, (heap_size / PAGE_SIZE) * sizeof(struct heap_page));
 
-    /* pre-init the mutex to at least fall through any semaphore calls */
-    heap_lock.sem = -1;
-    heap_lock.holder = -1;
+    /* init simple lock */
+    simple_lock_init(&heap_lock);
 
-    return 0;
+    return NO_ERROR;
 }
 
-uint32 heap_init_postsem(kernel_args_t *ka)
+status_t heap_init_postthread(kernel_args_t *ka)
 {
-    if(mutex_init(&heap_lock, "heap_mutex")) {
-        panic("error creating heap mutex\n");
-    }
+    threading = true; /* threading is functional */
 
-    return 0;
+    return NO_ERROR;
+}
+
+status_t heap_init_postsem(kernel_args_t *ka)
+{
+    /* nothing to do for now */
+
+    return NO_ERROR;
 }
 
 static char *raw_alloc(uint32 size, int bin_index)
 {
-    uint32 new_heap_ptr;
+    addr_t new_heap_ptr;
     char *retval;
     struct heap_page *page;
-    uint32 addr;
+    addr_t addr;
 
     /* compute new heap size */
     new_heap_ptr = heap_base_ptr + PAGE_ALIGN(size);
@@ -175,15 +193,16 @@ void *kmalloc(size_t size)
 {
     void *address = NULL;
     int bin_index;
-    uint32 i;
     struct heap_page *page;
+    unsigned long irq_state = 0;
+    uint32 i;
 
 #if MAKE_NOIZE
     kprint("kmalloc: asked to allocate size %d\n", size);
 #endif
 
     /* lock */
-    mutex_lock(&heap_lock);
+    HEAP_LOCK(irq_state);
 
     /* find a bin of suitable size */
     for (bin_index = 0; bin_index < bin_count; bin_index++)
@@ -201,7 +220,7 @@ void *kmalloc(size_t size)
         /* allocate space */
         if (bins[bin_index].free_list != NULL) {
             address = bins[bin_index].free_list;
-            bins[bin_index].free_list = (void *)(*(uint32 *)bins[bin_index].free_list);
+            bins[bin_index].free_list = (void *)(*(addr_t *)bins[bin_index].free_list);
             bins[bin_index].free_count--;
         } else {
             if (bins[bin_index].raw_count == 0) {
@@ -215,7 +234,7 @@ void *kmalloc(size_t size)
         }
 
         bins[bin_index].alloc_count++;
-        page = &heap_alloc_table[((uint32)address - heap_base) / PAGE_SIZE];
+        page = &heap_alloc_table[((addr_t)address - heap_base) / PAGE_SIZE];
         page[0].free_count--;
 #if MAKE_NOIZE
         kprint("kmalloc0: page 0x%x: bin_index %d, free_count %d\n", page, page->bin_index, page->free_count);
@@ -230,7 +249,7 @@ void *kmalloc(size_t size)
 
 out:
     /* unlock */
-    mutex_unlock(&heap_lock);
+    HEAP_UNLOCK(irq_state);
 
 #if MAKE_NOIZE
     kprint("kmalloc: asked to allocate size %d, returning ptr = %p\n", size, address);
@@ -242,6 +261,7 @@ void kfree(void *address)
 {
     struct heap_page *page;
     struct heap_bin *bin;
+    unsigned long irq_state = 0;
     uint32 i;
 
     /* ignore NULL pointers */
@@ -253,14 +273,14 @@ void kfree(void *address)
         panic("kfree: asked to free invalid address %p\n", address);
 
     /* lock */
-    mutex_lock(&heap_lock);
+    HEAP_LOCK(irq_state);
 
 #if MAKE_NOIZE
     kprint("kfree: asked to free at ptr = %p\n", address);
 #endif
 
     /* get page */
-    page = &heap_alloc_table[((unsigned)address - heap_base) / PAGE_SIZE];
+    page = &heap_alloc_table[((addr_t)address - heap_base) / PAGE_SIZE];
 
 #if MAKE_NOIZE
     kprint("kfree: page 0x%x: bin_index %d, free_count %d\n", page, page->bin_index, page->free_count);
@@ -284,9 +304,9 @@ void kfree(void *address)
 #if PARANOID_KFREE
     /* walk the free list on this bin to make sure this address doesn't exist already */
     {
-        uint32 *temp;
-        for(temp = bin->free_list; temp != NULL; temp = (uint32 *)*temp) {
-            if(temp == (uint32 *)address) {
+        addr_t *temp;
+        for(temp = bin->free_list; temp != NULL; temp = (addr_t *)*temp) {
+            if(temp == (addr_t *)address) {
                 panic("kfree: address %p already exists in bin free list\n", address);
             }
         }
@@ -297,13 +317,13 @@ void kfree(void *address)
     memset(address, 0x99, bin->element_size);
 #endif
 
-    *(uint32 *)address = (uint32)bin->free_list;
+    *(addr_t *)address = (addr_t)bin->free_list;
     bin->free_list = address;
     bin->alloc_count--;
     bin->free_count++;
 
     /* unlock */
-    mutex_unlock(&heap_lock);
+    HEAP_UNLOCK(irq_state);
 }
 
 void kfree_and_null(void **address)

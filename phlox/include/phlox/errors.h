@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ERRORS_H
@@ -42,6 +42,17 @@ enum PhloxMultithreadingErrors {
     ERR_MT_INVALID_HANDLE,
     ERR_MT_INVALID_STATE,
     ERR_MT_GENERAL_LIMIT
+};
+
+/* Semaphores errors */
+enum PhloxSemaphoresErrors {
+    ERR_SEM_GENERAL_BASE = 0x83000000,
+    ERR_SEM_GENERAL = ERR_SEM_GENERAL_BASE,
+    ERR_SEM_INVALID_HANDLE,
+    ERR_SEM_INVALID_VALUE,
+    ERR_SEM_DELETED,
+    ERR_SEM_TIMEOUT,
+    ERR_SEM_GENERAL_LIMIT
 };
 
 #endif

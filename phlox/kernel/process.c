@@ -168,6 +168,7 @@ static process_t *create_process_common(const char *name, const char *args)
     /* init lists */
     xlist_init(&proc->threads);
     xlist_init(&proc->children);
+    xlist_init(&proc->semaphores);
 
     /* assign process id */
     proc->id = get_next_process_id();

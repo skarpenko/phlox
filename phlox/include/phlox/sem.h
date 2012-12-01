@@ -20,4 +20,51 @@
 status_t semaphores_init(kernel_args_t *kargs);
 
 
+/*
+ * Create semaphore
+ * Params:
+ *   name       - optional semaphore name;
+ *   max_count  - max. value of the semaphore;
+ *   init_count - initial value;
+ *   owner      - owner process id.
+*/
+sem_id sem_create_ex(const char *name, uint max_count, uint init_count, proc_id owner);
+sem_id sem_create(const char *name, uint max_count, uint init_count);
+
+/*
+ * Delete semaphore
+*/
+status_t sem_delete(sem_id id);
+
+/*
+ * Count semaphore down
+ * Params:
+ *   id           - semaphore id;
+ *   count        - value to count down;
+ *   timeout_msec - wait timeout in msec;
+ *   flags        - flags (see below).
+*/
+status_t sem_down_ex(sem_id id, uint count, uint timeout_msec, flags_t flags);
+status_t sem_down(sem_id id, uint count);
+
+/* Semaphore flags */
+enum {
+    SEMF_NOFLAGS = 0x0,  /* no flags */
+    SEMF_TIMEOUT = 0x1   /* Use timeout param. */
+};
+
+/*
+ * Count semaphore up
+ * Params:
+ *   id    - semaphore id;
+ *   count - value to count up.
+*/
+status_t sem_up(sem_id id, uint count);
+
+/*
+ * Find semaphore by name
+*/
+sem_id sem_get_by_name(const char *name);
+
+
 #endif

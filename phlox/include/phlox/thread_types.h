@@ -147,6 +147,7 @@ typedef struct process {
     xlist_t             threads;          /* Threads associated with process */
     xlist_t             children;         /* List of child processes */
     list_elem_t         sibling_node;     /* Node in parent process */
+    xlist_t             semaphores;       /* Owned semaphores list */
     /* Node of global processes list and tree */
     list_elem_t         procs_list_node;  /* Processes list node */
     avl_tree_node_t     procs_tree_node;  /* Processes tree node */

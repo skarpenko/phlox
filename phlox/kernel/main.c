@@ -295,9 +295,9 @@ int thread2(void *data)
 /* threads controller routine */
 int thread_ctl(void *data)
 {
-    thread_t *me = thread_get_current_thread();
+    thread_id me = thread_get_current_thread_id();
 
-    kprint("Threads controller (id = %d): started...\n", me->id);
+    kprint("Threads controller (id = %d): started...\n", me);
     while(1) {
         thread_ctl_ctr++;
         if( !(thread_ctl_ctr % 10) ) {

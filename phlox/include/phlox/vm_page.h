@@ -8,36 +8,7 @@
 #include <phlox/ktypes.h>
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
-#include <phlox/list.h>
-
-/* Page of memory */
-typedef struct {
-    /* pages list node */
-    list_elem_t list_node;
-    /* physical number of the page */
-    uint ppn;
-    /* references count to page */
-    uint ref_count;
-    /* page type */
-    uint type  : 2;
-    /* page state */
-    uint state : 4;
-} vm_page_t;
-
-/* Page types */
-enum {
-    VM_PAGE_TYPE_PHYSICAL = 0 /* Physical page */
-};
-
-/* Page states */
-enum {
-    VM_PAGE_STATE_ACTIVE = 0,  /* Active page */
-    VM_PAGE_STATE_FREE,        /* Free page */
-    VM_PAGE_STATE_CLEAR,       /* Clear page */
-    VM_PAGE_STATE_WIRED,       /* Wired page */
-    VM_PAGE_STATE_BUSY,        /* Busy page */
-    VM_PAGE_STATE_UNUSED       /* Unused or reserved page */
-};
+#include <phlox/vm_types.h>
 
 
 /*
@@ -101,5 +72,6 @@ size_t vm_page_pages_count(void);
  * Returns free pages count
 */
 size_t vm_page_free_pages_count(void);
+
 
 #endif

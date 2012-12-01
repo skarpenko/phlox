@@ -42,9 +42,9 @@
 
 #ifndef __cplusplus
 
-#define false 0
-#define true 1
 typedef int bool;
+#define false ((bool)0)
+#define true  ((bool)(-1))
 
 #endif
 
@@ -102,38 +102,48 @@ typedef signed int          ssize_t;
 #error "Don't know what size_t should be (int or long)!"
 #endif
 
-typedef _phlox_size_t size_t;
+typedef _phlox_size_t            size_t;
 
-typedef int64               off_t;
+typedef int64                    off_t;
 
-typedef unsigned char       u_char;
-typedef unsigned short      u_short;
-typedef unsigned int        u_int;
-typedef unsigned long       u_long;
+typedef unsigned char            u_char;
+typedef unsigned short           u_short;
+typedef unsigned int             u_int;
+typedef unsigned long            u_long;
 
-typedef unsigned char       uchar;
-typedef unsigned short      ushort;
-typedef unsigned int        uint;
-typedef unsigned long       ulong;
+typedef unsigned char            uchar;
+typedef unsigned short           ushort;
+typedef unsigned int             uint;
+typedef unsigned long            ulong;
 
-typedef volatile unsigned char       vuchar;
-typedef volatile unsigned short      vushort;
-typedef volatile unsigned int        vuint;
-typedef volatile unsigned long       vulong;
+typedef volatile char            vchar;
+typedef volatile short           vshort;
+typedef volatile int             vint;
+typedef volatile long            vlong;
 
-typedef unsigned char      uchar_t;
-typedef unsigned short     ushort_t;
-typedef unsigned int       uint_t;
-typedef unsigned long      ulong_t;
+typedef volatile unsigned char   vuchar;
+typedef volatile unsigned short  vushort;
+typedef volatile unsigned int    vuint;
+typedef volatile unsigned long   vulong;
 
-typedef volatile unsigned char       vuchar_t;
-typedef volatile unsigned short      vushort_t;
-typedef volatile unsigned int        vuint_t;
-typedef volatile unsigned long       vulong_t;
+typedef unsigned char            uchar_t;
+typedef unsigned short           ushort_t;
+typedef unsigned int             uint_t;
+typedef unsigned long            ulong_t;
 
-typedef int             intptr_t;
-typedef unsigned int    uintptr_t;
-typedef intptr_t        ptrdiff_t;
+typedef volatile char            vchar_t;
+typedef volatile short           vshort_t;
+typedef volatile int             vint_t;
+typedef volatile long            vlong_t;
+
+typedef volatile unsigned char   vuchar_t;
+typedef volatile unsigned short  vushort_t;
+typedef volatile unsigned int    vuint_t;
+typedef volatile unsigned long   vulong_t;
+
+typedef int                      intptr_t;
+typedef unsigned int             uintptr_t;
+typedef intptr_t                 ptrdiff_t;
 
 
 /* system types */
@@ -141,8 +151,8 @@ typedef uint32 result_t;
 typedef uint32 status_t;
 typedef int64 bigtime_t;
 typedef uint64 vnode_id;
-typedef int region_id;      /* vm region id     */
-typedef int aspace_id;      /* address space id */
+typedef uint object_id;     /* vm object id     */
+typedef uint aspace_id;     /* address space id */
 typedef int thread_id;      /* thread id        */
 typedef int proc_id;        /* process id       */
 typedef int pgrp_id;        /* process group id */

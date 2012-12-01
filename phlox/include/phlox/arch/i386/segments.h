@@ -22,5 +22,13 @@
 
 /* Per CPU TSS */
 #define CPU0_TSS          0x30
+#define CPU1_TSS          0x38
+#define CPU2_TSS          0x40
+#define CPU3_TSS          0x48
+#define CPU4_TSS          0x50
+#define CPU5_TSS          0x58
+#define CPU6_TSS          0x60
+#define CPU7_TSS          0x68
+/* and so on... */
 
 #endif

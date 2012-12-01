@@ -149,6 +149,7 @@ typedef intptr_t                 ptrdiff_t;
 /* system types */
 typedef uint32 result_t;
 typedef uint32 status_t;
+typedef uint32 flags_t;
 typedef int64 bigtime_t;
 typedef uint64 vnode_id;
 typedef uint object_id;     /* vm object id     */

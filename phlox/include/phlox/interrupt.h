@@ -17,32 +17,32 @@
 #define INT_FLAGS_NOFLAGS  0x00000000  /* no flags set */
 
 /* Hardware interrupt handling routine */
-typedef uint32 (hw_int_handler_t)(void *);
+typedef flags_t (hw_int_handler_t)(void *);
 
 /*
  * Interrupt handling initialization routine.
  * Called during kernel startup.
  */
-uint32 interrupt_init(kernel_args_t *kargs);
+status_t interrupt_init(kernel_args_t *kargs);
 
 /*
  * Called during interrupt handling when
  * hardware interrupt occurs.
  * (returns flags collected from handlers)
  */
-uint32 handle_hw_interrupt(uint32 hw_vector);
+result_t handle_hw_interrupt(uint hw_vector);
 
 /*
  * Enable hardware interrupt
  * Returns NO_ERROR on success.
  */
-uint32 hw_interrupt_enable(uint32 hw_int);
+result_t hw_interrupt_enable(uint hw_int);
 
 /*
  * Disable hardware interrupt
  * Returns NO_ERROR on success.
  */
-uint32 hw_interrupt_disable(uint32 hw_int);
+result_t hw_interrupt_disable(uint hw_int);
 
 /*
  * Set hardware interrupt handler
@@ -52,14 +52,14 @@ uint32 hw_interrupt_disable(uint32 hw_int);
  *         data      - additional data passed to handling routine.
  * Returns NO_ERROR on success.
  */
-uint32 set_hw_interrupt_handler(uint32 hw_vector, hw_int_handler_t *handler,
-                                const char *name, void *data);
+result_t set_hw_interrupt_handler(uint hw_vector, hw_int_handler_t *handler,
+                                  const char *name, void *data);
 
 /*
  * Remove hardware interrupt handler
  * Returns NO_ERROR on success.
  */
-uint32 remove_hw_interrupt_handler(uint32 hw_vector, hw_int_handler_t *handler,
-                                   void *data);
+result_t remove_hw_interrupt_handler(uint hw_vector, hw_int_handler_t *handler,
+                                     void *data);
 
 #endif

@@ -10,6 +10,7 @@
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/vm_page.h>
+#include <phlox/vm_private.h>
 #include <phlox/vm.h>
 
 
@@ -156,7 +157,6 @@ error:
 /*** Public routines ***/
 
 /* Module initialization routine */
-status_t vm_objects_init(kernel_args_t *kargs); /* keep silence */
 status_t vm_objects_init(kernel_args_t *kargs)
 {
    /* set initially available object id */

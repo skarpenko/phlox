@@ -10,6 +10,25 @@
 #include <phlox/kargs.h>
 #include <phlox/vm_types.h>
 
+/*******************************************************************
+ * VM INTERNALS. DO NOT USE!
+ *******************************************************************/
+
+
+/*
+ * Address spaces module init
+ */
+status_t vm_address_spaces_init(kernel_args_t *kargs);
+
+/*
+ * Memory objects module init
+ */
+status_t vm_objects_init(kernel_args_t *kargs);
+
+/*
+ * Page fault handler
+ */
+result_t vm_hard_page_fault(addr_t addr, addr_t fault_addr, bool is_write, bool is_exec, bool is_user);
 
 /*
  * Allocate free physical page from kernel args structure.

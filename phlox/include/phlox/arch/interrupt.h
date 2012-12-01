@@ -12,6 +12,6 @@
  * initialization routine.
  * Called during kernel startup.
  */
-uint32 arch_interrupt_init(kernel_args_t *kargs);
+status_t arch_interrupt_init(kernel_args_t *kargs);
 
 #endif

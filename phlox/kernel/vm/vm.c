@@ -11,13 +11,11 @@
 #include <phlox/heap.h>
 
 
-/* External initialization routines */
-status_t vm_address_spaces_init(kernel_args_t *kargs);
-status_t vm_objects_init(kernel_args_t *kargs);
-
-
 /* Global variable with Virtual Memory State */
 vm_stat_t VM_State;
+
+/* software page fault handler */
+static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, bool is_user);
 
 
 /* init virtual memory */
@@ -173,4 +171,22 @@ addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection)
 size_t vm_phys_mem_size(void)
 {
     return VM_State.total_physical_pages * VM_State.physical_page_size;
+}
+
+/* software page fault handler */
+static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, bool is_user)
+{
+    return NO_ERROR;
+}
+
+/* hardware page fault handler. called on page fault exception. */
+result_t vm_hard_page_fault(addr_t addr, addr_t fault_addr, bool is_write, bool is_exec, bool is_user)
+{
+    status_t err;
+
+    err = vm_soft_page_fault(addr, is_write, is_exec, is_user);
+    if(err != NO_ERROR)
+       panic("vm_hard_page_fault(): can't handle!");
+
+    return NO_ERROR;
 }

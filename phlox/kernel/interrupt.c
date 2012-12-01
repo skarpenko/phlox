@@ -31,7 +31,7 @@ struct hw_int_vector_s hw_vectors[HW_INTERRUPTS_NUM];
 
 
 /* init interrupt handling */
-uint32 interrupt_init(kernel_args_t *kargs)
+status_t interrupt_init(kernel_args_t *kargs)
 {
     /* call architecture specific init */
     arch_interrupt_init(kargs);
@@ -43,9 +43,9 @@ uint32 interrupt_init(kernel_args_t *kargs)
 }
 
 /* handle hardware interrupt */
-uint32 handle_hw_interrupt(uint32 hw_vector)
+flags_t handle_hw_interrupt(uint hw_vector)
 {
-    uint32 flags = INT_FLAGS_NOFLAGS;
+    flags_t flags = INT_FLAGS_NOFLAGS;
     struct hw_int_handler_s *h;
 
     /* set lock to avoid SMP effects */
@@ -73,7 +73,7 @@ uint32 handle_hw_interrupt(uint32 hw_vector)
 }
 
 /* enable hardware interrupt */
-uint32 hw_interrupt_enable(uint32 hw_int)
+result_t hw_interrupt_enable(uint hw_int)
 {
     if(hw_int >= HW_INTERRUPTS_NUM)
         return ERR_INVALID_ARGS;
@@ -85,7 +85,7 @@ uint32 hw_interrupt_enable(uint32 hw_int)
 }
 
 /* disable hardware interrupt */
-uint32 hw_interrupt_disable(uint32 hw_int)
+result_t hw_interrupt_disable(uint hw_int)
 {
     if(hw_int >= HW_INTERRUPTS_NUM)
         return ERR_INVALID_ARGS;
@@ -97,12 +97,12 @@ uint32 hw_interrupt_disable(uint32 hw_int)
 }
 
 /* set hardware interrupt handler */
-uint32 set_hw_interrupt_handler(uint32 hw_vector, hw_int_handler_t *handler,
-                                const char *name, void *data)
+result_t set_hw_interrupt_handler(uint hw_vector, hw_int_handler_t *handler,
+                                  const char *name, void *data)
 {
     struct hw_int_handler_s *h = NULL;
     char *hname = NULL;
-    uint32 irqs_state;
+    unsigned long irqs_state;
 
     /* ensure that input correct */
     if(!handler || hw_vector >= HW_INTERRUPTS_NUM)
@@ -138,11 +138,11 @@ uint32 set_hw_interrupt_handler(uint32 hw_vector, hw_int_handler_t *handler,
 }
 
 /* remove hardware interrupt handler */
-uint32 remove_hw_interrupt_handler(uint32 hw_vector, hw_int_handler_t *handler,
-                                   void *data)
+result_t remove_hw_interrupt_handler(uint hw_vector, hw_int_handler_t *handler,
+                                     void *data)
 {
     struct hw_int_handler_s *h, *h_prev = NULL;
-    uint32 irqs_state;
+    unsigned long irqs_state;
 
     /* check inputs */
     if(!handler || hw_vector >= HW_INTERRUPTS_NUM)

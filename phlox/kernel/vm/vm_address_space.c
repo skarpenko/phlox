@@ -175,7 +175,6 @@ error:
 /*** Public routines ***/
 
 /* Module initialization routine */
-status_t vm_address_spaces_init(kernel_args_t *kargs); /* keep silence */
 status_t vm_address_spaces_init(kernel_args_t *kargs)
 {
     /* set initial value */

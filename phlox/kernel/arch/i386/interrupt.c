@@ -10,6 +10,7 @@
 #include <phlox/platform/irq.h>
 #include <phlox/processor.h>
 #include <phlox/kernel.h>
+#include <phlox/vm_private.h>
 #include <phlox/interrupt.h>
 
 
@@ -69,7 +70,7 @@ static void i386_set_task_gate(uint32 n, uint16 tss_seg)
 
 
 /* init interrupt handling */
-uint32 arch_interrupt_init(kernel_args_t *kargs)
+status_t arch_interrupt_init(kernel_args_t *kargs)
 {
     uint32 i;
 
@@ -187,7 +188,12 @@ void i386_handle_interrupt(i386_int_frame_t frame)
          break;
 
         /* Page-Fault Exception */
-        case 14:
+        case 14: {
+            vm_hard_page_fault( read_cr2(), frame.eip,
+                                (frame.err_code & 0x02) != 0,   /* is write ? */
+                                (frame.err_code & 0x10) != 0,   /* is exec ?  */
+                                (frame.err_code & 0x04) != 0 ); /* is user ?  */
+        }
          break;
 
         /** Vector 15 is reserved on IA-32, so...

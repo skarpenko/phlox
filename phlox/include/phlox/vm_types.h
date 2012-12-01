@@ -67,6 +67,7 @@ typedef struct vm_address_space {
     vm_translation_map_t  tmap;          /* Translation map */
     struct vm_memory_map  mmap;          /* Memory map */
     list_elem_t           list_node;     /* Node of address spaces list */
+    avl_tree_node_t       tree_node;     /* Node of address spaces AVL tree */
 } vm_address_space_t;
 
 /* Address space states */
@@ -77,18 +78,19 @@ enum {
 
 /* Memory object */
 typedef struct vm_object {
-    object_id    id;             /* Object ID */
-    spinlock_t   lock;           /* Access lock */
-    char        *name;           /* Name (can be NULL) */
-    size_t       size;           /* Size */
-    int          state;          /* Object state */
-    uint         protect;        /* Protection */
-    uint         flags;          /* Flags */
-    vuint        ref_count;      /* Reference count */
-    xlist_t      upages_list;    /* Universal pages list */
-    avl_tree_t   upages_tree;    /* Universal pages AVL tree */
-    xlist_t      mappings_list;  /* Mappings list */
-    list_elem_t  list_node;      /* Node of objects list */
+    object_id        id;             /* Object ID */
+    spinlock_t       lock;           /* Access lock */
+    char            *name;           /* Name (can be NULL) */
+    size_t           size;           /* Size */
+    int              state;          /* Object state */
+    uint             protect;        /* Protection */
+    uint             flags;          /* Flags */
+    vuint            ref_count;      /* Reference count */
+    xlist_t          upages_list;    /* Universal pages list */
+    avl_tree_t       upages_tree;    /* Universal pages AVL tree */
+    xlist_t          mappings_list;  /* Mappings list */
+    list_elem_t      list_node;      /* Node of objects list */
+    avl_tree_node_t  tree_node;      /* Node of objects AVL tree */
 } vm_object_t;
 
 /* Object states */

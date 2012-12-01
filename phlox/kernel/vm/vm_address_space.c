@@ -24,7 +24,10 @@ static vuint next_aspace_id;
 /* List of address spaces */
 static aspace_list_t aspaces_list;
 
-/* Spinlock for operations on address spaces list */
+/* AVL tree of address spaces for fast find by id */
+static avl_tree_t aspaces_tree;
+
+/* Spinlock for operations on address spaces list and tree */
 static spinlock_t aspaces_lock;
 
 /* Kernel address space */
@@ -32,6 +35,23 @@ static vm_address_space_t *kernel_aspace = NULL;
 
 
 /*** Locally used routines ***/
+
+/* compare routine for address spaces AVL tree */
+static int compare_aspace_id(const void *a1, const void *a2)
+{
+    if( ((vm_address_space_t *)a1)->id > ((vm_address_space_t *)a2)->id )
+        return 1;
+    if( ((vm_address_space_t *)a1)->id < ((vm_address_space_t *)a2)->id )
+        return -1;
+    return 0;
+}
+
+/* compare routine for mappings AVL tree */
+static int compare_mapping(const void *m1, const void *m2)
+{
+    /* TODO: */
+    return 0;
+}
 
 /* returns available address space id */
 static aspace_id get_next_aspace_id(void)
@@ -58,6 +78,10 @@ static void put_aspace_to_list(vm_address_space_t *aspace)
     /* add item */
     xlist_add_last(&aspaces_list, &aspace->list_node);
 
+    /* additionally put it it into tree */
+    if(!avl_tree_add(&aspaces_tree, aspace))
+      panic("put_aspace_to_list(): failed to add aspace into tree!\n");
+
     /* release lock */
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
 }
@@ -71,7 +95,11 @@ static void remove_aspace_from_list(vm_address_space_t *aspace)
     irqs_state = spin_lock_irqsave(&aspaces_lock);
 
     /* remove item */
-    xlist_remove(&aspaces_list, &aspace->list_node);
+    xlist_remove_unsafe(&aspaces_list, &aspace->list_node);
+
+    /* and remove from tree */
+    if(!avl_tree_remove(&aspaces_tree, aspace))
+      panic("remove_aspace_from_list(): failed to remove aspace from tree!\n");
 
     /* release lock */
     spin_unlock_irqrstor(&aspaces_lock, irqs_state);
@@ -109,7 +137,9 @@ static vm_address_space_t *create_aspace_common(const char* name, addr_t base, s
     aspace->mmap.base = base;
     aspace->mmap.size = size;
     xlist_init(&aspace->mmap.mappings_list);
-    /* TODO: avl_tree_create(aspace->mmap.mappings_tree) */
+    avl_tree_create( &aspace->mmap.mappings_tree, compare_mapping,
+                     sizeof(vm_mapping_t),
+                     offsetof(vm_mapping_t, tree_node) );
     aspace->mmap.aspace = aspace;
 
     /* init address space fields */
@@ -146,6 +176,11 @@ status_t vm_address_spaces_init(kernel_args_t *kargs)
 
     /* init address spaces list */
     xlist_init(&aspaces_list);
+
+    /* init address spaces AVL tree */
+    avl_tree_create( &aspaces_tree, compare_aspace_id,
+                     sizeof(vm_address_space_t),
+                     offsetof(vm_address_space_t, tree_node) );
 
     return NO_ERROR;
 }

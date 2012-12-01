@@ -2,8 +2,8 @@
 * Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
-#ifndef _PHLOX_LISTS_H
-#define _PHLOX_LISTS_H
+#ifndef _PHLOX_LIST_H
+#define _PHLOX_LIST_H
 
 #include <phlox/types.h>
 #include <phlox/kernel.h>
@@ -82,6 +82,18 @@ list_elem_t *xlist_peek_first(xlist_t *list);
 
 /* peek last element of the list */
 list_elem_t *xlist_peek_last(xlist_t *list);
+
+/* peek next element */
+static inline list_elem_t *xlist_peek_next(list_elem_t *item)
+{
+    return item->next;
+}
+
+/* peek previous element */
+static inline list_elem_t *xlist_peek_prev(list_elem_t *item)
+{
+    return item->prev;
+}
 
 /* dump all elements into array */
 uint xlist_dump_elements(xlist_t *list, list_elem_t **elements);

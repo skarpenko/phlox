@@ -112,3 +112,8 @@ uint get_current_processor(void)
 #  error get_current_processor(): smp not supported!
 #endif
 }
+
+processor_t *get_current_processor_struct(void)
+{
+    return &ProcessorSet.processors[get_current_processor()];
+}

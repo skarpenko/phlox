@@ -32,5 +32,14 @@ thread_t *thread_get_current_thread(void);
 */
 thread_id thread_get_current_thread_id(void);
 
+/*
+ * Create new kernel-side thread of execution.
+ * Returns new thread id or INVALID_THREADID on error.
+ *
+ * Params:
+ *  name - thread name; func - thread routine; data - optional data.
+*/
+thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data), void *data);
+
 
 #endif

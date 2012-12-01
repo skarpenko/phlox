@@ -25,6 +25,9 @@ kernel_args_t globalKargs;
 
 void print_kernel_memory_map(void); /* for DEBUG only */
 
+/* for threading DEBUG */
+int thread0(void *data);
+
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 {
@@ -116,6 +119,17 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
         thread_get_current_thread()->id,
         thread_get_current_thread()->name);
 
+    /* creating new thread */
+    {
+        thread_id tid;
+        tid = thread_create_kernel_thread("kernel_thread0", &thread0, NULL);
+        if(tid == INVALID_THREADID)
+            kprint("Failed to create new thread!!!");
+        else
+            kprint("New thread with id=%d successfully created!", tid);
+    }
+
+
     panic("kernel test complete. :)\n");
 }
 
@@ -145,4 +159,9 @@ void print_kernel_memory_map(void)
     }
 
     vm_put_aspace(aspace);
+}
+
+int thread0(void *data)
+{
+   panic("\nthread0: routine\n");
 }

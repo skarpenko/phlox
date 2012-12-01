@@ -222,6 +222,91 @@ static thread_t *get_thread_struct(void)
     return thread;
 }
 
+/* deinit less important fields of thread struct for future reuse */
+static void deinit_thread_struct(thread_t *thread)
+{
+    /* clear thread name */
+    if(thread->name != NULL)
+        kfree_and_null((void **)&thread->name);
+
+    /* put owning process */
+    if(thread->process) {
+        proc_put_process(thread->process);
+        thread->process = NULL;
+    }
+
+    /* reset other fields */
+    thread->cpu         = NULL;
+    thread->kernel_time = 0;
+    thread->user_time   = 0;
+    thread->entry       = 0;
+    thread->data        = NULL;
+
+    /* TODO: deinit other fields */
+}
+
+/* stub function for kernel-side threads */
+static int stub_for_kernel_thread(void)
+{
+    int (*func)(void *data);
+    thread_t *thread;
+    int retcode;
+
+    /* get current thread */
+    thread = thread_get_current_thread();
+
+    /* call entry and pass user-data into it */
+    func = (void *)thread->entry;
+    retcode = func(thread->data);
+
+    /* TODO: exit thread stages */
+
+    return 0;
+}
+
+/* stub function for user-side threads */
+static int stub_for_user_thread(void)
+{
+/* TODO: */
+    return 0;
+}
+
+/* create new kernel stack for thread */
+static status_t create_thread_kstack_area(thread_t *thread, const char *name)
+{
+    status_t err;
+
+    /* create memory object */
+    thread->kstack_id = vm_create_object(name, THREAD_KSTACK_SIZE,
+                                         VM_OBJECT_PROTECT_ALL);
+    if(thread->kstack_id == VM_INVALID_OBJECTID)
+        return ERR_VM_GENERAL;
+
+    /* map created object into kernel address space */
+    err = vm_map_object(vm_get_kernel_aspace_id(), thread->kstack_id,
+                        VM_PROT_KERNEL_ALL, &thread->kstack_base);
+    if(err != NO_ERROR)
+        goto exit_on_error;
+
+    /* compute stack top address */
+    thread->kstack_top = thread->kstack_base + THREAD_KSTACK_SIZE - 1;
+
+    /* simulate page fault to actually map all stack pages */
+    err = vm_simulate_pf(thread->kstack_base, thread->kstack_top);
+    if(err != NO_ERROR)
+        goto exit_on_error;
+
+    /* return last success */
+    return err;
+
+/* error state */
+exit_on_error:
+   /* TODO: Unmap (if mapped) and delete created object here ? */
+
+   /* return last error */
+   return err;
+}
+
 
 /*** Public routines ***/
 
@@ -345,6 +430,9 @@ status_t thread_continue_as_idle(kernel_args_t *kargs, uint curr_cpu)
     /* init arch-specific parts */
     arch_thread_init_struct(thread);
 
+    /* attach to kernel process */
+    proc_attach_thread(thread->process, thread);
+
     /* add to scheduling */
     sched_add_idle_thread(thread, curr_cpu);
 
@@ -352,6 +440,9 @@ status_t thread_continue_as_idle(kernel_args_t *kargs, uint curr_cpu)
 
     /* error occurs */
 exit_on_error:
+    /* deinit thread structure for reuse in future */
+    deinit_thread_struct(thread);
+
     /* move to deads */
     move_thread_to_list(thread, DEAD_THREADS_LIST);
 
@@ -374,4 +465,58 @@ thread_t *thread_get_current_thread(void)
 thread_id thread_get_current_thread_id(void)
 {
     return thread_get_current_thread()->id;
+}
+
+/* create new kernel-side thread of execution */
+thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data), void *data)
+{
+    char tmp_name[SYS_MAX_OS_NAME_LEN];
+    status_t err;
+    thread_t *thread;
+
+    /* get thread struct */
+    thread = get_thread_struct();
+    if(!thread)
+        return INVALID_THREADID;
+
+    /* set thread data */
+    thread->name = kstrdup(name);
+    thread->process = proc_get_kernel_process();
+    thread->cpu = get_current_processor_struct();
+
+    /* create kernel stack area */
+    snprintf(tmp_name, SYS_MAX_OS_NAME_LEN, "kernel_thread_%d_kstack", thread->id);
+    err = create_thread_kstack_area(thread, tmp_name);
+    if(err != NO_ERROR)
+        goto exit_on_error;
+
+    /* set pointer to thread struct at the bottom of kernel stack */
+    *(thread_t **)(thread->kstack_base) = thread;
+
+    /* set entry point and user data */
+    thread->entry = (addr_t)&stub_for_kernel_thread;
+    thread->data = data;
+
+    /* init arch-specific parts */
+    arch_thread_init_struct(thread);
+
+    /* attach to kernel process */
+    proc_attach_thread(thread->process, thread);
+
+    /* add to scheduling scheme */
+    sched_add_thread(thread);
+
+    /* return new thread id to caller */
+    return thread->id;
+
+  /* if error state */
+exit_on_error:
+    /* deinit thread structure */
+    deinit_thread_struct(thread);
+
+    /* move to deads */
+    move_thread_to_list(thread, DEAD_THREADS_LIST);
+
+    /* return error state */
+    return INVALID_THREADID;
 }

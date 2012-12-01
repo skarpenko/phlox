@@ -138,4 +138,9 @@ status_t processor_init_after_vm(processor_t *p, kernel_args_t *kargs, uint curr
  */
 uint get_current_processor(void);
 
+/*
+ * Returns pointer to current processor data
+*/
+processor_t *get_current_processor_struct(void);
+
 #endif

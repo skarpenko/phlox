@@ -91,7 +91,7 @@ static void remove_object_from_list(vm_object_t *object)
 {
     unsigned long irqs_state;
 
-    /* acquire lock befor modifying list */
+    /* acquire lock before modifying list */
     irqs_state = spin_lock_irqsave(&objects_lock);
 
     /* remove item */

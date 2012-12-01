@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_VM_TYPES_H_
@@ -8,6 +8,7 @@
 #include <phlox/ktypes.h>
 #include <phlox/list.h>
 #include <phlox/avl_tree.h>
+#include <phlox/spinlock.h>
 #include <phlox/arch/vm_translation_map.h>
 
 

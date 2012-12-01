@@ -7,6 +7,20 @@
 
 #include <phlox/ktypes.h>
 #include <phlox/arch/process.h>
+#include <phlox/thread_types.h>
 
+/* Reserved ID */
+#define INVALID_PROCESSID  ((proc_id)0)  /* Invalid process ID */
+
+
+/*
+ * Returns kernel process ID to caller
+*/
+proc_id proc_get_kernel_proc_id(void);
+
+/*
+ * Returns kernel process struct to caller
+*/
+process_t *proc_get_kernel_proc(void);
 
 #endif

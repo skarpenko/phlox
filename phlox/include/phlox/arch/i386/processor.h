@@ -479,7 +479,7 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count);
 /* returns non-zero value if irqs disabled */
 #define arch_local_irqs_disabled() \
 ({ \
-    uint32 __flags; \
+    unsigned long __flags; \
     local_store_flags(__flags); \
     !(__flags & X86_EFLAGS_IF); \
 })
@@ -596,6 +596,16 @@ void i386_set_kstack(addr_t kstack_top);
 void i386_dbg_regs_save(uint32 *dbg_regs);
 void i386_dbg_regs_load(uint32 *dbg_regs);
 void i386_dbg_regs_clear(void);
+
+/*
+ * Miscellaneous utility routines
+ */
+
+/*
+ * Switch stack and call specified function, arg will be passed to called
+ * function.
+ */
+void i386_switch_stack_and_call(addr_t stack, void (*func)(void *), void *arg);
 
 
 #endif

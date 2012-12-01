@@ -26,6 +26,7 @@ typedef xlist_t threads_list_t;
 /* Thread lists types */
 enum list_types {
     ALIVE_THREADS_LIST,  /* List of alive threads */
+    DEATH_THREADS_LIST,  /* List of threads in death state */
     DEAD_THREADS_LIST    /* List of dead threads */
 };
 
@@ -40,6 +41,12 @@ static avl_tree_t threads_tree;
 
 /* Dead threads list (for faster threads creation) */
 static threads_list_t dead_threads_list;
+
+/* List of threads in transition to dead state.
+ * Valid thread states in that list is Running and Death.
+ * Threads in death state will be moved to dead list.
+*/
+static threads_list_t death_threads_list;
 
 /* Spinlock for operations on treads lists and tree */
 static spinlock_t threads_lock;
@@ -104,10 +111,12 @@ static void put_thread_to_list(thread_t *thread)
 /* move thread from one list to another (non-lock version) */
 static void move_thread_to_list_nolock(thread_t *thread, enum list_types dest_list)
 {
-    if(dest_list == ALIVE_THREADS_LIST) { /* Destination is alive threads list */
+    switch(dest_list) {
+      /* Destination is alive threads list */
+      case ALIVE_THREADS_LIST:
         /* Only dead threads can be moved to alive list */
-        ASSERT_MSG(thread->state == THREAD_STATE_DEAD,
-            "move_thread_to_list_nolock(): Wrong thread state!");
+        if(thread->state != THREAD_STATE_DEAD)
+            panic("move_thread_to_list_nolock(): Wrong thread state!");
 
         /* remove thread from the deads */
         xlist_remove_unsafe(&dead_threads_list, &thread->threads_list_node);
@@ -117,28 +126,57 @@ static void move_thread_to_list_nolock(thread_t *thread, enum list_types dest_li
 
         /* put to alive threads list and tree */
         put_thread_to_list_nolock(thread);
-    } else if(dest_list == DEAD_THREADS_LIST) { /* Destination is dead threads list */
-        /* Only threads in Death and Birth state can be moved here */
-        ASSERT_MSG(thread->state == THREAD_STATE_DEATH ||
-                   thread->state == THREAD_STATE_BIRTH,
-            "move_thread_to_list_nolock(): Wrong thread state!");
+        break;
 
-        /* remove thread from list */
+      /* Destination is death threads list */
+      case DEATH_THREADS_LIST:
+        /* Only threads in Running state can be moved here */
+        if(thread->state != THREAD_STATE_RUNNING)
+            panic("move_thread_to_list_nolock(): Wrong thread state!");
+
+        /* remove thread from list of active threads */
         xlist_remove_unsafe(&threads_list, &thread->threads_list_node);
         /* remove thread from tree */
         if(!avl_tree_remove(&threads_tree, thread))
             panic("move_thread_to_list_nolock(): failed to remove thread from tree!\n");
+
+        /* Thread is in Running state, we can't switch state to Death here,
+         * so... we set next state, after reschedule state will be correct.
+         */
+        thread->next_state = THREAD_STATE_DEATH;
+
+        /* add to death list */
+        xlist_add_last(&death_threads_list, &thread->threads_list_node);
+        break;
+
+      /* Destination is dead threads list */
+      case DEAD_THREADS_LIST:
+        /* Threads in Birth state contained in active threads list and tree,
+         * the ones in Death state contained only in death treads list.
+         */
+        if(thread->state == THREAD_STATE_BIRTH) {
+            /* remove thread from active threads list */
+            xlist_remove_unsafe(&threads_list, &thread->threads_list_node);
+            /* remove thread from tree */
+            if(!avl_tree_remove(&threads_tree, thread))
+                panic("move_thread_to_list_nolock(): failed to remove thread from tree!\n");
+        } else if(thread->state == THREAD_STATE_DEATH) {
+            /* remove thread from death list */
+            xlist_remove_unsafe(&death_threads_list, &thread->threads_list_node);
+        } else /* Only threads in Death and Birth state can be moved here */
+            panic("move_thread_to_list_nolock(): Wrong thread state!");
 
         /* set as dead */
         thread->state = THREAD_STATE_DEAD;
 
         /* add to deads list */
         xlist_add_last(&dead_threads_list, &thread->threads_list_node);
-    }
-#ifdef __DEBUG__
-    else
+        break;
+
+      /* panic if wrong state */
+      default:
         panic("move_thread_to_list_nolock(): wrong list type passed!\n");
-#endif
+    }
 }
 
 /* move thread from one list to another */
@@ -191,37 +229,6 @@ static thread_t *create_thread_struct(void)
     return thread;
 }
 
-/* get not used or create new thread structure */
-static thread_t *get_thread_struct(void)
-{
-    unsigned long irqs_state;
-    thread_t *thread;
-
-    /* acquire lock before touching dead threads list */
-    irqs_state = spin_lock_irqsave(&threads_lock);
-
-    /* peek first item in list */
-    thread = peek_dead_list_nolock();
-    /* if exists - move to alive threads list */
-    if(thread)
-        move_thread_to_list_nolock(thread, ALIVE_THREADS_LIST);
-    
-    /* release lock */
-    spin_unlock_irqrstor(&threads_lock, irqs_state);
-
-    /* if no thread struct selected - create new one */
-    if(!thread) {
-        thread = create_thread_struct();
-        thread->state = THREAD_STATE_BIRTH;
-        put_thread_to_list(thread);
-    }
-
-    /* executed at kernel side initially */
-    thread->in_kernel = true;
-
-    return thread;
-}
-
 /* deinit less important fields of thread struct for future reuse */
 static void deinit_thread_struct(thread_t *thread)
 {
@@ -245,6 +252,63 @@ static void deinit_thread_struct(thread_t *thread)
     /* TODO: deinit other fields */
 }
 
+/* moves threads in death state from death list to dead list */
+static void purge_death_threads_list_nolock(void)
+{
+    list_elem_t *iter = xlist_peek_first(&death_threads_list);
+    thread_t *thread;
+
+    while(iter != NULL) {
+        /* get thread structure */
+        thread = containerof(iter, thread_t, threads_list_node);
+
+        /* move iterator to next item */
+        iter = iter->next;
+
+        /* move to dead list if in death state */
+        if(thread->state == THREAD_STATE_DEATH) {
+            /* deinit structure ... */
+            deinit_thread_struct(thread);
+            /* ... and move to deads */
+            move_thread_to_list_nolock(thread, DEAD_THREADS_LIST);
+        }
+    }
+}
+
+/* get not used or create new thread structure */
+static thread_t *get_thread_struct(void)
+{
+    unsigned long irqs_state;
+    thread_t *thread;
+
+    /* acquire lock before touching dead threads list */
+    irqs_state = spin_lock_irqsave(&threads_lock);
+
+    /* move threads in death state to deads list */
+    purge_death_threads_list_nolock();
+
+    /* peek first item in list */
+    thread = peek_dead_list_nolock();
+    /* if exists - move to alive threads list */
+    if(thread)
+        move_thread_to_list_nolock(thread, ALIVE_THREADS_LIST);
+
+    /* release lock */
+    spin_unlock_irqrstor(&threads_lock, irqs_state);
+
+    /* if no thread struct selected - create new one */
+    if(!thread) {
+        thread = create_thread_struct();
+        thread->state = THREAD_STATE_BIRTH;
+        put_thread_to_list(thread);
+    }
+
+    /* executed at kernel side initially */
+    thread->in_kernel = true;
+
+    return thread;
+}
+
 /* stub function for kernel-side threads */
 static int stub_for_kernel_thread(void)
 {
@@ -266,8 +330,10 @@ static int stub_for_kernel_thread(void)
     func = (void *)thread->entry;
     retcode = func(thread->data);
 
-    /* TODO: exit thread stages */
-    panic("\nkernel thread termination is not implemented yet!\n");
+    /* call thread exit routine */
+    thread_exit(retcode);
+
+    /*** Control never goes here ***/
 
     return 0;
 }
@@ -368,6 +434,7 @@ status_t threading_init(kernel_args_t *kargs, uint curr_cpu)
         /* threads lists */
         xlist_init(&threads_list);
         xlist_init(&dead_threads_list);
+        xlist_init(&death_threads_list);
 
         /* threads tree */
         avl_tree_create( &threads_tree, compare_thread_id,
@@ -522,11 +589,13 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     thread->process = proc_get_kernel_process();
     thread->cpu = get_current_processor_struct();
 
-    /* create kernel stack area */
-    snprintf(tmp_name, SYS_MAX_OS_NAME_LEN, "kernel_thread_%d_kstack", thread->id);
-    err = create_thread_kstack_area(thread, tmp_name);
-    if(err != NO_ERROR)
-        goto exit_on_error;
+    /* create kernel stack area, if was not created before */
+    if(thread->kstack_id == VM_INVALID_OBJECTID) {
+        snprintf(tmp_name, SYS_MAX_OS_NAME_LEN, "kernel_thread_%d_kstack", thread->id);
+        err = create_thread_kstack_area(thread, tmp_name);
+        if(err != NO_ERROR)
+            goto exit_on_error;
+    }
 
     /* set pointer to thread struct at the bottom of kernel stack */
     *(thread_t **)(thread->kstack_base) = thread;
@@ -576,5 +645,49 @@ void thread_yield(void)
     /* do reschedule for stop current thread
      * and select new one for execution.
      */
+    sched_reschedule();
+}
+
+/* terminate current thread with specified exit code */
+void thread_exit(int exitcode)
+{
+    thread_t *thread = thread_get_current_thread();
+    process_t *process = thread->process;
+
+    /* check current state */
+    if(is_kernel_start_stage(K_KERNEL_STARTUP) || local_irqs_disabled())
+        panic("thread_exit(): called during kernel startup or irqs disabled!");
+
+    /* TODO: Possible algorithm here is the following:
+     *   1. Boost thread priority.
+     *   2. Kill alarms
+     *   3. Kill userspace regions
+     *   4. If not a kernel thread:
+     *     4.1. Move thread to kernel process
+     *     4.2. If main thread: mark process to destroy
+     *     4.3. Switch to kernel address space
+     *   5. Delete process if needed
+     *   6. Wake up thread termination waiters
+     * If needed to destroy kernel-side stack area
+     *   7. Switch to temp stack and call thread_exit2 using
+     *      switch_stack_and_call.
+     *
+     * In thread_exit2:
+     *   1. Remove thread from kernel process
+     *   2. Free other resources
+     *   3. Set DEATH state
+     *   4. Reschedule
+    */
+
+    /* detach thread from process */
+    proc_detach_thread(process, thread);
+
+    /* disable irqs on this cpu */
+    local_irqs_disable();
+
+    move_thread_to_list(thread, DEATH_THREADS_LIST);
+
+    /* set next state for thread and reschedule */
+    thread->next_state = THREAD_STATE_DEATH;
     sched_reschedule();
 }

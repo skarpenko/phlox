@@ -248,3 +248,15 @@ FUNCTION(i386_dbg_regs_clear):
     /* restore eax and return */
     popl  %eax
     ret
+
+/* void i386_switch_stack_and_call(addr_t stack, void (*func)(void *), void *arg) */
+FUNCTION(i386_switch_stack_and_call):
+    movl ARG0, %eax     /* address of the new stack top */
+    movl ARG1, %ecx     /* function to call */
+    movl ARG2, %edx     /* pointer to data passed into called function */
+
+    movl %eax, %esp     /* switch to new stack */
+    pushl %edx          /* push the additional data address */
+    call *%ecx          /* call the target function */
+_inf_loop:              /* control never goes here ... */
+    jmp _inf_loop       /* ... loop forever */

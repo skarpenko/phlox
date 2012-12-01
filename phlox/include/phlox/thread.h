@@ -51,5 +51,9 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
 */
 void thread_yield(void);
 
+/*
+ * Terminate current thread with specified exit code
+*/
+void thread_exit(int exitcode);
 
 #endif

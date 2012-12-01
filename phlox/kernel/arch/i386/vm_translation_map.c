@@ -1,8 +1,9 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <sys/debug.h>
 #include <arch/arch_bits.h>
 #include <arch/arch_data.h>
 #include <phlox/types.h>
@@ -10,6 +11,7 @@
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
 #include <phlox/processor.h>
+#include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/list.h>
 #include <phlox/heap.h>
@@ -194,13 +196,13 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
     mmu_pde *pgdir = pgdir = tmap->arch.pgdir_virt;
     mmu_pte *pgtbl;
     unsigned int index;
+    vm_page_t *page;
     status_t status;
 
     /* check to see if a page table exists for this range */
     index = VADDR_TO_PDENT(va);
     if(pgdir[index].stru.p == 0) {
         addr_t pgtable;
-        vm_page_t *page;
 
         /* we need to allocate a pgtable */
         page = vm_page_alloc(VM_PAGE_STATE_CLEAR);
@@ -239,6 +241,11 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
     if(is_kernel_address(va))
         pgtbl[index].stru.g = 1; /* global bit set for all kernel addresses */
 
+    /* increment wired counter (count of refered maps) */
+    page = vm_page_lookup(pgtbl[index].stru.base);
+    ASSERT_MSG(page, "map_tmap(): page = NULL!");
+    atomic_inc(&page->wire_count);
+
     /* put page back */
     put_physical_page_tmap((addr_t)pgtbl);
 
@@ -260,6 +267,7 @@ static status_t unmap_tmap(vm_translation_map_t *tmap, addr_t start, addr_t end)
     mmu_pde *pgdir = tmap->arch.pgdir_virt;
     mmu_pte *pgtbl;
     unsigned int index;
+    vm_page_t *page;
     status_t status;
 
     /* align by page size */
@@ -292,6 +300,11 @@ restart:
 
         pgtbl[index].stru.p = 0; /* mark as not present */
         tmap->map_count--;
+
+        /* decrement wired counter (count of refered maps) */
+        page = vm_page_lookup(pgtbl[index].stru.base);
+        ASSERT_MSG(page, "unmap_tmap(): page = NULL!");
+        atomic_dec(&page->wire_count);
 
         /* add page address into invalidation cache */
         if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -499,12 +499,12 @@ object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_
     }
 
     /* lock translation map */
-    (*aspace->tmap.ops->lock)(&aspace->tmap);
+    aspace->tmap.ops->lock(&aspace->tmap);
 
     /* and start querying physical pages */
     for(offset = 0, vaddr = virt_addr; offset < size; offset += PAGE_SIZE, vaddr += PAGE_SIZE) {
         /* query physical page */
-        (*aspace->tmap.ops->query)(&aspace->tmap, vaddr, &paddr, &flags);
+        aspace->tmap.ops->query(&aspace->tmap, vaddr, &paddr, &flags);
         /* page must present in address space */
         if( !(flags & VM_FLAG_PAGE_PRESENT) )
             goto error;
@@ -524,7 +524,7 @@ object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_
     }
 
     /* unlock translation map */
-    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+    aspace->tmap.ops->unlock(&aspace->tmap);
     /* ... and put address space back */
     vm_put_aspace(aspace);
 
@@ -536,7 +536,7 @@ object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_
 
 error:
     /* releas lock and put address space back */
-    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+    aspace->tmap.ops->unlock(&aspace->tmap);
     vm_put_aspace(aspace);
 
     /* return allocated physical pages back */

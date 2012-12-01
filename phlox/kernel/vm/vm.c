@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -342,14 +342,13 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     spin_unlock(&mapping->object->lock);
 
     /* ... and lock translation map */
-    (*aspace->tmap.ops->lock)(&aspace->tmap);
+    aspace->tmap.ops->lock(&aspace->tmap);
 
     /* map page into address space */
-    (*aspace->tmap.ops->map)(&aspace->tmap, addr, PAGE_ADDRESS(page->ppn), mapping->protect);
-    atomic_inc(&page->wire_count); /* increment wired counter */
+    aspace->tmap.ops->map(&aspace->tmap, addr, PAGE_ADDRESS(page->ppn), mapping->protect);
 
     /* unlock translation map */
-    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+    aspace->tmap.ops->unlock(&aspace->tmap);
 
     /* .. and finally unlock address space */
     spin_unlock(&aspace->lock);
@@ -519,6 +518,11 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
         err = ERR_VM_BAD_ADDRESS;
         goto exit_unmap;
     }
+
+    /* unmap already mapped pages */
+    aspace->tmap.ops->lock(&aspace->tmap); /* lock translation map */
+    aspace->tmap.ops->unmap(&aspace->tmap, mapping->start, mapping->end);
+    aspace->tmap.ops->unlock(&aspace->tmap); /* unlock */
 
     /* acquire object lock */
     spin_lock(&mapping->object->lock);

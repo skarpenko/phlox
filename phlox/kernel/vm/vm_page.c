@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Copyright 2001-2004, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -324,7 +324,7 @@ status_t vm_page_init_wire_counters(addr_t vbase, size_t size)
     /* now query all physical pages and set wired counter to 1 */
     for(vaddr = vbase; vaddr < end_addr; vaddr += PAGE_SIZE) {
         /* query physical page */
-        (*aspace->tmap.ops->query)(&aspace->tmap, vaddr, &paddr, &flags);
+        aspace->tmap.ops->query(&aspace->tmap, vaddr, &paddr, &flags);
 
         /* page must present in address space */
         if( !(flags & VM_FLAG_PAGE_PRESENT) ) {

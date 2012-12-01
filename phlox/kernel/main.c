@@ -30,6 +30,7 @@ void init_console_writer(void); /* for DEBUG only */
 vuint thread0_ctr = 0;
 vuint thread1_ctr = 0;
 vuint thread2_ctr = 0;
+vuint thread_ctl_ctr = 0;
 int thread0(void *data);
 int thread1(void *data);
 int thread2(void *data);
@@ -183,37 +184,61 @@ void print_kernel_memory_map(void)
 /* thread 0 routine */
 int thread0(void *data)
 {
-    kprint("Thread0: started...\n");
-    while(1)
+    thread_t *me = thread_get_current_thread();
+    vuint *jiff = &me->jiffies;
+
+    kprint("Thread0 (id = %d): started...\n", me->id);
+
+    while(1) {
         thread0_ctr++;
+        /* wait till the end of my time slice */
+        while(*jiff != 0); while(*jiff == 0);
+    }
 }
 
 /* thread 1 routine */
 int thread1(void *data)
 {
-    kprint("Thread1: started...\n");
-    while(1)
+    thread_t *me = thread_get_current_thread();
+    vuint *jiff = &me->jiffies;
+
+    kprint("Thread1 (id = %d): started...\n", me->id);
+
+    while(1) {
         thread1_ctr++;
+        /* wait till the end of my time slice */
+        while(*jiff != 0); while(*jiff == 0);
+    }
 }
 /* thread 2 routine */
 int thread2(void *data)
 {
-    kprint("Thread2: started...\n");
-    while(1)
+    thread_t *me = thread_get_current_thread();
+    vuint *jiff = &me->jiffies;
+
+    kprint("Thread2 (id = %d): started...\n", me->id);
+
+    while(1) {
         thread2_ctr++;
+        /* wait till the end of my time slice */
+        while(*jiff != 0); while(*jiff == 0);
+    }
 }
+
 /* threads controller routine */
 int thread_ctl(void *data)
 {
     thread_t *me = thread_get_current_thread();
     vuint *jiff = &me->jiffies;
 
-    kprint("Threads controller: started...\n");
+    kprint("Threads controller (id = %d): started...\n", me->id);
     while(1) {
-        if( !(thread0_ctr % 3) ) {
-            kprint("Thread Ctl: ctr0 = %d  ctr1 = %d  ctr2 = %d\n",
+        thread_ctl_ctr++;
+        if( !(thread_ctl_ctr % 10) ) {
+            kprint("Threads controller message: ctr0 = %u  ctr1 = %u  ctr2 = %u\n",
                 thread0_ctr, thread1_ctr, thread2_ctr);
-            while(*jiff != 0);
         }
+        /* wait for next thread */
+        while(*jiff != 0); while(*jiff == 0);
     }
 }

@@ -70,7 +70,7 @@ static void _dump_klog()
     addr_t va;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
-    char nl[2] = "\n";
+    char nl[1] = "\n";
 
     /* set zero terminator */
     tmp[SYSCFG_KLOG_NCOLS] = 0;
@@ -99,10 +99,14 @@ static void _dump_klog()
 /* temporary used console-writer */
 static int console_writer(void *data)
 {
+    thread_t *me = thread_get_current_thread();
     addr_t console_addr;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
-    char nl[2] = "\n";
+    char nl[1] = "\n";
+
+    /* notify */
+    kprint("Console writer (id = %d): started...\n", me->id);
 
     /* set zero terminator */
     tmp[SYSCFG_KLOG_NCOLS] = 0;

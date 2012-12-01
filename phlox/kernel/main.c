@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -103,6 +103,18 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     err = threading_init(&globalKargs, num_cpu);
     if(err != NO_ERROR)
         panic("Threading initialization stage failed!\n");
+
+    /* continue initialization of modules that requires threading.
+     * initialization goes only on bootstrap processor, others - waiting.
+    */
+    if(num_cpu==0) {
+        /* init timer module */
+        err = timer_init_after_threading(&globalKargs);
+        if(err != NO_ERROR)
+            panic("Timer threading dependent part initialization failed!\n");
+    } else {
+       /* wait until BSP completes? */
+    }
 
 
     /* page fault handling test */
@@ -301,15 +313,28 @@ int thread2(void *data)
     }
 }
 
+/* timeout call routine */
+void timeout_call(timeout_id id, void *data)
+{
+    kprint("TIMEOUT CALL id = %d\n", id);
+    /* re-register call */
+    timer_timeout_sched(timeout_call, NULL, TIMER_MSEC_TO_TICKS(1000));
+}
+
 /* threads controller routine */
 int thread_ctl(void *data)
 {
     thread_id me = thread_get_current_thread_id();
+    timeout_id t_id;
 
     kprint("Threads controller (id = %d): started...\n", me);
 
     kprint("Threads controller: Wait for 3000 msec before output start...\n");
     thread_sleep(3000);
+
+    /* register timeout call */
+    t_id = timer_timeout_sched(timeout_call, NULL, TIMER_MSEC_TO_TICKS(1000));
+    /* timer_timeout_cancel(t_id); */
 
     while(1) {
         thread_ctl_ctr++;

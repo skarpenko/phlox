@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <sys/debug.h>
@@ -10,6 +10,7 @@
 #include <phlox/thread_private.h>
 #include <phlox/scheduler.h>
 #include <phlox/spinlock.h>
+#include <phlox/avl_tree.h>
 #include <phlox/list.h>
 #include <phlox/heap.h>
 #include <phlox/timer.h>
@@ -18,28 +19,79 @@
 /* redefinition for convenience */
 typedef xlist_t events_queue_t;
 
+
 /* timer event type */
 typedef struct event_struct {
-    int delta;
-    thread_t *thread;
+    int delta;     /* timer ticks delta */
+
+    bool timeout;  /* is timeout call? */
+    union {
+        /* valid if timeout is true */
+        struct {
+            timeout_id id;                             /* timeout call id */
+            bool canceled;                             /* is canceled? */
+            void (*timeout_routine)(timeout_id,void*); /* ptr to routine */
+            void *data;                                /* user data */
+        };
+        /* valid if timeout is false */
+        thread_t *thread;
+    };
     list_elem_t list_node;
+    avl_tree_node_t tree_node;
 } event_t;
 
 
 /* Timer ticks counter */
 static volatile bigtime_t timer_ticks = 0;
 
+/* Enumerator for timeout calls IDs */
+static vuint next_timeout_id;
+
 /* Timer events */
-spinlock_t events_lock;
+spinlock_t events_lock; /* access lock for queues below */
 events_queue_t events_queue;
+events_queue_t ready_timeouts_queue;
+
 int events_ticks_lost = 0;
 
+/* Timeout calls handler thread */
+thread_t *timeout_calls_thread = NULL;
+
+/* Tree of timeout calls for fast search by id */
+static avl_tree_t timeouts_tree;
+spinlock_t timeouts_lock;
 
 /* called from from timer handler */
 static bool timer_schedule_event(void);
 
 
 /*** Locally used routines ***/
+
+/* compare routine for timeouts AVL tree */
+static int compare_timeout_id(const void *e1, const void *e2)
+{
+    ASSERT_MSG(((event_t *)e1)->timeout && ((event_t *)e2)->timeout,
+        "compare_timeout_id(): not a timeout call!\n");
+
+    if( ((event_t *)e1)->id > ((event_t *)e2)->id )
+        return 1;
+    if( ((event_t *)e1)->id < ((event_t *)e2)->id )
+        return -1;
+    return 0;
+}
+
+/* returns available timeout id */
+static timeout_id get_next_timeout_id(void)
+{
+    timeout_id retval;
+
+    /* atomically increment and get previous value */
+    retval = (timeout_id)atomic_inc_ret(&next_timeout_id);
+    if(retval == INVALID_TIMEOUTID)
+        panic("No available timeout IDs!");
+
+    return retval;
+}
 
 /* returns pointer to next event */
 static inline event_t *peek_next_event(event_t *e)
@@ -54,6 +106,16 @@ static inline event_t *peek_next_event(event_t *e)
 static inline event_t *peek_first_event(void)
 {
     list_elem_t *e = xlist_peek_first(&events_queue);
+    if(!e)
+        return NULL;
+    else
+        return containerof(e, event_t, list_node);
+}
+
+/* extract first event */
+static inline event_t *extract_first_event(void)
+{
+    list_elem_t *e = xlist_extract_first(&events_queue);
     if(!e)
         return NULL;
     else
@@ -99,6 +161,66 @@ static void add_new_event_nolock(event_t *new_evt, int tick)
     }
 }
 
+/* extract timeout event from the appropriate queue */
+static inline event_t *extract_timeout_event(void)
+{
+    list_elem_t *e = xlist_extract_first(&ready_timeouts_queue);
+    if(!e)
+        return NULL;
+    else
+        return containerof(e, event_t, list_node);
+}
+
+/* enqueue timeout event into appropriate queue */
+static void enqueue_timeout_event(event_t *evt)
+{
+    xlist_add_last(&ready_timeouts_queue, &evt->list_node);
+}
+
+/* timeout calls handler thread routine */
+static int timeout_calls_handler(void *data)
+{
+    unsigned long irqs_state;
+    event_t *evt;
+
+    while(1) {
+         /* acquire events queue lock */
+         irqs_state = spin_lock_irqsave(&events_lock);
+         evt = extract_timeout_event();
+         /* release events queue lock */
+         spin_unlock_irqrstor(&events_lock, irqs_state);
+
+         /* suspend if no events in queue, will be resumed
+          * when new event be added.
+          */
+         if(!evt) {
+             thread_suspend_current();
+             continue;
+         }
+
+        ASSERT_MSG(evt->timeout, "timeout_calls_handler(): not a timeout call!\n");
+
+        /* call routine only if event was not canceled */
+        if(!evt->canceled) {
+            evt->timeout_routine(evt->id, evt->data);
+        }
+
+        /** Remove event data from tree and free it **/
+
+        /* acquire events lock */
+        irqs_state = spin_lock_irqsave(&timeouts_lock);
+
+        /* remove from tree */
+        if(!avl_tree_remove(&timeouts_tree, evt))
+            panic("timeout_calls_handler(): failed to remove event from tree.");
+
+        /* release events lock */
+        spin_unlock_irqrstor(&timeouts_lock, irqs_state);
+
+        kfree(evt); /* return memory to kernel */
+    }
+}
+
 
 /* system timer initialization */
 status_t timer_init(kernel_args_t *kargs)
@@ -117,7 +239,32 @@ status_t timer_init(kernel_args_t *kargs)
 
     /* init events data */
     spin_init(&events_lock);
+    spin_init(&timeouts_lock);
     xlist_init(&events_queue);
+    xlist_init(&ready_timeouts_queue);
+    /* timeouts tree */
+    avl_tree_create(&timeouts_tree, compare_timeout_id, sizeof(event_t),
+                    offsetof(event_t, tree_node));
+
+    /* next valid timeout id */
+    next_timeout_id = 1;
+
+    return NO_ERROR;
+}
+
+/* continue timer module initialization */
+status_t timer_init_after_threading(kernel_args_t *kargs)
+{
+    /* create timeout calls handler thread */
+    thread_id id = thread_create_kernel_thread("timeout_calls_handler_thread",
+                        &timeout_calls_handler, NULL, false);
+    if(id == INVALID_THREADID)
+        return ERR_MT_GENERAL;
+
+    /* get pointer to thread structure */
+    timeout_calls_thread = thread_get_thread_struct(id);
+    if(timeout_calls_thread == NULL)
+        return ERR_MT_GENERAL;
 
     return NO_ERROR;
 }
@@ -125,8 +272,9 @@ status_t timer_init(kernel_args_t *kargs)
 /* events queue handler */
 static bool timer_schedule_event(void)
 {
-    int ticks;              /* ticks to process */
-    bool resched = false;   /* =true if reschedule required */
+    int ticks;                     /* ticks to process */
+    bool resched = false;          /* =true if reschedule required */
+    bool timeouts_thread = false;  /* =true if timeout calls handler ready to run */
     event_t *evt;
 
     /* try to acquire access to events */
@@ -146,12 +294,33 @@ static bool timer_schedule_event(void)
         if( (ticks = (evt->delta -= ticks)) <= 0 ) {
             /** time for event! **/
 
-            /* awake thread */
-            thread_lock_thread(evt->thread);
-            sched_add_thread(evt->thread);
-            thread_unlock_thread(evt->thread);
+            if(!evt->timeout) {
+                /* awake thread */
+                thread_lock_thread(evt->thread);
+                sched_add_thread(evt->thread);
+                thread_unlock_thread(evt->thread);
 
-            destroy_first_event(); /* destroy event data */
+                destroy_first_event(); /* destroy event data */
+            } else {
+                /* move event to timeout calls queue */
+                extract_first_event();
+                enqueue_timeout_event(evt);
+
+                /* schedule timeouts handler for execution */
+                if(!timeouts_thread) {
+                    timeouts_thread = true;
+                    /* lock thread first */
+                    thread_lock_thread(timeout_calls_thread);
+                    /* add to scheduler if was suspended */
+                    if(timeout_calls_thread->state == THREAD_STATE_SUSPENDED)
+                        sched_add_thread(timeout_calls_thread);
+                    /* cancel suspended state on next reschedule */
+                    if(timeout_calls_thread->next_state == THREAD_STATE_SUSPENDED)
+                        timeout_calls_thread->next_state = THREAD_STATE_READY;
+                    /* unlock thread */
+                    thread_unlock_thread(timeout_calls_thread);
+                }
+            }
 
             /* update ticks */
             ticks = -ticks;
@@ -235,28 +404,84 @@ status_t timer_lull_thread(thread_t *thread, uint ticks)
      * Anyway, be careful!
      */
 
-     /* allocate memory for new event */
-     new_evt = (event_t*)kmalloc(sizeof(event_t));
-     if(!new_evt)
-         panic("timer_lull_thread(): out of kernel heap!\n");
+    /* allocate memory for new event */
+    new_evt = (event_t*)kmalloc(sizeof(event_t));
+    if(!new_evt)
+        panic("timer_lull_thread(): out of kernel heap!\n");
+
+    /* set thread states */
+    thread->next_state = THREAD_STATE_SLEEPING;
+    /* if was taken directly from runqueue - update current state */
+    if(IS_THREAD_STATE_READY(thread))
+        thread->state = THREAD_STATE_SLEEPING;
+
+    /* set event data */
+    new_evt->thread = thread;
+    new_evt->timeout = false; /* not a timeout call */
+
+    /* acquire events lock */
+    irqs_state = spin_lock_irqsave(&events_lock);
+
+    /* add event to queue */
+    add_new_event_nolock(new_evt, ticks);
+
+    /* release events lock */
+    spin_unlock_irqrstor(&events_lock, irqs_state);
+
+    return NO_ERROR;
+}
+
+/* schedule timeout call */
+timeout_id timer_timeout_sched(timeout_routine_t routine, void *data, uint ticks)
+{
+    event_t *new_evt;
+    unsigned long irqs_state;
+
+    /* allocate memory for new event */
+    new_evt = (event_t*)kmalloc(sizeof(event_t));
+    if(!new_evt)
+         panic("timer_timeout_sched(): out of kernel heap!\n");
+
+     /* set event data */
+     new_evt->timeout = true;
+     new_evt->id = get_next_timeout_id();
+     new_evt->canceled = false;
+     new_evt->timeout_routine = routine;
+     new_evt->data = data;
 
      /* acquire events lock */
      irqs_state = spin_lock_irqsave(&events_lock);
-
-     /* set thread states */
-     thread->next_state = THREAD_STATE_SLEEPING;
-     /* if was taken directly from runqueue - update current state */
-     if(IS_THREAD_STATE_READY(thread))
-         thread->state = THREAD_STATE_SLEEPING;
-
-     /* set event data */
-     new_evt->thread = thread;
+     spin_lock(&timeouts_lock);
 
      /* add event to queue */
      add_new_event_nolock(new_evt, ticks);
+     /* ...and to avl-tree */
+     if(!avl_tree_add(&timeouts_tree, new_evt))
+         panic("timer_timeout_sched(): failed to add event into tree!\n");;
 
      /* release events lock */
+     spin_unlock(&timeouts_lock);
      spin_unlock_irqrstor(&events_lock, irqs_state);
 
-     return NO_ERROR;
+     return new_evt->id; /* return event id */
+}
+
+/* cancel timeout call */
+void timer_timeout_cancel(timeout_id tid)
+{
+    event_t *look_for, *evt;
+    unsigned long irqs_state;
+
+    look_for = containerof(&tid, event_t, id);
+
+    /* acquire events lock */
+    irqs_state = spin_lock_irqsave(&timeouts_lock);
+
+    /* find event in tree and set canceled flag */
+    evt = avl_tree_find(&timeouts_tree, look_for, NULL);
+    if(evt)
+        evt->canceled = true;
+
+    /* release events lock */
+    spin_unlock_irqrstor(&timeouts_lock, irqs_state);
 }

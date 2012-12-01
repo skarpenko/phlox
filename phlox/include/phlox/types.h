@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Portions copyright 2001, Travis Geiselbrecht.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -162,6 +162,7 @@ typedef int sess_id;        /* session id       */
 typedef int sem_id;         /* semaphore id     */
 typedef int port_id;        /* ipc port id      */
 typedef int image_id;       /* binary image id  */
+typedef int timeout_id;     /* timeout call id  */
 
 # include <stddef.h>
 

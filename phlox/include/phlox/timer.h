@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_TIMER_H_
@@ -14,6 +14,9 @@
 #include <phlox/thread_types.h>
 
 
+/* Reserved ID */
+#define INVALID_TIMEOUTID  ((timeout_id)0)  /* Invalid timeout ID */
+
 /* Parameters used in time convertion */
 #define TIMER_MSEC_PER_SEC  (1000L)
 #define TIMER_USEC_PER_SEC  (1000000L)
@@ -26,10 +29,21 @@
 #define TIMER_MSEC_TO_TICKS(a)       TIMER_TIME_TO_TICKS(a, TIMER_MSEC_PER_SEC)
 
 
+/* timeout routine type definition */
+typedef void (*timeout_routine_t)(timeout_id,void*);
+
+
 /*
  * Timer init routine. Called on system start up.
 */
 status_t timer_init(kernel_args_t *kargs);
+
+
+/*
+ * Timer module init routine. Called on system start up,
+ * right after threading subsystem inited.
+*/
+status_t timer_init_after_threading(kernel_args_t *kargs);
 
 
 /*
@@ -55,6 +69,21 @@ bigtime_t timer_get_time(void);
  * a SLEEPING state.
 */
 status_t timer_lull_thread(thread_t *thread, uint ticks);
+
+/*
+ * Schedule timeout call after given count of timer ticks.
+ *
+ * Params:
+ *  routine - routine to be called;
+ *  data    - user data to be passed into routine;
+ *  ticks   - timer ticks count.
+ */
+timeout_id timer_timeout_sched(timeout_routine_t routine, void *data, uint ticks);
+
+/*
+ * Cancel previously scheduled timeout call.
+ */
+void timer_timeout_cancel(timeout_id tid);
 
 
 #endif

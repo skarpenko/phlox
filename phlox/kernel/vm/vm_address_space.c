@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -413,18 +413,19 @@ void vm_aspace_delete_mapping(vm_address_space_t *aspace, vm_mapping_t *mapping)
 /* get mapping by virtual address within address space */
 status_t vm_aspace_get_mapping(vm_address_space_t *aspace, addr_t vaddr, vm_mapping_t **mapping)
 {
-    vm_mapping_t dummy;
+    /* init dummy mapping and search for item */
+    struct dummy_mapping {
+        addr_t start;
+        addr_t end;
+    } dummy = { vaddr, vaddr };
+    vm_mapping_t *look4 = containerof(&dummy.start, vm_mapping_t, start);
 
     /* check specified address */
     if(vaddr < aspace->mmap.base || vaddr > aspace->mmap.base + aspace->mmap.size - 1)
         return ERR_VM_BAD_ADDRESS;
 
-    /* fill dummy fields */
-    dummy.start = vaddr;
-    dummy.end   = vaddr;
-
     /* search tree */
-    *mapping = avl_tree_find(&aspace->mmap.mappings_tree, &dummy, NULL);
+    *mapping = avl_tree_find(&aspace->mmap.mappings_tree, look4, NULL);
     if(*mapping == NULL)
         return ERR_VM_NO_MAPPING;
 
@@ -567,16 +568,17 @@ aspace_id vm_get_current_user_aspace_id(void)
 /* returns address space by its id */
 vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
 {
-    vm_address_space_t temp_aspace, *aspace;
+    vm_address_space_t *look_for, *aspace;
     unsigned long irqs_state;
 
-    temp_aspace.id = aid;
+    /* init search for item */
+    look_for = containerof(&aid, vm_address_space_t, id);
 
     /* acquire lock before accessing tree */
     irqs_state = spin_lock_irqsave(&aspaces_lock);
 
     /* search tree */
-    aspace = avl_tree_find(&aspaces_tree, &temp_aspace, NULL);
+    aspace = avl_tree_find(&aspaces_tree, look_for, NULL);
 
     /* increase references count if aspace found and in proper state */
     if(aspace && aspace->state == VM_ASPACE_STATE_NORMAL)

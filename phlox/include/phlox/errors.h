@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ERRORS_H
@@ -39,6 +39,7 @@ enum PhloxVirtualMemoryErrors {
 enum PhloxMultithreadingErrors {
     ERR_MT_GENERAL_BASE = 0x82000000,
     ERR_MT_GENERAL = ERR_MT_GENERAL_BASE,
+    ERR_MT_INVALID_HANDLE,
     ERR_MT_GENERAL_LIMIT
 };
 

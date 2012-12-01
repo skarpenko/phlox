@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -360,16 +360,16 @@ status_t vm_object_get_or_add_upage(vm_object_t *object, addr_t offset, vm_upage
 {
     uint upn = PAGE_NUMBER(offset);
     avl_tree_index_t where;
-    vm_upage_t dummy, *parent;
+    vm_upage_t *look4, *parent;
 
     /* check offset */
     if(offset >= object->size)
         return ERR_VM_BAD_OFFSET;
 
-    /* fill dummy */
-    dummy.upn = upn;
+    /* init search cookie */
+    look4 = containerof(&upn, vm_upage_t, upn);
     /* .. and try to locate upage first */
-    *upage = avl_tree_find(&object->upages_tree, &dummy, &where);
+    *upage = avl_tree_find(&object->upages_tree, look4, &where);
     if(*upage != NULL)
         return NO_ERROR;
 
@@ -413,17 +413,18 @@ status_t vm_object_get_or_add_upage(vm_object_t *object, addr_t offset, vm_upage
 /* returns upage at given offset if exists (no lock acquired before) */
 status_t vm_object_get_upage(vm_object_t *object, addr_t offset, vm_upage_t **upage)
 {
-    vm_upage_t dummy;
+    uint upn = PAGE_NUMBER(offset);
+    vm_upage_t *look4;
 
     /* check offset */
     if(offset >= object->size)
         return ERR_VM_BAD_OFFSET;
 
-    /* fill dummy for search */
-    dummy.upn = PAGE_NUMBER(offset);
+    /* fill cookie for search */
+    look4 = containerof(&upn, vm_upage_t, upn);
 
     /* search for upage */
-    *upage = avl_tree_find(&object->upages_tree, &dummy, NULL);
+    *upage = avl_tree_find(&object->upages_tree, look4, NULL);
     if(*upage == NULL)
         return ERR_VM_NO_UPAGE;
 
@@ -649,16 +650,17 @@ status_t vm_delete_object(object_id oid)
 /* returns object by its id */
 vm_object_t *vm_get_object_by_id(object_id oid)
 {
-    vm_object_t temp_object, *object;
+    vm_object_t *search4, *object;
     unsigned long irqs_state;
 
-    temp_object.id = oid;
+    /* search cookie */
+    search4 = containerof(&oid, vm_object_t, id);
 
     /* acquire lock before accessing tree */
     irqs_state = spin_lock_irqsave(&objects_lock);
 
     /* search tree */
-    object = avl_tree_find(&objects_tree, &temp_object, NULL);
+    object = avl_tree_find(&objects_tree, search4, NULL);
 
     /* if object found and in proper state - increase references count */
     if(object && object->state == VM_OBJECT_STATE_NORMAL)

@@ -100,7 +100,7 @@ void sched_remove_thread(thread_t *thread);
  * Called from thread stub and inside scheduler
  * for performing last steps of context switch.
 */
-void sched_complete_context_switch(thread_t *thread);
+void sched_complete_context_switch(void);
 
 /*
  * Create kernel process.

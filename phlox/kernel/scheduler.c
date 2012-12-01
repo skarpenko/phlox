@@ -443,9 +443,10 @@ int sched_release_cpu(void)
 }
 
 /* performs last steps of context switch */
-void sched_complete_context_switch(thread_t *thread)
+void sched_complete_context_switch(void)
 {
-    /* get runqueue for this thread */
+    thread_t *thread = thread_get_current_thread();
+    /* get runqueue for current thread */
     runqueue_t *rq = &runqueues[thread->cpu->cpu_num];
 
     /* unlock runqueue */
@@ -563,5 +564,5 @@ void sched_reschedule(void)
      */
 
     /* perform last steps of context switch */
-    sched_complete_context_switch( thread_get_current_thread() );
+    sched_complete_context_switch();
 }

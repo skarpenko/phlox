@@ -324,7 +324,7 @@ static int stub_for_kernel_thread(void)
         panic("\nFailed to start thread id = %d\n", thread->id);
 
     /* notify scheduler about new thread start */
-    sched_complete_context_switch(thread);
+    sched_complete_context_switch();
 
     /* call entry and pass user-data into it */
     func = (void *)thread->entry;
@@ -554,6 +554,27 @@ thread_t *thread_get_current_thread(void)
     return *(thread_t **)(stack_ptr & (~(THREAD_KSTACK_SIZE-1)));
 }
 
+/* return structure for specified thread */
+thread_t *thread_get_thread_struct(thread_id tid)
+{
+    thread_t *look_for, *thread;
+    unsigned long irqs_state;
+
+    /* init data for search */
+    look_for = containerof(&tid, thread_t, id);
+
+    /* lock threads containers before touching */
+    irqs_state = spin_lock_irqsave(&threads_lock);
+
+    /* search for thread */
+    thread = avl_tree_find(&threads_tree, look_for, NULL);
+
+    /* release lock */
+    spin_unlock_irqrstor(&threads_lock, irqs_state);
+
+    return thread;
+}
+
 /* returns current thread id */
 thread_id thread_get_current_thread_id(void)
 {
@@ -690,4 +711,16 @@ void thread_exit(int exitcode)
     /* set next state for thread and reschedule */
     thread->next_state = THREAD_STATE_DEATH;
     sched_reschedule();
+}
+
+/* suspend specified thread */
+status_t thread_suspend(thread_id tid)
+{
+    return NO_ERROR;
+}
+
+/* resume specified thread */
+status_t thread_resume(thread_id tid)
+{
+    return NO_ERROR;
 }

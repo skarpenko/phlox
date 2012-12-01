@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -322,16 +322,17 @@ process_t *proc_get_kernel_process(void)
 /* returns process structure by its id */
 process_t *proc_get_process_by_id(proc_id pid)
 {
-    process_t temp_proc, *proc;
+    process_t *look4, *proc;
     unsigned int irqs_state;
 
-    temp_proc.id = pid;
+    /* look for */
+    look4 = containerof(&pid, process_t, id);
 
     /* acquire lock before tree-search */
     irqs_state = spin_lock_irqsave(&processes_lock);
 
     /* search */
-    proc = avl_tree_find(&processes_tree, &temp_proc, NULL);
+    proc = avl_tree_find(&processes_tree, look4, NULL);
 
     /* increment refs count on success search */
     if(proc) atomic_inc(&proc->ref_count);

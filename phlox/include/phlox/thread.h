@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_H_
@@ -21,6 +21,12 @@
  * Called only within system start up.
 */
 status_t threading_init(kernel_args_t *kargs, uint curr_cpu);
+
+/*
+ * Get structure for specified thread by id.
+ * Returns NULL if no such thread.
+*/
+thread_t *thread_get_thread_struct(thread_id tid);
 
 /*
  * Get current thread information
@@ -55,5 +61,16 @@ void thread_yield(void);
  * Terminate current thread with specified exit code
 */
 void thread_exit(int exitcode);
+
+/*
+ * Suspend specified thread
+*/
+status_t thread_suspend(thread_id tid);
+
+/*
+ * Resume specified thread
+*/
+status_t thread_resume(thread_id tid);
+
 
 #endif

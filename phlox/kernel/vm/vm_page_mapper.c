@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -62,11 +62,11 @@ static int compare_mapping_desc(const void *d1, const void *d2)
 /* Find mapping in AVL tree by physical address */
 static mapping_desc_t *tree_find_mapping(addr_t paddr, avl_tree_index_t *where)
 {
-    mapping_desc_t tmp_d;
+    mapping_desc_t *look4;
 
-    tmp_d.paddr = paddr;
+    look4 = containerof(&paddr, mapping_desc_t, paddr);
 
-    return avl_tree_find(&mappings_tree, &tmp_d, where);
+    return avl_tree_find(&mappings_tree, look4, where);
 }
 
 /* insert new mapping into tree */

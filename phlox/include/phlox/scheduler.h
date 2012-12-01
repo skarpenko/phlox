@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SCHEDULER_H_
@@ -20,8 +20,18 @@ bool scheduler_timer(void);
 
 /*
  * Performs rescheduling and context switch.
+ * Note1: Scheduling lock must be acquired before call.
+ * Note2: The routine also enables local interrupts and
+ *        releases scheduling lock.
 */
 void sched_reschedule(void);
+
+/*
+ * Acquire / release scheduling lock.
+*/
+void sched_lock_acquire(void);
+void sched_lock_release(void);
+bool sched_lock_tryacquire(void);
 
 /*
  * Capture cpu by current thread. Thread cannot be rescheduled.

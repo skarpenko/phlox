@@ -700,8 +700,16 @@ exit_on_error:
 /* transfer control to another thread */
 void thread_yield(void)
 {
+    /* before we proceed - disable interrupts and acquire
+     * scheduling lock.
+     */
+     local_irqs_disable();
+     sched_lock_acquire();
+
     /* perform rescheduling, stop current thread
      * and select new one for execution.
+     * this also enables local interrupts and releases
+     * scheduling lock.
      */
     sched_reschedule();
 }
@@ -753,8 +761,11 @@ void thread_exit(int exitcode)
 
     /* unlock and call reschedule */
     thread_unlock_thread(thread);
+    sched_lock_acquire();
     sched_reschedule();
-    /* NOTE: interrupts will be enabled during rescheduling */
+    /* NOTE: interrupts will be enabled during rescheduling
+     *       as far as scheduling lock will be released.
+     */
 
     /** control never goes here **/
 }
@@ -773,8 +784,11 @@ status_t thread_suspend_current(void)
 
     /* unlock thread and reschedule */
     thread_unlock_thread(thread);
+    sched_lock_acquire();
     sched_reschedule();
-    /* NOTE: interrupts will be reenabled during rescheduling */
+    /* NOTE: interrupts will be reenabled during rescheduling and scheduling lock
+     *       will be released.
+     */
 
     return NO_ERROR;
 }
@@ -805,9 +819,10 @@ status_t thread_suspend(thread_id tid)
      * if true - reschedule immediately, interrupts will be
      * reenabled during rescheduling.
     */
-    if(thread_get_current_thread_id() == tid)
+    if(thread_get_current_thread_id() == tid) {
+        sched_lock_acquire();
         sched_reschedule();
-    else
+    } else
         local_irqs_enable();
 
     return NO_ERROR;

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -25,6 +25,9 @@ static cpu_tss doublefault_tss;
 #define DOUBLEFAULT_STACKSIZE   (1024)
 #define DOUBLEFAULT_STACKSTART  (uint32)(doublefault_stack + DOUBLEFAULT_STACKSIZE)
 static uint32 doublefault_stack[DOUBLEFAULT_STACKSIZE];
+
+/* =true if previous reschedule operation was skiped. */
+static bool resched_pending = false;
 
 
 /*
@@ -195,7 +198,7 @@ static void print_int_frame(i386_int_frame_t *frame)
 void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t *frame)
 {
-    bool resched_needed = false;
+    bool resched_needed = resched_pending; resched_pending = false;
 
     switch(frame->vector) {
         /* Divide Error Exception */
@@ -361,6 +364,10 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
     }
 
     /* reschedule if needed */
-    if(resched_needed)
-        sched_reschedule();
+    if(resched_needed) {
+        if(sched_lock_tryacquire())
+            sched_reschedule();
+        else
+            resched_pending = true;
+    }
 }

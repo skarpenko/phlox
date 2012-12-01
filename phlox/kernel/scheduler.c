@@ -11,7 +11,6 @@
 
 /* Scheduling timer state */
 static bigtime_t sched_ticks      = 0;      /* timer ticks counted */
-static bool      in_sched_tick    = false;  /* =true if in timer handler already */
 static vint      sched_lost_ticks = 0;      /* used for counting lost ticks */
 static int       sched_tick_type  = 0;      /* current tick type */
 
@@ -21,6 +20,12 @@ static uint shuffle_factor = THREAD_DEFAULT_QUANTA / SCHED_FACTOR_BMAX;
 
 /* Per cpu run queues */
 static runqueue_t runqueues[SYSCFG_MAX_CPUS];
+
+/*
+ * Scheduling lock.
+ * Must be acquired before rescheduling operation.
+ */
+static spinlock_t sched_lock;
 
 /* Idle threads for each cpu */
 static thread_t *idle_threads[SYSCFG_MAX_CPUS] = { NULL };
@@ -272,7 +277,8 @@ status_t scheduler_init(kernel_args_t *kargs)
     if(err != NO_ERROR)
         return err;
 
-    /* TODO: do something? */
+    /* init global scheduling lock */
+    spin_init(&sched_lock);
 
     return NO_ERROR;
 }
@@ -299,7 +305,6 @@ status_t scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
 bool scheduler_timer(void)
 {
     bool resched = false; /* return value */
-    uint irqs_state;
     int ticks_out;
     int cpu;
     int prio;
@@ -308,11 +313,10 @@ bool scheduler_timer(void)
     thread_t *run_th;
 
     /* if nested enter occurs - increase lost ticks and exit */
-    if(in_sched_tick) {
+    if(!sched_lock_tryacquire()) {
         sched_lost_ticks++;
         return false;
-    } else
-        in_sched_tick = true;
+    }
 
     /* calc scheduler ticks and ticks out value for current thread */
     sched_ticks += (ticks_out = sched_lost_ticks + 1);
@@ -324,7 +328,7 @@ bool scheduler_timer(void)
     run_th = thread_get_current_thread();
 
     /* lock access to runqueue */
-    irqs_state = spin_lock_irqsave(&rq->lock);
+    spin_lock(&rq->lock);
 
     /* set scheduler tick type and shuffle runqueue head */
     sched_tick_type = (sched_tick_type + 1) & SCHED_TICK_TYPES_MASK;
@@ -373,9 +377,9 @@ bool scheduler_timer(void)
     }
 
     /* unlock runqueue access */
-    spin_unlock_irqrstor(&rq->lock, irqs_state);
+    spin_unlock(&rq->lock);
 
-    in_sched_tick = false; /* we leave scheduler's timer handler */
+    sched_lock_release(); /* we leave scheduler's timer handler */
 
     /* return result */
     return resched;
@@ -468,11 +472,16 @@ void sched_complete_context_switch(void)
     /* unlock current thread */
     thread_unlock_thread( thread_get_current_thread() );
 
+    /* release scheduling lock */
+    sched_lock_release();
+
     /* enable interrupts */
     local_irqs_enable();
 }
 
-/* reschedules and performs context switch */
+/* reschedules and performs context switch
+ * this also reenables interrupts and releases scheduling lock.
+*/
 void sched_reschedule(void)
 {
     int cpu;
@@ -481,8 +490,8 @@ void sched_reschedule(void)
     runqueue_t *rq;
     thread_t *curr_thrd, *next_thrd;
 
-    /* disable interrupts */
-    local_irqs_disable();
+    ASSERT_MSG(sched_lock != 0,
+        "sched_reschedule(): scheduling lock was not acquired!");
 
     /* init some other important variables */
     cpu = get_current_processor();                  /* current cpu */
@@ -511,6 +520,7 @@ void sched_reschedule(void)
             /* unlock runqueue, thread and return */
             spin_unlock(&rq->lock);
             thread_unlock_thread(curr_thrd);
+            sched_lock_release();
             local_irqs_enable();
             return;
 
@@ -594,4 +604,22 @@ void sched_reschedule(void)
 
     /* perform last steps of context switch */
     sched_complete_context_switch();
+}
+
+/* acquire scheduling lock */
+void sched_lock_acquire(void)
+{
+    spin_lock(&sched_lock);
+}
+
+/* release scheduling lock */
+void sched_lock_release(void)
+{
+    spin_unlock(&sched_lock);
+}
+
+/* try acquire scheduling lock */
+bool sched_lock_tryacquire(void)
+{
+    return spin_trylock(&sched_lock);
 }

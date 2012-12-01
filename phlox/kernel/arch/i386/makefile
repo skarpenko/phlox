@@ -10,6 +10,7 @@ KERNEL_ARCH_I386_O_FILES += \
 	vm.o \
 	vm_translation_map.o \
 	interrupt.o \
+	timer.o \
 	int_entry.o
 
 KERNEL_ARCH_I386_O_FILES := $(addprefix $(KERNEL_ARCH_OUT_DIR)/,$(KERNEL_ARCH_I386_O_FILES))

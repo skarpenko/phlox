@@ -11,6 +11,7 @@ KERNEL_O_FILES := \
 	heap.o \
 	machine.o \
 	interrupt.o \
+	timer.o \
 	misc.o \
 	klog.o \
 	debug.o

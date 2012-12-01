@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -10,6 +10,7 @@
 #include <phlox/processor.h>
 #include <phlox/interrupt.h>
 #include <phlox/machine.h>
+#include <phlox/timer.h>
 #include <phlox/kargs.h>
 #include <phlox/vm.h>
 #include <phlox/klog.h>
@@ -64,8 +65,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
        /* init interrupt handling */
        interrupt_init(&globalKargs);
 
-       /* init virtual memory manager. */
+       /* init virtual memory manager */
        vm_init(&globalKargs);
+
+       /* system timer init */
+       timer_init(&globalKargs);
     } else {
        /* wait until BSP completes? */
     }

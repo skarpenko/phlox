@@ -65,6 +65,7 @@ typedef struct thread {
     addr_t           ustack_base;        /* User stack base */
     /* Thread state params */
     int              state;              /* Thread state */
+    int              next_state;         /* Thread state after reschedule */
     uint             flags;              /* Thread flags */
     int              preempt_count;      /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
@@ -86,7 +87,7 @@ typedef struct thread {
     list_elem_t      threads_list_node;  /* Threads list node */
     avl_tree_node_t  threads_tree_node;  /* Threads tree node */
     list_elem_t      proc_list_node;     /* Process threads list node */
-    list_elem_t      sched_list_node;    /* Scheduler's list node */
+    list_elem_t      sched_list_node;    /* List node for execution scheduling */
     /* Hardware-dependend data */
     arch_thread_t    arch;               /* Architecture-dependend data */
 /* TODO: Semaphores */

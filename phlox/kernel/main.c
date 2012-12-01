@@ -23,6 +23,9 @@
 /* Global kernel args */
 kernel_args_t globalKargs;
 
+/* Current kernel start up stage */
+static int _kernel_start_stage = K_KERNEL_STARTUP;
+
 void print_kernel_memory_map(void); /* for DEBUG only */
 void init_console_writer(void); /* for DEBUG only */
 
@@ -36,6 +39,8 @@ int thread1(void *data);
 int thread2(void *data);
 int thread_ctl(void *data);
 
+
+/* Main entry point on kernel start */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 {
@@ -144,12 +149,34 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     /* init console writer */
     init_console_writer();
 
+    /* switch to next kernel start stage */
+    _kernel_start_stage = K_SERVICES_STARTUP;
+
     /* enable interrupts */
     local_irqs_enable();
 
     /* start idle cycle for this cpu. wait for reschedule. */
     processor_idle_cycle();
 }
+
+/* get current kernel start up stage */
+int kernel_start_stage(void)
+{
+    return _kernel_start_stage;
+}
+
+/* returns true if specified stage is current */
+bool is_kernel_start_stage(int stage)
+{
+    return (_kernel_start_stage == stage);
+}
+
+/* returns true if specified stage was completed */
+bool is_kernel_start_stage_compl(int stage)
+{
+    return (_kernel_start_stage > stage);
+}
+
 
 /*
  * Prints kernel's memory map.

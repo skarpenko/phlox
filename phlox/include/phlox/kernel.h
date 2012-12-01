@@ -50,6 +50,23 @@ int panic(const char *fmt, ...);
 /* duplicate string */
 char *kstrdup(const char *text);
 
+/* kernel start up stages */
+enum {
+    K_KERNEL_STARTUP,    /* kernel start up stage */
+    K_SERVICES_STARTUP,  /* services start up */
+    K_SYSTEM_READY       /* system is ready to serve */
+};
+
+/* get current kernel start up stage */
+int kernel_start_stage(void);
+
+/* returns true if specified stage is current */
+bool is_kernel_start_stage(int stage);
+
+/* returns true if specified stage was completed */
+bool is_kernel_start_stage_compl(int stage);
+
+
 #ifdef __cplusplus
 } /* "C" */
 #endif

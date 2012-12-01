@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_PRIVATE_H_
@@ -97,11 +97,10 @@ void sched_add_thread(thread_t *thread);
 void sched_remove_thread(thread_t *thread);
 
 /*
- * Called from thread stub to inform scheduler that
- * new thread started. Scheduler performs last steps of
- * context switch within this routine.
+ * Called from thread stub and inside scheduler
+ * for performing last steps of context switch.
 */
-void sched_new_thread_started(thread_t *thread);
+void sched_complete_context_switch(thread_t *thread);
 
 /*
  * Create kernel process.

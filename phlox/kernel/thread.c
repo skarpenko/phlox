@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -324,7 +324,7 @@ static int stub_for_kernel_thread(void)
         panic("\nFailed to start thread id = %d\n", thread->id);
 
     /* notify scheduler about new thread start */
-    sched_new_thread_started(thread);
+    sched_complete_context_switch(thread);
 
     /* call entry and pass user-data into it */
     func = (void *)thread->entry;

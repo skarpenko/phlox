@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Portions copyright 2001, Travis Geiselbrecht.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -150,6 +150,7 @@ typedef intptr_t                 ptrdiff_t;
 typedef uint32 result_t;
 typedef uint32 status_t;
 typedef uint32 flags_t;
+typedef uint32 time_t;
 typedef int64 bigtime_t;
 typedef uint64 vnode_id;
 typedef uint object_id;     /* vm object id     */

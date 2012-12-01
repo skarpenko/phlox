@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SCHEDULER_PRIVATE_H_
@@ -11,11 +11,10 @@
 #include <phlox/thread_private.h>
 
 
-/* Timer tick length in milliseconds */
-#define SCHED_TICK_MSEC  (1000 / HZ)
-/* Ticks and milliseconds conversion macroses (not accurate) */
-#define SCHED_TICKS2MSEC(a)  ( (a) * SCHED_TICK_MSEC )
-#define SCHED_MSEC2TICKS(a)  ( (a) / SCHED_TICK_MSEC )
+/* Ticks and milliseconds conversion macroses */
+#define SCHED_TICKS2MSEC(a)  ( (a) * ((1000L)+(1000L)%HZ) / HZ )
+#define SCHED_MSEC2TICKS(a)  ( (a) * HZ / ((1000L)+(1000L)%HZ) )
+
 
 /* Scheduling ticks types */
 #define SCHED_TICK_TYPES_COUNT  8

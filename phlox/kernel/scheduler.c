@@ -442,8 +442,8 @@ int sched_release_cpu(void)
     return t->preempt_count;
 }
 
-/* this called from thread stub */
-void sched_new_thread_started(thread_t *thread)
+/* performs last steps of context switch */
+void sched_complete_context_switch(thread_t *thread)
 {
     /* get runqueue for this thread */
     runqueue_t *rq = &runqueues[thread->cpu->cpu_num];
@@ -558,11 +558,10 @@ void sched_reschedule(void)
     /* switch to next thread */
     arch_sched_context_switch(curr_thrd, next_thrd);
     /* NOTE: For new threads control never goes here after switch at the first
-     * time. But thread stub routine calls sched_new_thread_started() routine,
-     * so unlock steps performed inside this routine.
+     * time. But thread stub routine calls sched_complete_context_switch()
+     * routine directly, so context switch completes inside this routine.
      */
 
-    /* release lock */
-    spin_unlock(&rq->lock);
-    local_irqs_enable();
+    /* perform last steps of context switch */
+    sched_complete_context_switch( thread_get_current_thread() );
 }

@@ -217,7 +217,7 @@ status_t vm_page_init(kernel_args_t *kargs)
 
     /* init pages */
     for(i = 0; i < total_pages_count; i++) {
-       all_pages[i].ppn        = physical_page_offset;
+       all_pages[i].ppn        = physical_page_offset + i;
        all_pages[i].type       = VM_PAGE_TYPE_PHYSICAL;
        all_pages[i].state      = VM_PAGE_STATE_FREE;
        all_pages[i].wire_count = 0;
@@ -413,7 +413,7 @@ vm_page_t *vm_page_alloc_specific_range(addr_t first_page_num, addr_t npages, ui
     irqs_state = spin_lock_irqsave(&page_lock);
 
     /* check that allocation is possible */
-    for(i = first_page_num; i < npages; i++) {
+    for(i = first_page_num; i < first_page_num + npages; i++) {
         /* get page */
         p = vm_page_lookup(i);
         if(p == NULL || (p->state != VM_PAGE_STATE_FREE  &&
@@ -422,8 +422,11 @@ vm_page_t *vm_page_alloc_specific_range(addr_t first_page_num, addr_t npages, ui
             goto exit_allocate;
     }
 
+    /* adjust index for direct access to pages array */
+    first_page_num -= physical_page_offset;
+
     /* now we can allocate pages */
-    for(i = first_page_num; i < npages; i++) {
+    for(i = first_page_num; i < first_page_num + npages; i++) {
         p = &all_pages[i];
         /* remove page from proper list */
         switch(p->state) {
@@ -466,7 +469,7 @@ exit_allocate:
 
     /* clear pages if needed */
     if(need_clear) {
-        for(i = first_page_num; i < npages; i++)
+        for(i = first_page_num; i < first_page_num + npages; i++)
             clear_page(all_pages[i].ppn * PAGE_SIZE);
     }
 

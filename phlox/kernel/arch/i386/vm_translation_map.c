@@ -723,22 +723,6 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
       for(i=0; i<=kbase_pde; i++) {
          if(i==page_hole_pdeidx) continue;
 
-#warning "Temporary patch is here"
-         /*** Temporary patch starts here ***/
-         /* So... at the current stage of kernel development
-          * it is not possible to unmap page at address 0xb8000
-          * 'cause that is screen I/O buffer.
-         */
-         if(i==VADDR_TO_PDENT(0xb8000)) {
-             pgtable = (mmu_pte *)((uint32)page_hole + i * PAGE_SIZE);
-             for(j=0; j < MAX_PTENTS; j++) {
-                 if(j==VADDR_TO_PTENT(0xb8000)) continue;
-                 pgtable[j].stru.p = 0;
-             }
-             continue;
-         }
-         /*** Temporary patch ends here ***/
-
          /* if page table exists */
          if(page_hole_pgdir[i].stru.p) {
              if(i==kbase_pde) {

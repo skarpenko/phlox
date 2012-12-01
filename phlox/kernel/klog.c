@@ -222,11 +222,12 @@ uint klog_get_new_row(uint counter, char *row)
     /* compute least row counter */
     least_row_counter = row_counter - KLOG_N_ROWS + 1;
 
-    /* check counter ranges */
-    if (counter < least_row_counter)
+    /* check counter ranges
+     * if passed counter is out of range we treat it as
+     * a least row counter here
+    */
+    if (counter > row_counter && counter < least_row_counter)
         counter = least_row_counter;
-    if (counter > row_counter)
-        counter = row_counter;
 
     /* get row index that is matched given counter */
     index = _get_row_index(row_counter - counter);
@@ -235,7 +236,14 @@ uint klog_get_new_row(uint counter, char *row)
     memcpy(row, &logbook[index][0], KLOG_N_COLS);
 
     /* increment counter for caller */
-    if(++counter > row_counter)
+    counter++;
+
+    /* and check ranges again
+     * if incremented counter is out of range here
+     * we set it to current row counter and then return
+     * it to caller
+    */
+    if (counter > row_counter && counter < least_row_counter)
         counter = row_counter;
     
     /* release lock */

@@ -48,6 +48,7 @@ typedef struct {
 
     /*** Page lists ***/
     uint  active_pages;
+    uint  inactive_pages;
     uint  wired_pages;
     uint  busy_pages;
     uint  clear_pages;

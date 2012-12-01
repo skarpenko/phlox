@@ -26,14 +26,12 @@ status_t vm_page_init(kernel_args_t *kargs);
 /*
  * Mark given physical page as in use, but still not
  * used by VM
- *
 */
 status_t vm_page_mark_page_inuse(addr_t page);
 
 /*
  * Mark given range of physical pages as in use, but still not
  * used by VM
- *
 */
 status_t vm_page_mark_range_inuse(addr_t start_page, size_t len_pages);
 
@@ -42,6 +40,12 @@ status_t vm_page_mark_range_inuse(addr_t start_page, size_t len_pages);
  * state in VM subsystem
 */
 vm_page_t *vm_page_alloc_specific(addr_t page_num, uint page_state);
+
+/*
+ * Allocate specific continuous range of pages by physical number of
+ * first page in the range.
+*/
+vm_page_t *vm_page_alloc_specific_range(addr_t first_page_num, addr_t npages, uint page_state);
 
 /*
  * Allocate page by state in VM subsystem

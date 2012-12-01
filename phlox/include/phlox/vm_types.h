@@ -15,7 +15,7 @@
 typedef struct vm_page {
     list_elem_t list_node;  /* Pages list node */
     uint ppn;               /* Physical number of the page */
-    vuint ref_count;        /* References count to page */
+    vuint wire_count;       /* Count of maps refered to page */
     uint type  : 2;         /* Page type */
     uint state : 4;         /* Page state */
 } vm_page_t;
@@ -28,8 +28,9 @@ enum {
 /* Page states */
 enum {
     VM_PAGE_STATE_ACTIVE = 0,  /* Active page */
+    VM_PAGE_STATE_INACTIVE,    /* Inactive page */
     VM_PAGE_STATE_FREE,        /* Free page */
-    VM_PAGE_STATE_CLEAR,       /* Clear page */
+    VM_PAGE_STATE_CLEAR,       /* Free and clear page */
     VM_PAGE_STATE_WIRED,       /* Wired page */
     VM_PAGE_STATE_BUSY,        /* Busy page */
     VM_PAGE_STATE_UNUSED       /* Unused or reserved page */

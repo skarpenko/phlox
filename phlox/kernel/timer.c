@@ -29,6 +29,7 @@ typedef struct event_struct {
         /* valid if timeout is true */
         struct {
             timeout_id id;                             /* timeout call id */
+            spinlock_t run_lock;                       /* running if locked */
             bool canceled;                             /* is canceled? */
             void (*timeout_routine)(timeout_id,void*); /* ptr to routine */
             void *data;                                /* user data */
@@ -201,9 +202,11 @@ static int timeout_calls_handler(void *data)
         ASSERT_MSG(evt->timeout, "timeout_calls_handler(): not a timeout call!\n");
 
         /* call routine only if event was not canceled */
+        spin_lock(&evt->run_lock); /* set lock to mark running event */
         if(!evt->canceled) {
             evt->timeout_routine(evt->id, evt->data);
         }
+        spin_unlock(&evt->run_lock); /* clear lock */
 
         /** Remove event data from tree and free it **/
 
@@ -448,6 +451,7 @@ timeout_id timer_timeout_sched(timeout_routine_t routine, void *data, uint ticks
      new_evt->canceled = false;
      new_evt->timeout_routine = routine;
      new_evt->data = data;
+     spin_init(&new_evt->run_lock);
 
      /* acquire events lock */
      irqs_state = spin_lock_irqsave(&events_lock);
@@ -484,4 +488,35 @@ void timer_timeout_cancel(timeout_id tid)
 
     /* release events lock */
     spin_unlock_irqrstor(&timeouts_lock, irqs_state);
+}
+
+/* cancel timeout call (synchronized) */
+void timer_timeout_cancel_sync(timeout_id tid)
+{
+    event_t *look_for, *evt;
+    unsigned long irqs_state;
+    int retry;
+
+    look_for = containerof(&tid, event_t, id);
+
+    do {
+        retry = 0; /* clear retry state */
+
+        /* acquire events lock */
+        irqs_state = spin_lock_irqsave(&timeouts_lock);
+
+        /* find event in tree and set canceled flag */
+        evt = avl_tree_find(&timeouts_tree, look_for, NULL);
+        if(evt) {
+            retry = !spin_trylock(&evt->run_lock);
+            if(!retry) evt->canceled = true;
+        }
+
+        /* release events lock */
+        spin_unlock_irqrstor(&timeouts_lock, irqs_state);
+
+        /* Oops... Retry required. Wait a little. */
+        if(retry)
+            thread_yield();
+    } while(retry);
 }

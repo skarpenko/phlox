@@ -85,5 +85,12 @@ timeout_id timer_timeout_sched(timeout_routine_t routine, void *data, uint ticks
  */
 void timer_timeout_cancel(timeout_id tid);
 
+/*
+ * Cancel previously scheduled timeout call.
+ * This version is also ensures that the call is not
+ * currently running.
+ */
+void timer_timeout_cancel_sync(timeout_id tid);
+
 
 #endif

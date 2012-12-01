@@ -47,10 +47,11 @@ status_t sem_delete(sem_id id);
 status_t sem_down_ex(sem_id id, uint count, uint timeout_msec, flags_t flags);
 status_t sem_down(sem_id id, uint count);
 
-/* Semaphore flags */
+/* Flags to use in sem_down_ex() routine */
 enum {
-    SEMF_NOFLAGS = 0x0,  /* no flags */
-    SEMF_TIMEOUT = 0x1   /* Use timeout param. */
+    SEMF_NOFLAGS = 0x0,  /* No flags */
+    SEMF_TIMEOUT = 0x1,  /* Use timeout param */
+    SEMF_TRY     = 0x2   /* Try to count down */
 };
 
 /*
@@ -65,6 +66,14 @@ status_t sem_up(sem_id id, uint count);
  * Find semaphore by name
 */
 sem_id sem_get_by_name(const char *name);
+
+/*
+ * Change semaphore owning process
+ * Params:
+ *   id        - semaphore id;
+ *   new_owner - new owning process id.
+*/
+status_t sem_change_owner(sem_id id, proc_id new_owner);
 
 
 #endif

@@ -514,6 +514,9 @@ status_t sem_down_ex(sem_id id, uint count, uint timeout_msec, flags_t flags)
         if(wcb.sem->count >= count) {
             wcb.sem->count -= count;
             break;
+        } else if(flags & SEMF_TRY) {
+            wcb.err = ERR_SEM_TRY_FAILED;
+            break;
         }
 
         /* if thread is going to run at next state - put it to wait state
@@ -661,4 +664,53 @@ sem_id sem_get_by_name(const char *name)
     spin_unlock_irqrstor(&sem_tree_lock, irqs_state);
 
     return id; /* return result */
+}
+
+/* change semaphore owning process */
+status_t sem_change_owner(sem_id id, proc_id new_owner)
+{
+    unsigned long irqs_state;
+    process_t *proc;
+    semaphore_t *sem;
+
+    /* get process */
+    proc = proc_get_process_by_id(new_owner);
+    if(proc == NULL)
+        return ERR_MT_INVALID_HANDLE;
+
+    /* disable local interrupts */
+    local_irqs_save_and_disable(irqs_state);
+
+    /* get semaphore data */
+    sem = get_sem_by_id(id);
+    if(sem == NULL) {
+        /* restore interrupts */
+        local_irqs_restore(irqs_state);
+        /* put process back */
+        proc_put_process(proc);
+        /* return error state */
+        return ERR_SEM_INVALID_HANDLE;
+    }
+
+    /* acquire lock for old owner */
+    spin_lock(&sem->proc->lock);
+    /* remove from the list of old owner */
+    xlist_remove_unsafe(&sem->proc->semaphores, &sem->proc_list_node);
+    /* unlock old owner */
+    spin_unlock(&sem->proc->lock);
+    
+    /* acquire lock for new owner */
+    spin_lock(&proc->lock);
+    /* put into the list of new owner */
+    xlist_add(&proc->semaphores, &sem->proc_list_node);
+    /* set owner pointer to new owner */
+    sem->proc = proc;
+    /* unlock new owner */
+    spin_unlock(&proc->lock);
+
+    /* put new owner process back */
+    proc_put_process(proc);
+
+    /* return success */
+    return NO_ERROR;
 }

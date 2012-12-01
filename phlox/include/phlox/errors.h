@@ -52,6 +52,7 @@ enum PhloxSemaphoresErrors {
     ERR_SEM_INVALID_VALUE,
     ERR_SEM_DELETED,
     ERR_SEM_TIMEOUT,
+    ERR_SEM_TRY_FAILED,
     ERR_SEM_GENERAL_LIMIT
 };
 

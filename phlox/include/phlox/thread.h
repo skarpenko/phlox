@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_H_
@@ -160,6 +160,31 @@ thread_t *thread_get_thread_struct_locked(thread_id tid);
  * Returns current thread with lock acquired
 */
 thread_t *thread_get_current_thread_locked(void);
+
+
+/*** Other utility routines ***/
+
+/*
+ * Register thread termination callback.
+ *
+ * Thread pointed by corresponding cbd field must be locked before call.
+ * If callback was registered successfully pointer to cbd returned
+ * or NULL if some error occured.
+ *
+ * Callbacks are called in terminating thread context with no thread lock
+ * acquired. It is safe to free thread_cbd_t structure inside of callback
+ * being called.
+*/
+thread_cbd_t *thread_register_term_cb(thread_cbd_t *cbd);
+
+/*
+ * Unregister previously registered callback.
+ *
+ * Thread pointed by corresponding cbd field must be locked before call.
+ *
+ * cbd structure must be the same as used in register call.
+*/
+void thread_unregister_term_cb(thread_cbd_t *cbd);
 
 
 #endif

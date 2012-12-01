@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -257,6 +257,12 @@ static void deinit_thread_struct(thread_t *thread)
     spin_init_locked(&thread->lock);
 
     /* TODO: deinit other fields */
+
+    ASSERT_MSG(
+        thread->term_cbs_list.first == NULL &&
+        thread->term_cbs_list.last == NULL,
+        "deinit_thread_struct(): termination callbacks list is not empty."
+    );
 }
 
 /* moves threads in death state from death list to dead list */
@@ -404,6 +410,30 @@ exit_on_error:
    
    /* return occured error code */
    return err;
+}
+
+/* process termination callbacks registered for thread */
+static void purge_term_cbs_list(thread_t *th)
+{
+    unsigned long irqs_state;
+    list_elem_t *le;
+    thread_cbd_t *cbd;
+
+    do {
+        /* lock thread */
+        irqs_state = spin_lock_irqsave(&th->lock);
+
+        /* extract callback descriptor */
+        le = xlist_extract_first(&th->term_cbs_list);
+        cbd = (le) ? containerof(le, thread_cbd_t, list_node) : NULL;
+
+        /* release thread lock */
+        spin_unlock_irqrstor(&th->lock, irqs_state);
+
+        /* call the callback function */
+        if(cbd != NULL) cbd->func(cbd);
+
+    } while(cbd != NULL);
 }
 
 
@@ -746,6 +776,11 @@ void thread_exit(int exitcode)
      *   4. Reschedule
     */
 
+    /* before proceed with thread termination,
+     * call all registered termination callbacks.
+    */
+    purge_term_cbs_list(thread);
+
     /* disable irqs on this cpu */
     local_irqs_disable();
 
@@ -941,4 +976,26 @@ status_t thread_sleep_id(thread_id tid, uint msec)
     local_irqs_enable();
 
     return NO_ERROR;
+}
+
+/* register termination callback */
+thread_cbd_t *thread_register_term_cb(thread_cbd_t *cbd)
+{
+    ASSERT_MSG(cbd->thread->lock != 0,
+        "thread_register_term_cb(): thread was not locked.");
+
+    /* put callback to callbacks list of the thread */
+    xlist_add_last(&cbd->thread->term_cbs_list, &cbd->list_node);
+
+    return cbd;
+}
+
+/* unregister termination callback */
+void thread_unregister_term_cb(thread_cbd_t *cbd)
+{
+    ASSERT_MSG(cbd->thread->lock != 0,
+        "thread_unregister_term_cb(): thread was not locked.");
+
+    /* remove callback from the callbacks list */
+    xlist_remove_unsafe(&cbd->thread->term_cbs_list, &cbd->list_node);
 }

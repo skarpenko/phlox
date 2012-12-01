@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_TYPES_H_
@@ -85,6 +85,8 @@ typedef struct thread {
     /* Entry */
     addr_t           entry;              /* Entry point address */
     void             *data;              /* Optional data passed to thread */
+    /* Thread termination control */
+    xlist_t          term_cbs_list;      /* Termination callbacks list */
     /* List nodes */
     list_elem_t      threads_list_node;  /* Threads list node */
     avl_tree_node_t  threads_tree_node;  /* Threads tree node */
@@ -173,6 +175,14 @@ enum {
   PROCESS_FLAG_NONE        = 0x0,  /* No flags is set */
   PROCESS_FLAG_INTERACTIVE = 0x1   /* Process currently interactive */
 };
+
+/* Thread callback descriptor */
+typedef struct thread_cbd {
+    thread_t *thread;                  /* Thread the callback assigned to */
+    void (*func)(struct thread_cbd*);  /* Function to call */
+    void *data;                        /* User data */
+    list_elem_t list_node;             /* List node */
+} thread_cbd_t;
 
 
 #endif

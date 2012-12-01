@@ -1,11 +1,11 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
 /* Print warning if compiling for i386 CPU */
 #if CPU_i386
-#warning Compiling for i386 CPU
+#  warning Compiling for i386 CPU
 #endif
 
 #define FUNCTION(x) .global x; .type x,@function; x
@@ -13,9 +13,9 @@
 
 /* Use lock prefix if compiling for SMP */
 #if SYSCFG_SMP_SUPPORT
-  #define LOCK lock
+#  define LOCK lock
 #else
-  #define LOCK
+#  define LOCK
 #endif
 
 /* Arguments */

@@ -281,22 +281,23 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr
      }
 
      i = 0;
-     #if CPU_i386
-       i = 3; /* optimized for 80386 */
-     #endif
 
-     #if CPU_i486
-       i = 4; /* optimized for 80486 */
-     #endif
+#if CPU_i386
+     i = 3; /* optimized for 80386 */
+#endif
 
-     #if CPU_i586 || CPU_Pentium || CPU_PentiumMMX || CPU_K6 || CPU_K6_2 || CPU_K6_3
-       i = 5; /* optimized for Pentium-compatible chips */
-     #endif
+#if CPU_i486
+     i = 4; /* optimized for 80486 */
+#endif
 
-     #if CPU_i686 || CPU_PentiumPro || CPU_Pentium2 || CPU_Pentium3 || CPU_Pentium4 || \
-         CPU_K7 || CPU_Athlon || CPU_Athlon_Tbird || CPU_Athlon4 || CPU_AthlonXP || CPU_AthlonMP
-       i = 6; /* optimized for PentiumPro-compatible chips */
-     #endif
+#if CPU_i586 || CPU_Pentium || CPU_PentiumMMX || CPU_K6 || CPU_K6_2 || CPU_K6_3
+     i = 5; /* optimized for Pentium-compatible chips */
+#endif
+
+#if CPU_i686 || CPU_PentiumPro || CPU_Pentium2 || CPU_Pentium3 || CPU_Pentium4 || \
+    CPU_K7 || CPU_Athlon || CPU_Athlon_Tbird || CPU_Athlon4 || CPU_AthlonXP || CPU_AthlonMP
+     i = 6; /* optimized for PentiumPro-compatible chips */
+#endif
 
      if(ap->family < i) {
         kprint("\n\nSorry, but Phlox kernel cannot run on this computer\n");

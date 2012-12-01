@@ -35,9 +35,15 @@ extern "C" {
 
 extern kernel_args_t globalKargs; /* global kernel arguments variable */
 
-int vsprintf(char *str, char const *format, va_list ap);
-int sprintf(char * buf, const char *fmt, ...);
+/* string formatting routines */
+int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
+int vscnprintf(char *buf, size_t size, const char *fmt, va_list args);
+int snprintf(char *buf, size_t size, const char *fmt, ...);
+int scnprintf(char *buf, size_t size, const char *fmt, ...);
+int vsprintf(char *buf, const char *fmt, va_list args);
+int sprintf(char *buf, const char *fmt, ...);
 
+/* klog output */
 int kprint(const char *fmt, ...);
 int panic(const char *fmt, ...);
 

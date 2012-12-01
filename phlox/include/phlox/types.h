@@ -133,6 +133,7 @@ typedef volatile unsigned long       vulong_t;
 
 typedef int             intptr_t;
 typedef unsigned int    uintptr_t;
+typedef intptr_t        ptrdiff_t;
 
 
 /* system types */

@@ -10,10 +10,10 @@
  * Note: Use HZ variable instead of SYSCFG_KERNEL_HZ
  */
 #ifndef SYSCFG_KERNEL_HZ
-  #warning SYSCFG_KERNEL_HZ is not defined in phlox/sysconfig.h setting HZ to default
-  #define HZ  100 /* Hz */
+#  warning SYSCFG_KERNEL_HZ is not defined in phlox/sysconfig.h setting HZ to default
+#  define HZ  100 /* Hz */
 #else
-  #define HZ  SYSCFG_KERNEL_HZ
+#  define HZ  SYSCFG_KERNEL_HZ
 #endif
 
 #endif

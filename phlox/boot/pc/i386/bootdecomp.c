@@ -110,7 +110,7 @@ int dprintf(const char *fmt, ...)
     char temp[256];
 
     va_start(args, fmt);
-    ret = vsprintf(temp,fmt,args);
+    ret = vsnprintf(temp, 256, fmt, args);
     va_end(args);
 
     puts(temp);
@@ -124,7 +124,7 @@ int panic(const char *fmt, ...)
     char temp[256];
 
     va_start(args, fmt);
-    ret = vsprintf(temp,fmt,args);
+    ret = vsnprintf(temp, 256, fmt, args);
     va_end(args);
 
     puts("\nPANIC: ");

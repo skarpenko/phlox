@@ -215,7 +215,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     if(ext_mem_count > 0) {
         struct ext_mem_struct *buf = (struct ext_mem_struct *)ext_mem_block;
 
-      #if PRINT_BIOS_MEM_MAP
+#if PRINT_BIOS_MEM_MAP
         /* print RAM map provided by BIOS */
         dprintf("BIOS-provided physical RAM map:\n");
         for(i = 0; i < ext_mem_count; i++) {
@@ -226,7 +226,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
             dprintf(" (reserved)\n");
         }
         dprintf("===\n");
-      #endif
+#endif
 
         kargs->num_phys_mem_ranges = 0;
 
@@ -285,7 +285,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     /* write total memory count into kernel args */
     kargs->memsize = kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].size;
 
-  #if PRINT_KINIT_SUMMARY
+#if PRINT_KINIT_SUMMARY
     /* print out kinit summary */
     dprintf("\nkinit summary:\n");
     dprintf(" BootFS image phys.addr.: 0x%08X - 0x%08X\n", kargs->btfs_image_addr.start,
@@ -330,7 +330,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
                                       kargs->virt_alloc_range[i].start +
                                       kargs->virt_alloc_range[i].size - 1);
     dprintf("===\n");
-  #endif
+#endif
 
     /* save remaining kernel args */
     kargs->num_cpus = 1;
@@ -397,7 +397,7 @@ int dprintf(const char *fmt, ...)
     char temp[256];
 
     va_start(args, fmt);
-    ret = vsprintf(temp,fmt,args);
+    ret = vsnprintf(temp, 256, fmt, args);
     va_end(args);
 
     puts(temp);
@@ -411,7 +411,7 @@ int panic(const char *fmt, ...)
     char temp[256];
 
     va_start(args, fmt);
-    ret = vsprintf(temp,fmt,args);
+    ret = vsnprintf(temp, 256, fmt, args);
     va_end(args);
 
     puts("\nKINIT PANIC: ");

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -9,11 +9,11 @@
 #include <boot/bootfs_struct.h>
 
 #ifndef NULL
- #ifdef __cplusplus
-  #define NULL 0
- #else
-  #define NULL ((void *)0)
- #endif
+# ifdef __cplusplus
+#    define NULL 0
+# else
+#    define NULL ((void *)0)
+# endif
 #endif
 
 /* The possibilities for the third argument to `seek'.

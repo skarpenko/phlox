@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -68,6 +68,6 @@ uint32 get_current_processor(void)
 
 /* And fire compilation error if SMP support requested */
 #if SYSCFG_SMP_SUPPORT
-  #error get_current_processor(): smp not supported!
+#  error get_current_processor(): smp not supported!
 #endif
 }

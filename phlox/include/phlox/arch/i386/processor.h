@@ -93,14 +93,14 @@ typedef struct {
 /* SMP barriers */
 #if SYSCFG_SMP_SUPPORT
 /* Mandatory barriers for SMP    */
-#define arch_smp_mb()   arch_mb()
-#define arch_smp_rmb()  arch_rmb()
-#define arch_smp_wmb()  arch_wmb()
+#  define arch_smp_mb()   arch_mb()
+#  define arch_smp_rmb()  arch_rmb()
+#  define arch_smp_wmb()  arch_wmb()
 #else
 /* Compiler barriers for non-SMP */
-#define arch_smp_mb()   barrier()
-#define arch_smp_rmb()  barrier()
-#define arch_smp_wmb()  barrier()
+#  define arch_smp_mb()   barrier()
+#  define arch_smp_rmb()  barrier()
+#  define arch_smp_wmb()  barrier()
 #endif
 
 /*
@@ -325,10 +325,10 @@ typedef struct {
  * Note that WBINVD instruction supported by 486+ CPUs
  */
 #if CPU_i386
-  #warning WBINVD instruction is not supported on i386 CPU!
-  #define wbinvd()
+#  warning WBINVD instruction is not supported on i386 CPU!
+#  define wbinvd()
 #else
-  #define wbinvd()  __asm__ __volatile__ ("wbinvd")
+#  define wbinvd()  __asm__ __volatile__ ("wbinvd")
 #endif
 
 /*

@@ -134,6 +134,12 @@ status_t processor_set_init_after_vm(kernel_args_t *kargs, uint curr_cpu);
 status_t processor_init_after_vm(processor_t *p, kernel_args_t *kargs, uint curr_cpu);
 
 /*
+ * Idle cycle routine. Used in per-cpu idle threads.
+ * Routine never returns.
+ */
+void processor_idle_cycle(void);
+
+/*
  * Returns current processor number
  */
 uint get_current_processor(void);

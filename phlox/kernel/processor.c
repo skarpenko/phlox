@@ -99,6 +99,12 @@ status_t processor_init_after_vm(processor_t *p, kernel_args_t *kargs, uint curr
     return err;
 }
 
+void processor_idle_cycle(void)
+{
+    while(true)
+        safe_halt(); /* stop cpu until interrupt occurs */
+}
+
 uint get_current_processor(void)
 {
     /* As SMP is not currently supported we always return

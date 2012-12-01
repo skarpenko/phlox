@@ -3,16 +3,31 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <arch/i386/fpu_data.h>
 #include <phlox/errors.h>
 #include <phlox/arch/i386/segments.h>
+#include <phlox/processor.h>
 #include <phlox/thread.h>
 #include <phlox/thread_private.h>
+
+
+/* initial fpu state for newborn threads */
+static fpu_state initial_fpu_state _ALIGNED(16);
 
 
 /* architecture-dependend threading initialization */
 status_t arch_threading_init(kernel_args_t *kargs)
 {
-    /* nothing to init for now */
+    /* prepare global valid FPU state */
+    asm volatile (
+     "   clts     ;"  /* clear Task Switched flag to avoid exceptions */
+     "   fninit   ;"  /* init FPU */
+     "   fnclex   ;"  /* clear exceptions flags */
+    );
+    /* save prepared fpu state */
+    i386_fpu_context_save(&initial_fpu_state);
+
+    /* return success */
     return NO_ERROR;
 }
 
@@ -29,6 +44,10 @@ status_t arch_thread_init_struct(thread_t *thread)
     /* init with zeroes */
     memset(&thread->arch, 0, sizeof(arch_thread_t));
 
+    /* copy initial fpu state */
+    memcpy(thread->arch.fpu_state, &initial_fpu_state, sizeof(fpu_state));
+
+    /* done */
     return NO_ERROR;
 }
 

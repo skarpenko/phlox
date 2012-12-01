@@ -147,10 +147,8 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     /* enable interrupts */
     local_irqs_enable();
 
-    /* wait for reschedule */
-    while(1) cpu_relax(); /* todo: call 'hlt' ? */
-
-    panic("kernel test complete. :)\n");
+    /* start idle cycle for this cpu. wait for reschedule. */
+    processor_idle_cycle();
 }
 
 /*

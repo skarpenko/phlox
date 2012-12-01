@@ -55,6 +55,12 @@ void arch_sched_context_switch(thread_t *t_from, thread_t *t_to)
             i386_dbg_regs_clear();
     }
 
+    /* save fpu context if needed */
+    if(t_from->arch.fpu_used) {
+        i386_fpu_context_save((fpu_state *)t_from->arch.fpu_state);
+        t_from->arch.fpu_used = false; /* clear flag */
+    }
+
     /* set task switched bit.
      * due to fpu monitoring, "device not available"
      * exception occurs if thread tries to use fpu.

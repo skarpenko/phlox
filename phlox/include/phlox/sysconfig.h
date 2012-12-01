@@ -16,6 +16,10 @@
 /* Defines internal kernel timer frequency */
 #define SYSCFG_KERNEL_HZ  100 /* Hz */
 
+/* Defines kernel log config */
+#define SYSCFG_KLOG_NROWS  128  /* Rows number */
+#define SYSCFG_KLOG_NCOLS   64  /* Cols number */
+
 /* Compile in support for SMP or not (not supported for now) */
 #define SYSCFG_SMP_SUPPORT 0
 

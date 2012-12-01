@@ -3,13 +3,14 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/spinlock.h>
 #include <phlox/klog.h>
 
 /* Kernel log dimensions */
-#define KLOG_N_ROWS  128   /* Rows number    */
-#define KLOG_N_COLS   64   /* Columns number */
+#define KLOG_N_ROWS  SYSCFG_KLOG_NROWS   /* Rows number    */
+#define KLOG_N_COLS  SYSCFG_KLOG_NCOLS   /* Columns number */
 #define KLOG_LOGBOOK_SIZE  (KLOG_N_ROWS * KLOG_N_COLS)
 
 /* Variables */
@@ -93,6 +94,12 @@ uint klog_get_row_counter(void)
 
     /* return value to caller */
     return value;
+}
+
+/* return least available row counter */
+uint klog_get_least_row_counter(void)
+{
+    return klog_get_row_counter() - KLOG_N_ROWS + 1;
 }
 
 /* returns top index */
@@ -194,6 +201,48 @@ status_t klog_get_current_row(char *row)
 status_t klog_get_last_row(char *row)
 {
     return klog_get_row_abs(bottom, row);
+}
+
+/* get new row by previously stored row counter */
+uint klog_get_new_row(uint counter, char *row)
+{
+    uint irqs_state;
+    uint least_row_counter;
+    uint index;
+
+    ASSERT(row != NULL);
+
+    /* check arguments */
+    if(!row)
+        return counter;
+
+    /* acquire access lock */
+    irqs_state = spin_lock_irqsave(&klog_lock);
+
+    /* compute least row counter */
+    least_row_counter = row_counter - KLOG_N_ROWS + 1;
+
+    /* check counter ranges */
+    if (counter < least_row_counter)
+        counter = least_row_counter;
+    if (counter > row_counter)
+        counter = row_counter;
+
+    /* get row index that is matched given counter */
+    index = _get_row_index(row_counter - counter);
+
+    /* copy row to caller */
+    memcpy(row, &logbook[index][0], KLOG_N_COLS);
+
+    /* increment counter for caller */
+    if(++counter > row_counter)
+        counter = row_counter;
+    
+    /* release lock */
+    spin_unlock_irqrstor(&klog_lock, irqs_state);
+
+    /* return updated counter */
+    return counter;
 }
 
 /* put string into logbook */

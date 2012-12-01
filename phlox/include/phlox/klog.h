@@ -32,6 +32,12 @@ uint klog_get_rows_num(void);
 uint klog_get_row_counter(void);
 
 /*
+ * Get least row counter. Least row counter
+ * always matching bottom row.
+ */
+uint klog_get_least_row_counter(void);
+
+/*
  * Get kernel log top row index
  * (top row is a current row)
  */
@@ -68,6 +74,13 @@ status_t klog_get_current_row(char *row);
  * Get last row in a log
  */
 status_t klog_get_last_row(char *row);
+
+/*
+ * Get row by row counter.
+ * Returns counter for next row or passed
+ * counter if no new rows was added into log.
+ */
+uint klog_get_new_row(uint counter, char *row);
 
 /*
  * Put string into kernel log

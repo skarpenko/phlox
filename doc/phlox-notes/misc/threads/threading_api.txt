@@ -1,0 +1,30 @@
+private:
+continue_as_idle(); // initiate idle thread
+
+
+process live
+------------
+
+create_process
+  create struct, lock list, add to list, unlock list
+
+*[
+create thread
+  create struct, lock list/tree, add to list/tree, unlock list/tree
+
+attach to process
+  lock process, add, unlock process
+]
+
+*[
+detach thread
+  lock proces, remove, unlock process
+]
+
+if death state and no threads
+  lock list, delete process, unlock list
+
+*[
+adding process
+  lock curr process, add, unlock curr process
+]

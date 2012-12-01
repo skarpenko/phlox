@@ -1,0 +1,16 @@
+preempt_enable() { preemt_count--; }
+preempt_disable() { preemt_count++; }
+get_cpu() ; returns cpu id with preempt disabled
+put_cpu()
+
+thread {
+   int preempt_count; // if not 0 we do not preemt this task
+}
+
+thread_kstack {
+  1:
+  2:
+  3:
+  4:
+  5: ptr to tread info
+};

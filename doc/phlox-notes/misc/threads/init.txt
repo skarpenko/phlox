@@ -1,0 +1,2 @@
+thread_init(kargs, curr_cpu);
+thread_init_percpu(); // called from init (it like in processor.c

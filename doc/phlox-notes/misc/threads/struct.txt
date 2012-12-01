@@ -1,0 +1,85 @@
+threads_list / tree
+processes_list / tree
+
+kernel_thread_queues {
+    queue prio[NUM_PRIORITIES]; // or ordered by priorities list ?
+    queue sleeping; // or suspended
+    queue waiting;
+    queue dead; //?
+    queue idle_threads[MAX_CPU]; // ?
+    queue running; // ??
+};
+
+
+process {
+    proc_id id;
+    char name[];
+    
+    char *arg;
+    
+    process *parent;
+    list children;
+    list_node sibling; // position in parent's children list
+    
+    gid_t group_id;   // ??
+    sid_t session_id; // ??
+
+    uint state;
+    
+    vm_aspace aspace;
+    
+    thread main_thread;
+    
+    list threads;
+    
+    struct arch_proc;
+};
+
+
+thread {
+    thread_id id;
+    char name[];
+    uint priority; (static_prio ? )
+    
+    process *process;
+    
+    uint state;
+    uint flags;
+    
+    bool in_kernel; // ?
+    
+    user_stack;
+    kernel_stack;
+    
+    bigtime_t user_time;
+    bigtime_t kernel_time;
+    
+    uint sig_pending;
+    uint sig_mask;
+    struct signal_action[32];
+
+    quantum / jiffies / time_slice
+
+    // ?
+    args
+    entry
+    cpu
+    bool fpu_used;
+    fpu_state;
+    // ?
+    
+    struct arch_thread;
+};
+
+
+exit_code;
+errno; // ?
+
+
+
+API:
+
+create_process
+add_thread_to_process
+remove_thread_from_process
+?

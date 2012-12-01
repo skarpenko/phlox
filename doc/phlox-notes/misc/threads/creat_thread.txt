@@ -1,0 +1,18 @@
+
+create_thread_struct()
+  arch_init_thread_struct();
+  state = birth
+
+delete_thread_struct(); ??
+put_thread_struct_to_dead();
+  arch_deinit_thread_struct();
+  state = dead
+
+create_kernel_thread()
+  proc_attach_thread_to_process()
+    if process is destroyiong - cancel operation
+
+
+thread_create_kernel_thread()
+  create_kernel_thread
+  sched_add_to_scheduling();

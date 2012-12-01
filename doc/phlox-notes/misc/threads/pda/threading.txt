@@ -1,0 +1,63 @@
+Files:
+1. scheduler.c (.h)
+2. arch/scheduler.c (.h)
+3. process.c (.h)
+4. arch/process.c (.h)
+5. thread.c (.h)
+6. arch/thread.c (.h)
+7. thread_types.h
+8. arch/thread_types.h
+9. time.c (.h) + arch/platform
+10. timer.c (.h) + arch/platform
+11. signal.c (.h) ?
+12. thread_private.h
+----
+1. High-level scheduler algorithms and scheduler API
+2. HW-dependend scheduler routines such as "switch to thread".
+3-4. Process creation and management API.
+5-6. Thread creation and management API.
+7-8. Threading types common for all modules.
+9-10. Time and timer routines and api.
+11. Signals delivery api.
+12. Threading private declarations including kernel stack sizes and STACK_WARN
+
+TODO: Add GDT management from NewOS. Might be needed for task switch.
+TODO2: Common header for threads and processes and threading types?
+
+Queues/Lists:
+1. Running
+2. Sleeping
+3. Waiting
+4. Dead?   // for thread_struct reuse
+5. ReadyToRun
+---
+1. Running threads goes here.
+2. Sleeping (suspended) threads are here.
+3. Waiting for semaphore/event/thread/... threads are here.
+4. Do not know is this needed for dead threads. (see above)
+5. This can be multiple queues one for every priority. Or only one sorted by priorities using tree.(?) Think multiple queues is faster.
+6. Use per CPU queues when SMP?
+
+Other:
+Process groups
+Sessions
+Double Fault TSS
+
+Questions:
+1. What is kernel process and how kernel threads managed?
+* Kernel process with kernels aspace.
+
+2. How per thread time slices counted?
+* Call from timer ISR something like scheduler_on_timer()
+
+3. How thread switch occured (including kernel threads)?
+* Seems software context switch is faster. Do like in linux and newos?
+
+4. What arch-data stored in process and thred?
+5. What is idle user-threads and cpu relax thread?
+* Note: Relax threads must be per CPU due to different stacks.
+
+6. Where or how current thread pointer stored? If in processor_t that must be safe on thread switch.
+* Imho, use of per processor_t spinlock with interrupts disabled is enought.
+
+7. How to get current CPU?

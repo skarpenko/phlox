@@ -1,0 +1,53 @@
+static create_thread_struct
+static delete_thread_struct
+
+obj names "thread_898_kstack"
+rename kstacks to "cpu0_idle_thread_kstack"
+
+switch_context_to
+
+// stubs for thread start
+_kernel_thread_stub
+_user_thread_stub
+
+processor_t add "cpu_num" and remove "lock" as it always be r/o structs
+
+
+thread {
+   id
+   *name
+   *process
+   *processor
+   
+   object_id kstack
+   addr kstack_base
+   size kstack_size
+   
+   object_id ustack
+   addr ustack_base
+   size ustack_size
+   
+   state
+   prio
+   flags
+   
+   last_error // is it really needed ?
+   preempt_count
+   
+   queue_node
+   owner's_list_node
+   tree_node
+   
+   kernel_time
+   user_time
+   
+   addr entry
+   
+   arch {
+       bool fpu_used
+       fpu
+       debug
+       int_frame
+       far_jump
+   };
+};

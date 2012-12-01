@@ -1,0 +1,53 @@
+create_kernel_process(name)
+* Called once
+
+create_kernel_thread(name, data, func, stack_size)
+* Automatically inserts into kernel process
+
+bool sched_times_tick()
+* Called from timer ISR
+
+schedule()
+* Reschedules and switches context
+
+create_process(name, obj_code, obj_data, args, .....?)
+* Creates user process
+todo: flexible code and data positions, heap, stacks.
+
+create_thread(name, data, func, stack_size)
+* Creates user thread
+
+add/attach_thread(proc_id, thead_id)
+* Attaches thread to process
+
+remove/detach_thread(proc_id, thread_id)
+* Detaches thread from process
+
+kill_process(proc_id)
+kill_thread(thread_id)
+* Kills process / thread
+
+thread_yield()
+* Pass control to another thread
+
+thread_snooze(msec)
+* Suspends thread for given time
+
+code = thread_wait(thread_id)
+* Wait for thread terminates
+
+thread_term/exit(code)
+* Terminate thread
+
+process_exit(code)
+* Terminate process
+
+get_current_thread_id()
+get_current_thread()
+* Returnes current thread data
+
+thread_suspend(thread_id) / thread_resume(thread_id)
+* Suspend and resume
+
+thread_priority(thread_id, prio)
+* Sets thread priority

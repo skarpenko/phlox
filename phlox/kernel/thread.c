@@ -284,6 +284,9 @@ static status_t create_thread_kstack_area(thread_t *thread, const char *name)
 {
     status_t err;
 
+    /* init stack adresses to zero for use in error handling */
+    thread->kstack_base = thread->kstack_top = 0;
+
     /* create memory object */
     thread->kstack_id = vm_create_object(name, THREAD_KSTACK_SIZE,
                                          VM_OBJECT_PROTECT_ALL);
@@ -313,9 +316,20 @@ static status_t create_thread_kstack_area(thread_t *thread, const char *name)
 
 /* error state */
 exit_on_error:
-   /* TODO: Unmap (if mapped) and delete created object here ? */
-
-   /* return last error */
+   /* if stack area was mapped - unmap it and delete corresponding
+    * memory object
+    */
+   if(thread->kstack_base != 0) {
+       if(vm_unmap_object(vm_get_kernel_aspace_id(), thread->kstack_base) != NO_ERROR)
+           panic("create_thread_kstack_area(): failed to recover after error!");
+       /* delete memory object created for stack area */
+       vm_delete_object(thread->kstack_id);
+       /* reset kernel stack area params */
+       thread->kstack_id = VM_INVALID_OBJECTID;
+       thread->kstack_base = thread->kstack_top = 0;
+   }
+   
+   /* return occured error code */
    return err;
 }
 

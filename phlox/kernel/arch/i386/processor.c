@@ -4,9 +4,13 @@
 */
 #include <string.h>
 #include <arch/arch_bits.h>
+#include <phlox/arch/i386/segments.h>
 #include <phlox/types.h>
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
+#include <phlox/errors.h>
+#include <phlox/vm.h>
+#include <phlox/heap.h>
 #include <phlox/processor.h>
 
 
@@ -32,6 +36,16 @@ static const struct i386_cpu_vendor_info cpu_vendor_info[I386_VENDORS_COUNT] = {
     { "UMC",       { "UMC UMC UMC" } },   /* United Microelectronics Corporation */
     { "NSC",       { "Geode by NSC" } }   /* National Semiconductor */
 };
+
+/* Global Descriptors Table */
+static cpu_seg_desc *gdt = NULL;
+
+/* Pointers for per CPU Task State Segments */
+static cpu_tss **tss;
+/*
+ * NOTE: TSS is not used for context switching,
+ *       only for kernel stack setup.
+ */
 
 
 /*** Externals need to be initialized ***/
@@ -92,7 +106,71 @@ void arch_processor_mod_init(arch_processor_t *bsp)
 /* architecture specific processor set init */
 void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint curr_cpu)
 {
-    /* do nothing for now */
+    /* store GDT address */
+    gdt = (cpu_seg_desc *)kargs->arch_args.virt_gdt;
+}
+
+/* architecture specific processor set init called after VM is ready to work */
+status_t arch_processor_set_init_after_vm(arch_processor_set_t *aps, kernel_args_t *kargs, uint curr_cpu)
+{
+    uint i;
+    status_t err;
+    object_id oid;
+    /* TSS descriptor for first CPU */
+    cpu_sys_desc *tss_d = (cpu_sys_desc *)&gdt[CPU0_TSS >> 3];
+    /* cache line aligned TSS size */
+    uint tss_size = ROUNDUP(sizeof(cpu_tss), 64);
+    /* base address of TSS array */
+    addr_t tss_base;
+
+    /* allocate memory for TSS pointers */
+    tss = (cpu_tss **)kmalloc(ProcessorSet.processors_num * sizeof(cpu_tss *));
+    if(tss == NULL)
+        return ERR_NO_MEMORY;
+
+    /* create memory object for array of per CPU TSS */
+    oid = vm_create_object("kernel_tss", ProcessorSet.processors_num * tss_size,
+                           VM_OBJECT_PROTECT_ALL);
+    if(oid == VM_INVALID_OBJECTID)
+        return ERR_VM_GENERAL;
+
+    /* map newly created object into kernel address space */
+    err = vm_map_object(vm_get_kernel_aspace_id(), oid, VM_PROT_KERNEL_ALL, &tss_base);
+    if(err != NO_ERROR)
+        return err;
+
+    /* initiate page fault by clearing mapped area
+     * this actually allocates and maps physical memory
+     */
+    memset((void *)tss_base, 0, ProcessorSet.processors_num * tss_size);
+
+    /* set pointers and init descriptors */
+    for(i = 0; i < ProcessorSet.processors_num; i++) {
+        /* set pointer */
+        tss[i] = (cpu_tss *)(tss_base + i*tss_size);
+
+        /* kernel side stack selector */
+        tss[i]->ss0 = KERNEL_DATA_SEG;
+
+        tss[i]->io_map_base = 0x00ff; /* terminator byte */
+
+        /* init descriptor */
+        tss_d[i].stru.limit_00_15 = sizeof(cpu_tss) & 0xffff;
+        tss_d[i].stru.limit_16_19 = 0;
+        tss_d[i].stru.base_00_15  = (addr_t)tss[i] & 0xffff;
+        tss_d[i].stru.base_16_23  = ((addr_t)tss[i] >> 16) & 0xff;
+        tss_d[i].stru.base_24_31  = (addr_t)tss[i] >> 24;
+        tss_d[i].stru.type        = 0x9; /* TSS descriptor */
+        tss_d[i].stru.dpl         = 0;
+        tss_d[i].stru.p           = 1;
+        tss_d[i].stru.g           = 1;
+        tss_d[i].stru.zero0       = 0;
+        tss_d[i].stru.zero1       = 0;
+        tss_d[i].stru.zero2       = 0;
+        tss_d[i].stru.zero3       = 0;
+    }
+
+    return NO_ERROR;
 }
 
 /* architecture specific processor init */
@@ -305,6 +383,20 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint curr_c
         kprint("system stopped.\n");
         while(1);
      }
+}
+
+/* architecture specific processor init called after VM init */
+status_t arch_processor_init_after_vm(arch_processor_t *ap, kernel_args_t *kargs, uint curr_cpu)
+{
+    short seg = CPU0_TSS + (curr_cpu << 3); /* per CPU TSS descriptor */
+
+    /* load Task Register */
+    asm(
+     "    movw %0, %%ax;  "
+     "    ltr  %%ax;      "
+        : : "r" (seg) : "eax");
+
+    return NO_ERROR;
 }
 
 /* build cpu features string */

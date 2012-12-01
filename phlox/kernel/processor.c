@@ -5,6 +5,7 @@
 #include <string.h>
 #include <phlox/kernel.h>
 #include <phlox/kargs.h>
+#include <phlox/errors.h>
 #include <phlox/processor.h>
 
 
@@ -34,6 +35,8 @@ void processor_set_init(kernel_args_t *kargs, uint curr_cpu)
     if(curr_cpu == 0) { /* we are bootstrap processor */
        /* prepare ProcessorSet */
        memset(&ProcessorSet, 0, sizeof(processor_set_t));
+       /* set processors number */
+       ProcessorSet.processors_num = kargs->num_cpus;
        /* execute architecture specific inits */
        arch_processor_set_init(&ProcessorSet.arch, kargs, curr_cpu);
        /* execute processor init */
@@ -52,12 +55,48 @@ void processor_set_init(kernel_args_t *kargs, uint curr_cpu)
     }
 }
 
+status_t processor_set_init_after_vm(kernel_args_t *kargs, uint curr_cpu)
+{
+    status_t err;
+
+    if(curr_cpu == 0) { /* we are bootstrap cpu */
+        /* call architecture specific version */
+        err = arch_processor_set_init_after_vm(&ProcessorSet.arch, kargs, curr_cpu);
+        if(err != NO_ERROR)
+            panic("arch_processor_set_init_after_vm: FAILED!\n");
+
+        /* per processor init for bootstrap cpu */
+        err = processor_init_after_vm(&ProcessorSet.processors[curr_cpu], kargs, curr_cpu);
+        if(err != NO_ERROR)
+            panic("arch_processor_init_after_vm: FAILED! (CPU%d)\n", curr_cpu);
+    } else {
+        /* NOTE: Slave CPUs waiting until bootstrap CPU completes */
+
+        /* per processor init */
+        err = processor_init_after_vm(&ProcessorSet.processors[curr_cpu], kargs, curr_cpu);
+        if(err != NO_ERROR)
+            panic("arch_processor_init_after_vm: FAILED! (CPU%d)\n", curr_cpu);
+    }
+
+    return NO_ERROR;
+}
+
 void processor_init(processor_t *p, kernel_args_t *kargs, uint curr_cpu)
 {
     p->cpu_num = curr_cpu; /* set CPU number */
 
     /* execute architecture specific inits */
     arch_processor_init(&p->arch, kargs, curr_cpu);
+}
+
+status_t processor_init_after_vm(processor_t *p, kernel_args_t *kargs, uint curr_cpu)
+{
+    status_t err;
+
+    /* architecture specific init */
+    err = arch_processor_init_after_vm(&p->arch, kargs, curr_cpu);
+
+    return err;
 }
 
 uint get_current_processor(void)

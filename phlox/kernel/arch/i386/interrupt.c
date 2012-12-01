@@ -16,7 +16,7 @@
 
 
 /* Interrupt Descriptors Table */
-cpu_gate_desc *idt = NULL;
+static cpu_gate_desc *idt = NULL;
 
 /* State segment of special task which is called on double fault */
 static cpu_tss doublefault_tss;
@@ -149,6 +149,7 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
     doublefault_tss.fs   = KERNEL_DATA_SEG;
     doublefault_tss.ldt  = 0;
     doublefault_tss.eflags = 0x2; /* second bit is always set */
+    doublefault_tss.io_map_base = 0x00ff; /* terminator byte */
 
     /* Init TSS descriptor */
     tss_d->stru.limit_00_15 = sizeof(cpu_tss) & 0xffff;

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -119,6 +119,10 @@ static void remove_aspace_from_list(vm_address_space_t *aspace)
 static vm_address_space_t *create_aspace_common(const char* name, addr_t base, size_t size, bool kernel)
 {
     vm_address_space_t *aspace;
+
+    /* address space must have size */
+    if(size == 0)
+        return NULL;
 
     /* allocate address space structure in heap */
     aspace = (vm_address_space_t *)kmalloc(sizeof(vm_address_space_t));

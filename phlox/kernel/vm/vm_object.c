@@ -110,6 +110,10 @@ static vm_object_t *create_object_common(const char *name, size_t size, uint pro
 {
     vm_object_t *object;
 
+    /* object must have size */
+    if(size == 0)
+        return NULL;
+
     /* allocate object structure */
     object = (vm_object_t *)kmalloc(sizeof(vm_object_t));
     if(!object)

@@ -15,4 +15,9 @@ void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, ui
 /* architecture specific processor init */
 void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint curr_cpu);
 
+/* architecture specific processor set init. called after VM init finished. */
+status_t arch_processor_set_init_after_vm(arch_processor_set_t *aps, kernel_args_t *kargs, uint curr_cpu);
+/* architecture specific processor init. called after VM init finished. */
+status_t arch_processor_init_after_vm(arch_processor_t *ap, kernel_args_t *kargs, uint curr_cpu);
+
 #endif

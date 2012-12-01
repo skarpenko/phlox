@@ -74,6 +74,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
        /* wait until BSP completes? */
     }
 
+
+    /* processor set initialization continue */
+    processor_set_init_after_vm(&globalKargs, num_cpu);
+
+
     /* enable interrupts */
     local_irqs_enable();
 

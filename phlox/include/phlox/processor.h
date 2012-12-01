@@ -128,6 +128,11 @@ void processor_set_init(kernel_args_t *kargs, uint curr_cpu);
 /* this one called by processor_set_init for each cpu */
 void processor_init(processor_t *p, kernel_args_t *kargs, uint curr_cpu);
 
+/* Continue of processors initialization after VM init finished */
+status_t processor_set_init_after_vm(kernel_args_t *kargs, uint curr_cpu);
+/* this called by processor_set_init_after_vm for each cpu */
+status_t processor_init_after_vm(processor_t *p, kernel_args_t *kargs, uint curr_cpu);
+
 /*
  * Returns current processor number
  */

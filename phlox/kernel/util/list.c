@@ -172,6 +172,8 @@ uint xlist_insert_after(xlist_t *list, list_elem_t *item, list_elem_t *e)
          e->next = item->next;
          if(!e->next)
            list->last = e;
+         else
+           e->next->prev = e;
          item->next = e;
          list->count++; /* increase items count */
          return 1; /* return true */
@@ -192,6 +194,8 @@ uint xlist_insert_after_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e)
     e->next = item->next;
     if(!e->next)
       list->last = e;
+    else
+      e->next->prev = e;
     item->next = e;
     list->count++; /* increase items count */
     return 1; /* return true */
@@ -210,6 +214,8 @@ uint xlist_insert_before(xlist_t *list, list_elem_t *item, list_elem_t *e)
          e->next = item;
          if(!e->prev)
            list->first = e;
+         else
+           e->prev->next = e;
          item->prev = e;
          list->count++; /* increase items count */
          return 1; /* return true */
@@ -230,6 +236,8 @@ uint xlist_insert_before_unsafe(xlist_t *list, list_elem_t *item, list_elem_t *e
     e->next = item;
     if(!e->prev)
       list->first = e;
+    else
+      e->prev->next = e;
     item->prev = e;
     list->count++; /* increase items count */
     return 1; /* return true */

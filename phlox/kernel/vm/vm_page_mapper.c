@@ -51,9 +51,9 @@ static mutex_t map_pool_mutex; /* Mappings pool mutex */
 static int compare_mapping_desc(const void *d1, const void *d2)
 {
     if( ((mapping_desc_t *)d1)->paddr > ((mapping_desc_t *)d2)->paddr )
-        return -1;
-    if( ((mapping_desc_t *)d1)->paddr < ((mapping_desc_t *)d2)->paddr )
         return 1;
+    if( ((mapping_desc_t *)d1)->paddr < ((mapping_desc_t *)d2)->paddr )
+        return -1;
     return 0;
 }
 

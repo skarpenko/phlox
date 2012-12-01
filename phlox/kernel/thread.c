@@ -14,6 +14,7 @@
 #include <phlox/spinlock.h>
 #include <phlox/processor.h>
 #include <phlox/vm.h>
+#include <phlox/timer.h>
 #include <phlox/scheduler.h>
 #include <phlox/process.h>
 #include <phlox/thread.h>
@@ -780,7 +781,13 @@ status_t thread_suspend_current(void)
     thread = thread_get_current_thread_locked();
 
     /* set next state as suspended */
-    thread->next_state = THREAD_STATE_SUSPENDED;
+    if(!IS_THREAD_NEXSTATE_READY(thread) && !IS_THREAD_NEXSTATE_RUNNING(thread)) {
+        /* cannot suspend - return an error */
+        thread_unlock_thread(thread);
+        local_irqs_enable();
+        return ERR_MT_INVALID_STATE;
+    } else
+        thread->next_state = THREAD_STATE_SUSPENDED;
 
     /* unlock thread and reschedule */
     thread_unlock_thread(thread);
@@ -808,9 +815,15 @@ status_t thread_suspend(thread_id tid)
     /* change next state for thread only if it is running or
      * ready to run at that time.
      */
-    if(thread->state == THREAD_STATE_READY ||
-       thread->state == THREAD_STATE_RUNNING)
-          thread->next_state = THREAD_STATE_SUSPENDED;
+    if((!IS_THREAD_STATE_READY(thread) && !IS_THREAD_STATE_RUNNING(thread)) ||
+       (!IS_THREAD_NEXSTATE_READY(thread) && !IS_THREAD_NEXSTATE_RUNNING(thread)))
+    {
+        /* cannot suspend thread - return an error */
+        thread_unlock_thread(thread);
+        local_irqs_enable();
+        return ERR_MT_INVALID_STATE;
+    } else
+        thread->next_state = THREAD_STATE_SUSPENDED;
 
     /* unlock thread */
     thread_unlock_thread(thread);
@@ -845,6 +858,85 @@ status_t thread_resume(thread_id tid)
         sched_add_thread(thread);
 
     /* unlock thread and enable interrupts again */
+    thread_unlock_thread(thread);
+    local_irqs_enable();
+
+    return NO_ERROR;
+}
+
+/* put current thread into sleep */
+void thread_sleep(uint msec)
+{
+    thread_t *thread;
+
+    /* just switch to another thread if time
+     * was not specified
+     */
+    if(!msec) {
+        thread_yield();
+        return;
+    }
+
+    /* disable interrupts and take current thread */
+    local_irqs_disable();
+    thread = thread_get_current_thread_locked();
+
+    /* add thread to event queue of the timer */
+    if(IS_THREAD_NEXSTATE_READY(thread) || IS_THREAD_NEXSTATE_RUNNING(thread))
+        timer_lull_thread(thread, TIMER_MSEC_TO_TICKS(msec));
+
+    /* unlock thread and reschedule */
+    thread_unlock_thread(thread);
+    sched_lock_acquire();
+    sched_reschedule();
+    /* NOTE: interrupts will be reenabled during rescheduling and scheduling lock
+     *       will be released.
+     */
+}
+
+/* put thread to sleep by its id */
+status_t thread_sleep_id(thread_id tid, uint msec)
+{
+    thread_t *thread;
+
+    /* if id of the current thread specified */
+    if(thread_get_current_thread_id() == tid) {
+        thread_sleep(msec);
+        return NO_ERROR;
+    }
+
+    /* get thread data */
+    thread = thread_get_thread_struct(tid);
+    if(thread == NULL)
+        return ERR_MT_INVALID_HANDLE;
+
+    /* disable interrupts and lock thread */
+    local_irqs_disable();
+    thread_lock_thread(thread);
+
+    /* check thread state is correct */
+    if((!IS_THREAD_STATE_READY(thread) && !IS_THREAD_STATE_RUNNING(thread)) ||
+       (!IS_THREAD_NEXSTATE_READY(thread) && !IS_THREAD_NEXSTATE_RUNNING(thread)))
+    {
+        /* cannot put thread to bed - unlock thread,
+         * enable irqs and return error
+         */
+        thread_unlock_thread(thread);
+        local_irqs_enable();
+        return ERR_MT_INVALID_STATE;
+    }
+
+    /* remove thread from runqueue
+     * if it is not currently running
+     */
+    if(thread->state == THREAD_STATE_READY) {
+        sched_remove_thread(thread);
+    }
+
+    /* add thread to event queue of the timer */
+    timer_lull_thread(thread, TIMER_MSEC_TO_TICKS(msec));
+
+    /* unlock thread and restore irqs */
     thread_unlock_thread(thread);
     local_irqs_enable();
 

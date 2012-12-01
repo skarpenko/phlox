@@ -412,6 +412,7 @@ void sched_add_thread(thread_t *thread)
 
     ASSERT_MSG(thread->state == THREAD_STATE_BIRTH ||
                thread->state == THREAD_STATE_WAITING ||
+               thread->state == THREAD_STATE_SLEEPING ||
                thread->state == THREAD_STATE_SUSPENDED,
         "sched_add_thread(): thread in wrong state!");
 
@@ -444,8 +445,26 @@ void sched_add_thread(thread_t *thread)
 /* remove thread from scheduling */
 void sched_remove_thread(thread_t *thread)
 {
-   /* NOTE: must be in death or dead states? */
-   /* NOTE2: this call might be not needed */
+    unsigned long irqs_state;
+    runqueue_t *rq;
+
+    ASSERT_MSG(thread->lock != 0,
+        "sched_remove_thread(): thread was not locked before!");
+
+    ASSERT_MSG(thread->state == THREAD_STATE_READY,
+        "sched_remove_thread(): thread in wrong state!");
+
+    /* get runqueue for thread */
+    rq = &runqueues[ thread->cpu->cpu_num ];
+
+    /* acquire lock for runqueue */
+    irqs_state = spin_lock_irqsave(&rq->lock);
+
+    /* extract thread from runqueue */
+    rq_extract_thread(rq, thread);
+
+    /* release lock */
+    spin_unlock_irqrstor(&rq->lock, irqs_state);
 }
 
 /* capture cpu by current thread */
@@ -541,6 +560,7 @@ void sched_reschedule(void)
 
         /* do not put thread back to runqueue */
         case THREAD_STATE_WAITING:
+        case THREAD_STATE_SLEEPING:
         case THREAD_STATE_SUSPENDED:
         case THREAD_STATE_DEATH:
             break;

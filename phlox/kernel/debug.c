@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -128,6 +128,8 @@ static int console_writer(void *data)
                 _puts(nl);
             klog_ctr = c;
         }
+        /* pass control to another thread */
+        thread_yield();
     }
 }
 

@@ -207,14 +207,6 @@ void print_kernel_memory_map(void)
     vm_put_aspace(aspace);
 }
 
-/* cyclic wait */
-void wait(long msec)
-{
-    bigtime_t curr = timer_get_time();
-    while((timer_get_time()-curr)<msec)
-        ;
-}
-
 /* thread 0 routine */
 int thread0(void *data)
 {
@@ -222,10 +214,13 @@ int thread0(void *data)
 
     kprint("Thread0 (id = %d): started...\n", me);
 
+    kprint("Thread0: Wait for 5000 msec before start...\n");
+    thread_sleep(5000);
+
     while(1) {
         thread0_ctr++;
         /* wait a little */
-        wait(50);
+        thread_sleep(50);
     }
 }
 
@@ -241,6 +236,9 @@ int thread1(void *data)
 
     kprint("Thread1 (id = %d): started...\n", me);
 
+    kprint("Thread1: Wait for 7000 msec before start...\n");
+    thread_sleep(7000);
+
     while(1) {
         thread1_ctr++;
 
@@ -249,13 +247,21 @@ int thread1(void *data)
 
         /* simulate slave thread controlling */
         if(curr_time-time > 5000) {
+
            if(slave_active) {
               slave_active = false;
-              thread_suspend(slave);
+              /* put slave into sleep periodically */
+              if(thread_sleep_id(slave, 8333)) {
+                  kprint("Thread1: Failed to put slave into sleep!\n");
+              } else {
+                  kprint("Thread1: Slave goes to sleep!\n");
+              }
+              /** thread_suspend(slave); */
            } else {
               slave_active = true;
-              thread_resume(slave);
+              /** thread_resume(slave); */
            }
+
            time = timer_get_time();
         }
 
@@ -266,7 +272,7 @@ int thread1(void *data)
         }
 
         /* wait a little */
-        wait(50);
+        thread_sleep(50);
     }
 }
 /* thread 2 routine */
@@ -278,6 +284,9 @@ int thread2(void *data)
 
     kprint("Thread2 (id = %d): started...\n", me);
 
+    kprint("Thread2: Wait for 9000 msec before start...\n");
+    thread_sleep(9000);
+
     while(1) {
         thread2_ctr++;
 
@@ -288,7 +297,7 @@ int thread2(void *data)
         }
 
         /* wait a little */
-        wait(50);
+        thread_sleep(50);
     }
 }
 
@@ -298,6 +307,10 @@ int thread_ctl(void *data)
     thread_id me = thread_get_current_thread_id();
 
     kprint("Threads controller (id = %d): started...\n", me);
+
+    kprint("Threads controller: Wait for 3000 msec before output start...\n");
+    thread_sleep(3000);
+
     while(1) {
         thread_ctl_ctr++;
         if( !(thread_ctl_ctr % 10) ) {

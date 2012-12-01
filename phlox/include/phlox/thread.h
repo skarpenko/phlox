@@ -16,6 +16,27 @@
 #define INVALID_THREADID  ((thread_id)0)  /* Invalid thread ID */
 
 
+/* Check thread state */
+#define IS_THREAD_STATE_READY(thread)     (thread->state==THREAD_STATE_READY)
+#define IS_THREAD_STATE_BIRTH(thread)     (thread->state==THREAD_STATE_BIRTH)
+#define IS_THREAD_STATE_DEATH(thread)     (thread->state==THREAD_STATE_DEATH)
+#define IS_THREAD_STATE_RUNNING(thread)   (thread->state==THREAD_STATE_RUNNING)
+#define IS_THREAD_STATE_WAITING(thread)   (thread->state==THREAD_STATE_WAITING)
+#define IS_THREAD_STATE_SLEEPING(thread)  (thread->state==THREAD_STATE_SLEEPING)
+#define IS_THREAD_STATE_SUSPENDED(thread) (thread->state==THREAD_STATE_SUSPENDED)
+#define IS_THREAD_STATE_DEAD(thread)      (thread->state==THREAD_STATE_DEAD)
+
+/* Check thread next state */
+#define IS_THREAD_NEXSTATE_READY(thread)     (thread->next_state==THREAD_STATE_READY)
+#define IS_THREAD_NEXSTATE_BIRTH(thread)     (thread->next_state==THREAD_STATE_BIRTH)
+#define IS_THREAD_NEXSTATE_DEATH(thread)     (thread->next_state==THREAD_STATE_DEATH)
+#define IS_THREAD_NEXSTATE_RUNNING(thread)   (thread->next_state==THREAD_STATE_RUNNING)
+#define IS_THREAD_NEXSTATE_WAITING(thread)   (thread->next_state==THREAD_STATE_WAITING)
+#define IS_THREAD_NEXSTATE_SLEEPING(thread)  (thread->next_state==THREAD_STATE_SLEEPING)
+#define IS_THREAD_NEXSTATE_SUSPENDED(thread) (thread->next_state==THREAD_STATE_SUSPENDED)
+#define IS_THREAD_NEXSTATE_DEAD(thread)      (thread->next_state==THREAD_STATE_DEAD)
+
+
 /*
  * Starts threading initialization stages sequence.
  * Called only within system start up.
@@ -78,6 +99,17 @@ status_t thread_suspend(thread_id tid);
  * Resume specified thread
 */
 status_t thread_resume(thread_id tid);
+
+/*
+ * Put current thread into bed for a given count of
+ * milliseconds.
+*/
+void thread_sleep(uint msec);
+
+/*
+ * Put thread into bed by its id.
+*/
+status_t thread_sleep_id(thread_id tid, uint msec);
 
 
 

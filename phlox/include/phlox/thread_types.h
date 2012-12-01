@@ -102,6 +102,7 @@ enum {
   THREAD_STATE_DEATH,      /* Thread destroying */
   THREAD_STATE_RUNNING,    /* Thread running */
   THREAD_STATE_WAITING,    /* Thread is waiting for event */
+  THREAD_STATE_SLEEPING,   /* Thread is sleeping */
   THREAD_STATE_SUSPENDED,  /* Thread is suspended */
   THREAD_STATE_DEAD        /* Thread is dead */
 };

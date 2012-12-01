@@ -11,6 +11,7 @@
 #include <phlox/param.h>
 #include <phlox/arch/timer.h>
 #include <phlox/platform/timer.h>
+#include <phlox/thread_types.h>
 
 
 /* Parameters used in time convertion */
@@ -46,6 +47,14 @@ bigtime_t timer_get_ticks(void);
  * Returns count of milliseconds since system booted up.
 */
 bigtime_t timer_get_time(void);
+
+/*
+ * Suspends thread for a given amount of timer ticks.
+ * Thread must be locked before call and be in RUNNING
+ * or READY state. After reschedule thread will be in
+ * a SLEEPING state.
+*/
+status_t timer_lull_thread(thread_t *thread, uint ticks);
 
 
 #endif

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -193,6 +193,18 @@ status_t vm_init(kernel_args_t *kargs)
     /* end of init memory structures */
 
     return NO_ERROR;
+}
+
+/* init stage after threading inited */
+status_t vm_init_post_threading(kernel_args_t *kargs)
+{
+    return NO_ERROR;
+}
+
+/* init stage after semaphores inited */
+status_t vm_init_post_sema(kernel_args_t *kargs)
+{
+    return vm_page_mapper_init_post_sema(kargs);
 }
 
 /* allocate virtual space from kernel args */

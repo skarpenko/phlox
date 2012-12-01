@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -126,7 +126,8 @@ static sem_id get_next_gid(bool nozero)
 /* compare routine for semaphores names */
 static int compare_sem_name(const void *sem1, const void *sem2)
 {
-    return strcmp( ((semaphore_t*)sem1)->name, ((semaphore_t*)sem2)->name );
+    int r = strcmp( ((semaphore_t*)sem1)->name, ((semaphore_t*)sem2)->name );
+    return (r<=0) ? ( (r<0) ? -1 : 0 ) : 1;
 }
 
 /* allocate and init semaphore structure */
@@ -618,10 +619,11 @@ status_t sem_up(sem_id id, uint count)
 
     /* get last item of control blocks list to process */
     wcb_f = sem_peek_last_wcb(sem);
-    ASSERT_MSG(wcb_f != NULL, "sem_up(): control blocks list is empty!");
+
+    wcb = NULL; /* if wcb_f is NULL next loop will be skipped */
 
     /* walk through control blocks list to find threads for wake up */
-    do {
+    while(wcb != wcb_f) {
         wcb = sem_get_wcb(sem);  /* get block from head */
         /* can acquire? */
         if(wcb->count <= curr_count) {
@@ -632,9 +634,9 @@ status_t sem_up(sem_id id, uint count)
 
             /* update current count value */
             curr_count -= wcb->count;
-        }
-        sem_put_wcb(sem, wcb);  /* put block to tail */
-    } while(wcb != wcb_f);
+        } else
+           sem_put_wcb(sem, wcb);  /* put block to tail */
+    }
 
     /* unlock semaphore */
     sem_unlock(sem);

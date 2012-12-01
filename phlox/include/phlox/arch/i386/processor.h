@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_PROCESSOR_H_
@@ -527,6 +527,9 @@ void arch_invalidate_TLB_list(addr_t pages[], size_t count);
 
 /* used when interrupts are already enabled or to shutdown the processor */
 #define arch_halt()  __asm__ __volatile__ ("hlt")
+
+/* used for system hang */
+#define arch_hang() __asm__ __volatile__ ("cli; hlt;")
 
 
 /*

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -29,7 +29,6 @@ kernel_args_t globalKargs;
 static int _kernel_start_stage = K_KERNEL_STARTUP;
 
 void print_kernel_memory_map(void); /* for DEBUG only */
-void init_console_writer(void); /* for DEBUG only */
 
 /* for threading DEBUG */
 vuint thread0_ctr = 0;
@@ -96,6 +95,9 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
        /* init virtual memory manager */
        vm_init(&globalKargs);
 
+       /* init console */
+       debug_init_console_output(&globalKargs);
+
        /* system timer init */
        timer_init(&globalKargs);
     } else {
@@ -115,6 +117,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
      * initialization goes only on bootstrap processor, others - waiting.
     */
     if(num_cpu==0) {
+        /* continue VM init */
+        err = vm_init_post_threading(&globalKargs);
+        if(err != NO_ERROR)
+            panic("VM post-threading init failed!\n");
+
         /* init heap */
         err = heap_init_postthread(&globalKargs);
         if(err != NO_ERROR)
@@ -129,6 +136,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
         err = semaphores_init(&globalKargs);
         if(err != NO_ERROR)
             panic("Semaphores initialization failed!\n");
+
+        /* continue VM init */
+        err = vm_init_post_sema(&globalKargs);
+        if(err != NO_ERROR)
+            panic("VM post-semaphores init failed!\n");
     } else {
        /* wait until BSP completes? */
     }
@@ -180,7 +192,7 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     }
 
     /* init console writer */
-    init_console_writer();
+    debug_init_console_writer();
 
     /* switch to next kernel start stage */
     _kernel_start_stage = K_SERVICES_STARTUP;

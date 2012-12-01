@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_VM_H_
@@ -62,6 +62,18 @@ typedef struct {
  * for virtual memory initialization.
 */
 status_t vm_init(kernel_args_t *kargs);
+
+/*
+ * This routine called after threading init stage to
+ * continue VM initialization.
+*/
+status_t vm_init_post_threading(kernel_args_t *kargs);
+
+/*
+ * This routine called after semaphores init stage to
+ * continue VM initialization.
+*/
+status_t vm_init_post_sema(kernel_args_t *kargs);
 
 /*
  * Returns available physical memory

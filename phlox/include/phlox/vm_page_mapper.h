@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_VM_PAGE_MAPPER_H_
@@ -33,6 +33,13 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
  * Sets up virtual memory bookkeeping structures.
  */
 status_t vm_page_mapper_init_final(kernel_args_t *kargs);
+
+/*
+ * The routine called after semapores init to complete Page mapper
+ * initialization.
+*/
+status_t vm_page_mapper_init_post_sema(kernel_args_t *kargs);
+
 
 /*
  * Get physical page.

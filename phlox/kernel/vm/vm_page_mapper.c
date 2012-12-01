@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -7,6 +7,7 @@
 #include <phlox/errors.h>
 #include <phlox/avl_tree.h>
 #include <phlox/list.h>
+#include <phlox/sem.h>
 #include <phlox/mutex.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm.h>
@@ -158,9 +159,9 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
         list_add_mapping(&free_mappings, &mappings[i]);
     }
 
-    /* mutex init */
-    mutex_init(&map_pool_mutex, "map_pool_mutex");
-    
+    /* mutex init, it is not actual mutex creation */
+    mutex_init(&map_pool_mutex);
+
     return NO_ERROR;
 }
 
@@ -192,6 +193,12 @@ status_t vm_page_mapper_init_final(kernel_args_t *kargs)
     err = vm_page_init_wire_counters((addr_t)mappings, mappings_count * sizeof(mapping_desc_t));
 
     return NO_ERROR;
+}
+
+/* post-semaphore init stage */
+status_t vm_page_mapper_init_post_sema(kernel_args_t *kargs)
+{
+    return mutex_create(&map_pool_mutex, "map_pool_mutex");
 }
 
 /* get physical page */

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -65,22 +65,19 @@ static int _puts(const char *str)
     return 0;
 }
 
+/* routine used in panic() */
 static void _dump_klog()
 {
-    addr_t va;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
     char nl[2] = "\n";
 
+    /* hang if there is no screen buffer mapped*/
+    if(screenBase == NULL)
+        hang();
+
     /* set zero terminator */
     tmp[SYSCFG_KLOG_NCOLS] = 0;
-
-    /* try to get screen page */
-    if(vm_pmap_get_ppage(SCREEN_PHYS, &va, false))
-        return;
-
-    /* set screen base addres */
-    screenBase = (unsigned short *)va;
 
     /* fetch klog rows one-by-one */
     while(klog_ctr != (c = klog_get_new_row(klog_ctr, tmp))) {
@@ -91,16 +88,12 @@ static void _dump_klog()
             _puts(nl);
         klog_ctr = c;
     }
-
-    /* put page back */
-    vm_pmap_put_ppage(va);
 }
 
 /* temporary used console-writer */
 static int console_writer(void *data)
 {
     thread_t *me = thread_get_current_thread();
-    addr_t console_addr;
     uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
     char nl[2] = "\n";
@@ -110,13 +103,6 @@ static int console_writer(void *data)
 
     /* set zero terminator */
     tmp[SYSCFG_KLOG_NCOLS] = 0;
-
-    /* try to get screen page */
-    if(vm_pmap_get_ppage(SCREEN_PHYS, &console_addr, false))
-        return 0;
-
-    /* set screen base addres */
-    screenBase = (unsigned short *)console_addr;
 
     /* fetch klog rows one-by-one */
     while(1) {
@@ -134,8 +120,7 @@ static int console_writer(void *data)
 }
 
 /* init console writer thread */
-void init_console_writer(void);
-void init_console_writer(void)
+void debug_init_console_writer(void)
 {
     thread_id tid;
 
@@ -153,6 +138,21 @@ status_t debug_init(kernel_args_t *kargs)
     /** will be replaced later **/
     line = kargs->cons_line;
     screenOffset = SCREEN_WIDTH * line;
+
+    return NO_ERROR;
+}
+
+/* init console output */
+status_t debug_init_console_output(kernel_args_t *kargs)
+{
+    addr_t va;
+
+    /* map screen buffer */
+    if(vm_pmap_get_ppage(SCREEN_PHYS, &va, false))
+        panic("Failed to map screen buffer!\n");
+
+    /* copy to global variable */
+    screenBase = (unsigned short *)va;
 
     return NO_ERROR;
 }
@@ -198,8 +198,10 @@ int panic(const char *fmt, ...)
     /* Copy kernel log to screen */
     _dump_klog();
 
-    for(;;); /* loop forever */
-    /* TODO: Stop system and all CPUs (for SMP) */
+    /* hang the system */
+    hang();
+
+    /* TODO: Stop system and all CPUs (for SMP) ? */
 
     return ret;
 }

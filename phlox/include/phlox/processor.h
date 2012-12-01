@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_PROCESSOR_H_
@@ -118,6 +118,9 @@ typedef struct {
 
 /* used to shutdown the processor */
 #define halt()  arch_halt()
+
+/* used to hang the system */
+#define hang()  arch_hang()
 
 
 /* Global variables */

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_PROCESSOR_H_
@@ -11,24 +11,23 @@
 #include <arch/arch_bits.h>
 #include <arch/arch_data.h>
 #include <phlox/kargs.h>
-#include <phlox/spinlock.h>
 #include <phlox/arch/processor.h>
+
 
 /* Bootstrap processor */
 #define BOOTSTRAP_CPU  0
 
 /* processor data */
 typedef struct {
-    spinlock_t        lock;  /* lock */
-    arch_processor_t  arch;  /* architecture specific data */
+    uint              cpu_num;   /* processor number */
+    arch_processor_t  arch;      /* architecture specific data */
 } processor_t;
 
 /* processor set data */
 typedef struct {
-    spinlock_t            lock;                         /* lock */
-    arch_processor_set_t  arch;                         /* architecture specific data */
-    uint32                processors_num;               /* processors count */
+    uint                  processors_num;               /* processors count */
     processor_t           processors[SYSCFG_MAX_CPUS];  /* processors array */
+    arch_processor_set_t  arch;                         /* architecture specific data */
 } processor_set_t;
 
 
@@ -125,13 +124,13 @@ typedef struct {
 extern processor_set_t  ProcessorSet;  /* Processor Set */
 
 /* Bootup processors initialization */
-void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu);
+void processor_set_init(kernel_args_t *kargs, uint curr_cpu);
 /* this one called by processor_set_init for each cpu */
-void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu);
+void processor_init(processor_t *p, kernel_args_t *kargs, uint curr_cpu);
 
 /*
  * Returns current processor number
  */
-uint32 get_current_processor(void);
+uint get_current_processor(void);
 
 #endif

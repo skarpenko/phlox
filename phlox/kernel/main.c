@@ -23,8 +23,8 @@ kernel_args_t globalKargs;
 
 void print_kernel_memory_map(void); /* for DEBUG only */
 
-void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
-void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
+void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu);  /* keep compiler happy */
+void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 {
     /* if we are bootstrap processor,
      * store kernel args to global variable and

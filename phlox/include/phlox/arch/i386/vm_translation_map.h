@@ -1,9 +1,9 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
-#ifndef _PHLOX_ARCH_I386_VM_TRANSLATION_MAP_H
-#define _PHLOX_ARCH_I386_VM_TRANSLATION_MAP_H
+#ifndef _PHLOX_ARCH_I386_VM_TRANSLATION_MAP_H_
+#define _PHLOX_ARCH_I386_VM_TRANSLATION_MAP_H_
 
 /* Some i386 architecture specific definitions */
 #define MAX_PDENTS  1024

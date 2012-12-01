@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -90,13 +90,13 @@ void arch_processor_mod_init(arch_processor_t *bsp)
 }
 
 /* architecture specific processor set init */
-void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint32 curr_cpu)
+void arch_processor_set_init(arch_processor_set_t *aps, kernel_args_t *kargs, uint curr_cpu)
 {
     /* do nothing for now */
 }
 
 /* architecture specific processor init */
-void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint32 curr_cpu)
+void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint curr_cpu)
 {
     uint32 cpu, fpu;
     uint16 fpu_tmp;

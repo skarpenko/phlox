@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -27,10 +27,10 @@ static mod_init_t mod_inits[] = {
 };
 
 
-void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu)
+void processor_set_init(kernel_args_t *kargs, uint curr_cpu)
 {
-    uint32 i;
-    
+    uint i;
+
     if(curr_cpu == 0) { /* we are bootstrap processor */
        /* prepare ProcessorSet */
        memset(&ProcessorSet, 0, sizeof(processor_set_t));
@@ -52,13 +52,15 @@ void processor_set_init(kernel_args_t *kargs, uint32 curr_cpu)
     }
 }
 
-void processor_init(processor_t *p, kernel_args_t *kargs, uint32 curr_cpu)
+void processor_init(processor_t *p, kernel_args_t *kargs, uint curr_cpu)
 {
+    p->cpu_num = curr_cpu; /* set CPU number */
+
     /* execute architecture specific inits */
     arch_processor_init(&p->arch, kargs, curr_cpu);
 }
 
-uint32 get_current_processor(void)
+uint get_current_processor(void)
 {
     /* As SMP is not currently supported we always return
      * Bootstrap processor number. With SMP support this

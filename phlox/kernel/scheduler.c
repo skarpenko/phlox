@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <sys/debug.h>
@@ -217,7 +217,7 @@ static void sched_shuffle_runqueue_head(runqueue_t *rq, int tick_type)
          * dynamic priority - move thread to higher queue.
          */
         if(new_prio > th->d_prio) {
-            /* remove thread from current thread */
+            /* remove thread from current queue */
             rq_pop_head_thread(rq, prio);
             /* set new dynamic priority */
             th->d_prio = new_prio;

@@ -49,7 +49,7 @@ help:
 	@echo
 	@echo "Additional options:"
 	@echo "  CPU=<cpu type>  - specifies CPU type to optimize for (default: i486);"
-	@echo "  DEBUG=yes       - turn on debug compilation (default: no)."
+	@echo "  DEBUG=yes|no    - turn on debug compilation (default: yes)."
 	@echo
 
 bochs: final

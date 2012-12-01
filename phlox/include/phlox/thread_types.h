@@ -66,7 +66,7 @@ typedef struct thread {
     /* Thread state params */
     int              state;              /* Thread state */
     uint             flags;              /* Thread flags */
-    int              preemt_count;       /* Thread is not preempted while >0 */
+    int              preempt_count;      /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
     /* Fields used by scheduler */
     int             jiffies;             /* Current jiffies count */
@@ -108,6 +108,10 @@ enum {
   THREAD_FLAG_NONE        = 0x0,  /* No flags set */
   THREAD_FLAG_RESCHEDULE  = 0x1   /* Thread will be rescheduled soon */
 };
+/*
+ * NOTE: THREAD_FLAG_RESCHEDULE flag used by scheduler's timer handler
+ *       for marking thread as being rescheduled soon.
+ */
 
 /* Process */
 typedef struct process {

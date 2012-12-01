@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/debug.h>
 #include <phlox/errors.h>
+#include <phlox/param.h>
 #include <phlox/heap.h>
 #include <phlox/avl_tree.h>
 #include <phlox/list.h>

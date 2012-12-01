@@ -28,9 +28,6 @@
  * Ptr - pointer to thread_t structure.
 */
 
-/* Per thread jiffies count (OBSOLETE) */
-#define DEFAULT_PER_THREAD_JIFFIES  25
-
 /* Per thread time quanta params in milliseconds */
 #define THREAD_DEFAULT_QUANTA      60  /* Default quanta size */
 #define THREAD_MINIMUM_QUANTA      20  /* Minimum quanta size */
@@ -93,6 +90,23 @@ void sched_add_idle_thread(thread_t *thread, uint cpu);
  * Add thread for scheduling.
 */
 void sched_add_thread(thread_t *thread);
+
+/*
+ * Remove thread from scheduling.
+*/
+void sched_remove_thread(thread_t *thread);
+
+/*
+ * Capture cpu by current thread. Thread cannot be rescheduled.
+ * Returns current value of preemt_count for thread.
+*/
+int sched_capture_cpu(void);
+
+/*
+ * Release cpu captured by current thread.
+ * Returns current value of preemt_count for thread.
+*/
+int sched_release_cpu(void);
 
 /*
  * Create kernel process.

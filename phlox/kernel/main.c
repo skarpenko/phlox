@@ -190,7 +190,7 @@ int thread0(void *data)
     while(1) {
         thread0_ctr++;
         /* wait till the end of my time slice */
-        while(*jiff != 0); while(*jiff == 0);
+        while(*jiff != 1); /* HACK */
     }
 }
 
@@ -205,7 +205,7 @@ int thread1(void *data)
     while(1) {
         thread1_ctr++;
         /* wait till the end of my time slice */
-        while(*jiff != 0); while(*jiff == 0);
+        while(*jiff != 1); /* HACK */
     }
 }
 /* thread 2 routine */
@@ -219,7 +219,7 @@ int thread2(void *data)
     while(1) {
         thread2_ctr++;
         /* wait till the end of my time slice */
-        while(*jiff != 0); while(*jiff == 0);
+        while(*jiff != 1); /* HACK */
     }
 }
 
@@ -237,6 +237,6 @@ int thread_ctl(void *data)
                 thread0_ctr, thread1_ctr, thread2_ctr);
         }
         /* wait for next thread */
-        while(*jiff != 0); while(*jiff == 0);
+        while(*jiff != 1); /* HACK */
     }
 }

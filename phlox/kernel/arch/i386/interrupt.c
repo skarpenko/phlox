@@ -126,6 +126,22 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
 }
 
 
+/* prints interrupt frame stack */
+static void print_int_frame(i386_int_frame_t *frame)
+{
+    kprint("\nStack frame:\n");
+    kprint("Vect = 0x%08x    ErrC = 0x%08x\n", frame->vector, frame->err_code);
+    kprint(" EAX = 0x%08x     EBX = 0x%08x\n", frame->eax, frame->ebx);
+    kprint(" ECX = 0x%08x     EDX = 0x%08x\n", frame->ecx, frame->edx);
+    kprint(" EDI = 0x%08x     ESI = 0x%08x\n", frame->edi, frame->esi);
+    kprint(" EBP = 0x%08x     ESP = 0x%08x\n", frame->ebp, frame->esp);
+    kprint("  CS = 0x%08x      DS = 0x%08x\n", frame->cs,  frame->ds);
+    kprint("  ES = 0x%08x      FS = 0x%08x\n", frame->es,  frame->fs);
+    kprint("  GS = 0x%08x      SS = 0x%08x\n", frame->gs,  frame->ds); /* SS = DS */
+    kprint(" EIP = 0x%08x  EFLAGS = 0x%08x\n", frame->eip, frame->eflags);
+    kprint("\n");
+}
+
 /* main interrupt handling routine */
 void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t *frame)
@@ -133,59 +149,101 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
     switch(frame->vector) {
         /* Divide Error Exception */
         case 0:
-         break;
+           kprint("\n\nDivide Error Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Debug Exception */
         case 1:
-         break;
+           kprint("\n\nDebug Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Nonmaskable Interrupt (NMI) */
         case 2:
-         break;
+           kprint("\n\nNonmaskable Interrupt\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Breakpoint Exception */
         case 3:
-         break;
+           kprint("\n\nBreakpoint Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Overflow Exception */
         case 4:
-         break;
+           kprint("\n\nOverflow Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* BOUND Range Exceeded Exception */
         case 5:
-         break;
+           kprint("\n\nBOUND Range Exceeded Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Invalid Opcode Exception */
         case 6:
-         break;
+           kprint("\n\nInvalid Opcode Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Device Not Available Exception */
         case 7:
-         break;
+           kprint("\n\nDevice Not Available Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Double Fault Exception */
         case 8:
-         break;
+           kprint("\n\nDouble Fault Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Coprocessor Segment Overrun */
         case 9:
-         break;
+           kprint("\n\nCoprocessor Segment Overrun\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Invalid TSS Exception */
         case 10:
-         break;
+           kprint("\n\nInvalid TSS Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Segment Not Present */
         case 11:
-         break;
+           kprint("\n\nSegment Not Present\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Stack Fault Exception */
         case 12:
-         break;
+           kprint("\n\nStack Fault Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* General Protection Exception */
         case 13:
-         break;
+           kprint("\n\nGeneral Protection Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Page-Fault Exception */
         case 14: {
@@ -202,23 +260,38 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
         /* x87 FPU Floating-Point Error */
         case 16:
-         break;
+           kprint("\n\nx87 FPU Floating-Point Error\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Alignment Check Exception */
         case 17:
-         break;
+           kprint("\n\nAlignment Check Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Machine-Check Exception */
         case 18:
-         break;
+           kprint("\n\nMachine-Check Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* SIMD Floating-Point Exception */
         case 19:
-         break;
+           kprint("\n\nSIMD Floating-Point Exception\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Unhandled vector */
         case 0xffffffff:
-         break;
+           kprint("\n\nUnhandled interrupt vector\n");
+           print_int_frame(frame);
+           panic(":(");
+            break;
 
         /* Here starts handling of hardware interrupts */
         default: {

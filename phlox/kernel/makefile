@@ -14,7 +14,10 @@ KERNEL_O_FILES := \
 	timer.o \
 	misc.o \
 	klog.o \
-	debug.o
+	debug.o \
+	process.o \
+	scheduler.o \
+	thread.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

@@ -14,6 +14,40 @@
 #include <phlox/arch/thread_types.h>
 
 
+/* Scheduling policy */
+typedef union {
+    struct {
+        uint name : 4;   /* Scheduling policy name */
+    } policy;            /* Scheduling policy structure */
+    uint raw;            /* Raw value of scheduling policy */
+} sched_policy_t;
+
+/* Scheduling policies names */
+enum {
+  SCHED_POLICY_ORDINARY = 0,   /* Ordinary shceduling policy for most tasks */
+  SCHED_POLICY_INTERRUPT,      /* Policy for low-priority interrupts handling */
+  SCHED_POLICY_HW_HANDLER,     /* Hardware I/O operations handler */
+  SCHED_POLICY_KERNEL,         /* Policy for scheduling kernel tasks */
+  SCHED_POLICY_REAL_TIME,      /* Scheduling policy for real-time tasks */
+  SCHED_POLICY_SERVICE,        /* Scheduling policy for system services */
+  SCHED_POLICY_INTERACTIVE,    /* Sheduling for interactive threads
+                                * (actual only when process is interactive)
+                                */
+  /* Count of scheduling policies */
+  SCHED_POLICIES_COUNT
+};
+
+/* Thread static priorities */
+enum {
+  THREAD_PRIORITY_REAL_TIME = 224,
+  THREAD_PRIORITY_VERY_HIGH = 192,
+  THREAD_PRIORITY_HIGH      = 160,
+  THREAD_PRIORITY_NORMAL    = 128,
+  THREAD_PRIORITY_LOW       =  96,
+  THREAD_PRIORITY_VERY_LOW  =  64,
+  THREAD_PRIORITY_IDLE      =  32
+};
+
 /* Thread */
 typedef struct thread {
     thread_id        id;                 /* Thread id */
@@ -35,7 +69,10 @@ typedef struct thread {
     int              preemt_count;       /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
     /* Fields used by scheduler */
-    uint jiffies;                        /* Jiffies count */
+    uint             jiffies;            /* Current jiffies count */
+    sched_policy_t   sched_policy;       /* Scheduling policy */
+    uint             s_prio;             /* Static priority */
+    uint             d_prio;             /* Current dynamic priority */
     /* Thread timing */
     bigtime_t        kernel_time;        /* Kernel-side execution time */
     bigtime_t        user_time;          /* User-side execution time */
@@ -75,6 +112,13 @@ typedef struct process {
     int                 state;            /* Process state */
     uint                flags;            /* Process flags */
     vuint               ref_count;        /* Reference count */
+    /* Scheduling data */
+    uint                process_role;     /* Process role */
+    uint                def_prio;         /* Default priority for new threads */
+    sched_policy_t      def_sched_policy; /* Default policy for new threads */
+    /* Process timing */
+    bigtime_t           kernel_time;      /* Kernel-side execution time */
+    bigtime_t           user_time;        /* User-side execution time */
     /* Process memory */
     aspace_id           aid;              /* Address space id */
     vm_address_space_t  *aspace;          /* Address space */
@@ -97,5 +141,21 @@ enum {
   PROCESS_STATE_BIRTH,       /* Process is in creation stage */
   PROCESS_STATE_DEATH        /* Process is in destroying stage */
 };
+
+/* Process roles */
+enum {
+  PROCESS_ROLE_KERNEL = 0,  /* Kernel process. Only one process has this role. */
+  PROCESS_ROLE_SERVICE,     /* Process is system service */
+  PROCESS_ROLE_USER,        /* Ordinary user process */
+  /* Count of process roles */
+  PROCESS_ROLES_COUNT
+};
+
+/* Process flags */
+enum {
+  PROCESS_FLAG_NONE        = 0x0,  /* No flags is set */
+  PROCESS_FLAG_INTERACTIVE = 0x1   /* Process currently interactive */
+};
+
 
 #endif

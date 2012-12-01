@@ -28,8 +28,22 @@
  * Ptr - pointer to thread_t structure.
 */
 
-/* Per thread jiffies count */
+/* Per thread jiffies count (OBSOLETE) */
 #define DEFAULT_PER_THREAD_JIFFIES  25
+
+/* Minimum and maximum scheduling quanta can be set for thread */
+#define SCHED_MAXIMUM_QUANTA  (100)
+#define SCHED_MINIMUM_QUANTA   (10)
+
+/* Priorities constants */
+#define THREAD_NUM_PRIORITY_LEVELS  (256)
+#define THREAD_LOWEST_PIORITY       (1)  /* 0 is for per CPU idle threads */
+#define THREAD_HIGHEST_PRIORITY     (THREAD_NUM_PRIORITY_LEVELS-1)
+
+/* Additional priority levels added to thread depending on process role */
+#define PROCESS_ROLE_PRIORITY_SHIFT_KERNEL  (16)
+#define PROCESS_ROLE_PRIORITY_SHIFT_SERVICE  (8)
+#define PROCESS_ROLE_PRIORITY_SHIFT_USER     (0)
 
 
 /*

@@ -33,6 +33,34 @@ static spinlock_t processes_lock;
 /* Kernel process */
 static process_t *kernel_process = NULL;
 
+/* Process roles properties */
+static struct {
+    sched_policy_t  def_sched_policy;  /* Default scheduling policy */
+    uint            def_prio;          /* Default priority */
+} process_roles_props[PROCESS_ROLES_COUNT] = {
+  /* Kernel process role properties */
+  {
+     /* Default scheduling policy */
+     { .policy.name = SCHED_POLICY_KERNEL },
+     /* Default priority */
+     (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_KERNEL)
+  },
+  /* Service process role properties */
+  {
+     /* Default scheduling policy */
+     { .policy.name = SCHED_POLICY_SERVICE },
+     /* Default priority */
+     (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_SERVICE)
+  },
+  /* User process role properties */
+  {
+     /* Default scheduling policy */
+     { .policy.name = SCHED_POLICY_ORDINARY },
+     /* Default priority */
+     (THREAD_PRIORITY_NORMAL + PROCESS_ROLE_PRIORITY_SHIFT_USER)
+  }
+}; /* Process roles properties */
+
 
 /*** Locally used routines ***/
 
@@ -227,6 +255,10 @@ proc_id proc_create_kernel_process(const char* name)
     id = proc->id;
     proc->aid = vm_get_kernel_aspace_id();
     proc->aspace = vm_get_kernel_aspace();
+    proc->process_role = PROCESS_ROLE_KERNEL;
+    proc->def_prio = process_roles_props[proc->process_role].def_prio;
+    proc->def_sched_policy.raw =
+        process_roles_props[proc->process_role].def_sched_policy.raw;
 
     /* store as global */
     kernel_process = proc;

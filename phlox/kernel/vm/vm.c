@@ -548,3 +548,22 @@ exit_unmap:
 
     return err;
 }
+
+/* simulate page fault for given virtual address range */
+status_t vm_simulate_pf(addr_t start, addr_t end)
+{
+    status_t err = NO_ERROR;
+
+    /* align address by page size */
+    start = ROUNDOWN(start, PAGE_SIZE);
+    end = ROUNDUP(end, PAGE_SIZE);
+
+    while(start < end) {
+        err = vm_soft_page_fault(start, false, false, true);
+        if(err != NO_ERROR)
+            break;
+        start += PAGE_SIZE;
+    }
+
+    return err;
+}

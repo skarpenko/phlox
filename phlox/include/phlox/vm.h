@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_VM_H_
@@ -177,6 +177,14 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
  * of address space.
 */
 status_t vm_unmap_object(aspace_id aid, addr_t vaddr);
+
+/*
+ * Simulate page fault for given virtual address range.
+ * Calls soft page fault handler for each page in range,
+ * so already mapped pages will be remapped again.
+ * Use with care.
+*/
+status_t vm_simulate_pf(addr_t start, addr_t end);
 
 
 /*

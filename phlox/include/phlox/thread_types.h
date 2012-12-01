@@ -24,11 +24,11 @@ typedef struct thread {
     /* Kernel-side stack data */
     object_id        kstack_id;          /* Kernel stack vm_object id */
     addr_t           kstack_top;         /* Kernel stack top */
-    size_t           kstack_base;        /* Kernel stack base */
+    addr_t           kstack_base;        /* Kernel stack base */
     /* User-side stack data */
     object_id        ustack_id;          /* User stack vm_object id */
     addr_t           ustack_top;         /* User stack top */
-    size_t           ustack_base;        /* User stack base */
+    addr_t           ustack_base;        /* User stack base */
     /* Thread state params */
     int              state;              /* Thread state */
     uint             flags;              /* Thread flags */

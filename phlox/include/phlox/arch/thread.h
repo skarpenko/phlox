@@ -23,5 +23,17 @@ status_t arch_threading_init(kernel_args_t *kargs);
 */
 status_t arch_threading_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 
+/*
+ * Initialize architecture-dependend parts of thread structure.
+*/
+status_t arch_thread_init_struct(thread_t *thread);
+
+/*
+ * Initialize kernel stack of newly created thread.
+ * stub_func will be called first when new thread will be
+ * scheduled for execution.
+*/
+status_t arch_thread_init_kstack(thread_t *thread, int (*stub_func)(void));
+
 
 #endif

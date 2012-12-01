@@ -334,6 +334,16 @@ void arch_processor_init(arch_processor_t *ap, kernel_args_t *kargs, uint curr_c
      : : "m" (fpu), "m" (fpu_tmp) : "%eax");
      ap->fpu = fpu;
 
+     /* enable fpu monitoring */
+     {
+         uint32 cr0;
+         /* get cr0 and set monitoring bit */
+         cr0 = read_cr0();
+         cr0 |= X86_CR0_MP;
+         /* store cr0 back */
+         write_cr0(cr0);
+     }
+
 
      /* print processor info */
      kprint("CPU #%d info:\n", curr_cpu);

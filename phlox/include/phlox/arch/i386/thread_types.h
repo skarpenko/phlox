@@ -14,7 +14,7 @@ typedef struct stack_state {
 /* Architecture dependend thread data */
 typedef struct arch_thread {
     stack_state_t  current_stack;                /* Thread stack state */
-    uint32         debug_regs[8];                /* Debug registers */
+    uint32         debug_regs[8];                /* Debug registers (dr7 - dr0) */
     bool           fpu_used;                     /* =true if FPU was used */
     uint8          fpu_state[512] _ALIGNED(16);  /* FPU state */
 } arch_thread_t;

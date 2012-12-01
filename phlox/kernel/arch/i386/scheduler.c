@@ -38,7 +38,30 @@ void arch_sched_context_switch(thread_t *t_from, thread_t *t_to)
     if(from_pgdir != to_pgdir)
         i386_pgdir_switch(to_pgdir);
 
-    /* TODO: disable FPU for its usage monitoring */
+    /* save / load debug registers */
+    {
+        uint32 dr7 = read_dr7();
+
+        /* save current debug state if hardware debug used */
+        if(dr7 != 0)
+            i386_dbg_regs_save(t_from->arch.debug_regs);
+
+        /* load new debug state if hardware debug used in
+         * next thread or turn off debugging facilities.
+         */
+        if(t_to->arch.debug_regs[0] != 0)
+            i386_dbg_regs_load(t_to->arch.debug_regs);
+        else
+            i386_dbg_regs_clear();
+    }
+
+    /* set task switched bit.
+     * due to fpu monitoring, "device not available"
+     * exception occurs if thread tries to use fpu.
+     * so... after this we know that fpu context must to
+     * be stored for this thread.
+     */
+    stts();
 
     /* set new kernel stack for next task switch */
     i386_set_kstack(t_to->kstack_top);

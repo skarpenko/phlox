@@ -185,3 +185,66 @@ FUNCTION(i386_pgdir_switch):
     movl ARG0, %eax  /* copy new_pgdir to eax */
     movl %eax, %cr3  /* load new page directory */
     ret
+
+/* void i386_dbg_regs_save(uint32 *dbg_regs) */
+FUNCTION(i386_dbg_regs_save):
+    pushl %ebx             /* store ebx (*dbg_regs now in ARG1) */
+    movl  ARG1, %eax       /* get pointer to storage */
+    movl  %dr7, %ebx       /* save dr7 */
+    movl  %ebx, 0(%eax)
+    movl  %dr6, %ebx       /* save dr6 */
+    movl  %ebx, 4(%eax)
+    movl  %dr5, %ebx       /* save dr5 */
+    movl  %ebx, 8(%eax)
+    movl  %dr4, %ebx       /* save dr4 */
+    movl  %ebx, 12(%eax)
+    movl  %dr3, %ebx       /* save dr3 */
+    movl  %ebx, 16(%eax)
+    movl  %dr2, %ebx       /* save dr2 */
+    movl  %ebx, 20(%eax)
+    movl  %dr1, %ebx       /* save dr1 */
+    movl  %ebx, 24(%eax)
+    movl  %dr0, %ebx       /* save dr0 */
+    movl  %ebx, 28(%eax)
+    popl  %ebx             /* restore ebx */
+    ret
+
+/* void i386_dbg_regs_load(uint32 *dbg_regs) */
+FUNCTION(i386_dbg_regs_load):
+    pushl %ebx             /* store ebx (*dbg_regs now in ARG1) */
+    movl  ARG1, %eax       /* get pointer to storage */
+    movl  0(%eax), %ebx    /* load dr7 */
+    movl  %ebx, %dr7
+    movl  4(%eax), %ebx    /* load dr6 */
+    movl  %ebx, %dr6
+    movl  8(%eax), %ebx    /* load dr5 */
+    movl  %ebx, %dr5
+    movl  12(%eax), %ebx   /* load dr4 */
+    movl  %ebx, %dr4
+    movl  16(%eax), %ebx   /* load dr3 */
+    movl  %ebx, %dr3
+    movl  20(%eax), %ebx   /* load dr2 */
+    movl  %ebx, %dr2
+    movl  24(%eax), %ebx   /* load dr1 */
+    movl  %ebx, %dr1
+    movl  28(%eax), %ebx   /* load dr0 */
+    movl  %ebx, %dr0
+    popl  %ebx             /* restore ebx */
+    ret
+
+/* void i386_dbg_regs_clear(void) */
+FUNCTION(i386_dbg_regs_clear):
+    pushl %eax        /* store eax */
+    xorl  %eax, %eax  /* set eax to 0 */
+    /* clear debug registers */
+    movl  %eax, %dr7
+    movl  %eax, %dr6
+    movl  %eax, %dr5
+    movl  %eax, %dr4
+    movl  %eax, %dr3
+    movl  %eax, %dr2
+    movl  %eax, %dr1
+    movl  %eax, %dr0
+    /* restore eax and return */
+    popl  %eax
+    ret

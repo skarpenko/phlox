@@ -8,6 +8,7 @@
 #include <arch/arch_data.h>
 #include <phlox/arch/i386/segments.h>
 #include <phlox/arch/i386/int_entry.h>
+#include <phlox/arch/i386/exceptions.h>
 #include <phlox/platform/irq.h>
 #include <phlox/processor.h>
 #include <phlox/kernel.h>
@@ -248,9 +249,7 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
         /* Device Not Available Exception */
         case 7:
-           kprint("\n\nDevice Not Available Exception\n");
-           print_int_frame(frame);
-           panic(":(");
+           i386_device_not_available();
             break;
 
         /* Double Fault Exception */

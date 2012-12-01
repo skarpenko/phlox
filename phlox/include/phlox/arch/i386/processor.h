@@ -154,6 +154,77 @@ typedef struct {
 #define write_cr4(x) \
     __asm__ __volatile__ ("movl %0, %%cr4": :"r" (x))
 
+/*
+ * Hardware debug registers read/write macroses
+ */
+#define read_dr0() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr0, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr0(x) \
+    __asm__ __volatile__ ("movl %0, %%dr0": :"r" (x))
+
+#define read_dr1() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr1, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr1(x) \
+    __asm__ __volatile__ ("movl %0, %%dr1": :"r" (x))
+
+#define read_dr2() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr2, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr2(x) \
+    __asm__ __volatile__ ("movl %0, %%dr2": :"r" (x))
+
+#define read_dr3() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr3, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr3(x) \
+    __asm__ __volatile__ ("movl %0, %%dr3": :"r" (x))
+
+/*** According to Intel's manual DR4 and DR5 is reserved. ***/
+
+#define read_dr6() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr6, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr6(x) \
+    __asm__ __volatile__ ("movl %0, %%dr6": :"r" (x))
+
+#define read_dr7() ({ \
+    uint32 __dummy; \
+    __asm__ __volatile__ ( \
+        "movl %%dr7, %0;" \
+        :"=r" (__dummy)); \
+    __dummy; \
+})
+
+#define write_dr7(x) \
+    __asm__ __volatile__ ("movl %0, %%dr7": :"r" (x))
+
 
 /*
  * I/O macroses
@@ -517,5 +588,14 @@ void i386_context_switch(arch_thread_t *t_from, arch_thread_t *t_to);
 void i386_pgdir_switch(addr_t new_pgdir);
 /* set kernel stack for next context switch */
 void i386_set_kstack(addr_t kstack_top);
+
+/*
+ * Routines for hardware debug context save and load.
+ * dr7 register is in zero index, dr6 in first and so on.
+ */
+void i386_dbg_regs_save(uint32 *dbg_regs);
+void i386_dbg_regs_load(uint32 *dbg_regs);
+void i386_dbg_regs_clear(void);
+
 
 #endif

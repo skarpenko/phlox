@@ -30,6 +30,10 @@
 #define VM_FLAG_PAGE_ACCESSED  0x40  /* Page accessed */
 #define VM_FLAG_PAGE_MASK      0x70  /* Mask          */
 
+/* Reserved ID values */
+#define VM_INVALID_OBJECTID  ((object_id)0)  /* Invalid object ID */
+#define VM_INVALID_ASPACEID  ((aspace_id)0)  /* Invalid address space ID */
+
 
 /*
  * State of the Virtual Memory.

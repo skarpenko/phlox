@@ -10,6 +10,12 @@
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/heap.h>
 
+
+/* External initialization routines */
+status_t vm_address_spaces_init(kernel_args_t *kargs);
+status_t vm_objects_init(kernel_args_t *kargs);
+
+
 /* Global variable with Virtual Memory State */
 vm_stat_t VM_State;
 
@@ -76,6 +82,16 @@ status_t vm_init(kernel_args_t *kargs)
     err = arch_vm_init_final(kargs);
     if(err)
        panic("arch_vm_init_final: final stage failed!\n");
+
+    /* init address spaces module */
+    err = vm_address_spaces_init(kargs);
+    if(err)
+       panic("vm_address_spaces_init: failed!\n");
+
+    /* init vm objects module */
+    err = vm_objects_init(kargs);
+    if(err)
+       panic("vm_objects_init: failed!\n");
 
     return NO_ERROR;
 }

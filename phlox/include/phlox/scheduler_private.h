@@ -10,6 +10,7 @@
 #include <phlox/param.h>
 #include <phlox/thread_private.h>
 
+
 /* Timer tick length in milliseconds */
 #define SCHED_TICK_MSEC  (1000 / HZ)
 /* Ticks and milliseconds conversion macroses (not accurate) */
@@ -46,6 +47,7 @@ typedef xlist_t sched_queue_t;
 /* Per CPU run queue */
 typedef struct {
     spinlock_t     lock;                               /* Access lock */
+    uint           cpu_num;                            /* CPU number */
     uint           total_count;                        /* Total threads count */
     sched_queue_t  queue[THREAD_NUM_PRIORITY_LEVELS];  /* Priority queues */
 } runqueue_t;

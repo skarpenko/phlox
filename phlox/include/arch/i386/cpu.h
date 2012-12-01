@@ -16,6 +16,9 @@
 /* Extract page number from address */
 #define PAGE_NUMBER(a)  (a>>PAGE_SHIFT)
 
+/* Form page address from its number */
+#define PAGE_ADDRESS(a)  (a<<PAGE_SHIFT)
+
 /* Max. limit of Global Descriptor Table */
 #define MAX_GDT_LIMIT  0x800
 /*

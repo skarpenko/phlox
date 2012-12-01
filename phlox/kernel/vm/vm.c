@@ -275,6 +275,86 @@ size_t vm_phys_mem_size(void)
 /* software page fault handler */
 static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, bool is_user)
 {
+    vm_address_space_t *aspace;
+    vm_mapping_t *mapping;
+    vm_upage_t *upage;
+    vm_page_t *page;
+    status_t err;
+
+    /* get faulted address space */
+    if(is_kernel_address(addr)) {
+        aspace = vm_get_kernel_aspace();
+    } else {
+        panic("vm_soft_page_fault: page fault at user space address %x!\n", addr);
+        aspace = NULL; /* keep compiler happy */
+    }
+
+    /* increment address space faults counter */
+    atomic_inc(&aspace->faults_count);
+
+    /* acquire lock before touching address space */
+    spin_lock(&aspace->lock);
+
+    /* get faulted mapping */
+    err = vm_aspace_get_mapping(aspace, addr, &mapping);
+    if(err != NO_ERROR)
+        panic("vm_soft_page_fault: can't get mapping at address %x, err = %x!\n", addr, err);
+
+    /* this page fault handler deals only with mapped objects */
+    if(mapping->type != VM_MAPPING_TYPE_OBJECT)
+        panic("vm_soft_page_fault: wrong mapping type!\n");
+
+    /* lock mapped object */
+    spin_lock(&mapping->object->lock);
+
+    /* get universal page for mapping its data */
+    err = vm_object_get_or_add_upage(mapping->object,
+                                     addr - mapping->start + mapping->offset,
+                                     &upage);
+    if(err != NO_ERROR)
+        panic("vm_soft_page_fault: can't get upage, err = %x!\n", err);
+
+    /* allocate new physical page or just map existing page */
+    if(upage->state == VM_UPAGE_STATE_UNWIRED) {
+        /* upage is not wired with physical page.
+         * so... allocate new one.
+         */
+        page = vm_page_alloc(VM_PAGE_STATE_CLEAR);
+        if(page == NULL)
+           panic("vm_soft_page_fault: out of physical memory!\n");
+        /* stick physical page into upage */
+        upage->state = VM_UPAGE_STATE_RESIDENT;
+        upage->ppn = page->ppn;
+    } else if(upage->state == VM_UPAGE_STATE_RESIDENT) {
+        /* upage has resident physical page.
+         * just get it for further mapping.
+         */
+        page = vm_page_lookup(upage->ppn);
+        if(page == NULL)
+            panic("vm_soft_page_fault: wrong physical page number!\n");
+    } else {
+        /* all other upage states is not supported for now */
+        panic("vm_soft_page_fault: invalid universal page state!\n");
+        page = NULL; /* keep compiler happy */
+    }
+
+    /* now unlock object */
+    spin_unlock(&mapping->object->lock);
+
+    /* ... and lock translation map */
+    (*aspace->tmap.ops->lock)(&aspace->tmap);
+
+    /* map page into address space */
+    (*aspace->tmap.ops->map)(&aspace->tmap, addr, PAGE_ADDRESS(page->ppn), mapping->protect);
+    atomic_inc(&page->wire_count); /* increment wired counter */
+
+    /* unlock translation map */
+    (*aspace->tmap.ops->unlock)(&aspace->tmap);
+
+    /* .. and finally unlock address space */
+    spin_unlock(&aspace->lock);
+
+    /* page fault handled successfully */
     return NO_ERROR;
 }
 
@@ -326,6 +406,7 @@ status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *va
     /* stick object to mapping */
     mapping->type = VM_MAPPING_TYPE_OBJECT;
     mapping->object = object;
+    mapping->protect = protection;
 
     /* store new mapping in mappings list of the object */
     vm_object_put_mapping(object, mapping);
@@ -389,6 +470,7 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
     /* ... and assign object to it */
     mapping->type = VM_MAPPING_TYPE_OBJECT;
     mapping->object = object;
+    mapping->protect = protection;
 
     /* store new mapping in object mappings list */
     vm_object_put_mapping(object, mapping);

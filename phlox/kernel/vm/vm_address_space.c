@@ -326,12 +326,13 @@ status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t bas
         return ERR_NO_MEMORY;
 
     /* init structure fields */
-    (*mapping)->start  = base;
-    (*mapping)->end    = base + size - 1;
-    (*mapping)->mmap   = &aspace->mmap;
-    (*mapping)->object = NULL;
-    (*mapping)->offset = 0;
-    (*mapping)->type   = VM_MAPPING_TYPE_HOLE;
+    (*mapping)->start   = base;
+    (*mapping)->end     = base + size - 1;
+    (*mapping)->mmap    = &aspace->mmap;
+    (*mapping)->object  = NULL;
+    (*mapping)->offset  = 0;
+    (*mapping)->type    = VM_MAPPING_TYPE_HOLE;
+    (*mapping)->protect = 0;
     xlist_elem_init(&(*mapping)->list_node);
     xlist_elem_init(&(*mapping)->obj_list_node);
 

@@ -53,6 +53,7 @@ typedef struct vm_mapping {
     struct vm_object     *object;         /* Mapped object */
     addr_t                offset;         /* Offset into object */
     uint                  type;           /* Mapping type */
+    uint                  protect;        /* Memory protection attributes */
     list_elem_t           list_node;      /* Node of mappings list */
     avl_tree_node_t       tree_node;      /* Node of mappings AVL tree */
     list_elem_t           obj_list_node;  /* Node of mappings list in VM Object */
@@ -72,7 +73,7 @@ typedef struct vm_address_space {
     char                 *name;          /* Name (can be NULL) */
     int                   state;         /* Address space state */
     vuint                 ref_count;     /* Reference count */
-    int                   faults_count;  /* Page faults count */
+    vuint                 faults_count;  /* Page faults count */
     vm_translation_map_t  tmap;          /* Translation map */
     struct vm_memory_map  mmap;          /* Memory map */
     list_elem_t           list_node;     /* Node of address spaces list */

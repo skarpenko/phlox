@@ -73,6 +73,24 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
     /* enable interrupts */
     local_irqs_enable();
 
+    /* page fault handling test */
+    {
+        object_id id;
+        aspace_id kid = vm_get_kernel_aspace_id();
+        addr_t vaddr = 0;
+
+        /* create new object */
+        id = vm_create_object("for_page_fault_test", PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
+
+        /* ... and map it */
+        vm_map_object(kid, id, VM_PROT_KERNEL_ALL, &vaddr);
+
+        kprint("\nPage fault test (touching address 0x%x)...", vaddr);
+        *((int *)vaddr) = 0; /* this initiates page fault */
+        kprint("PASSED\n");
+    }
+
+    /* kernel's memory map */
     print_kernel_memory_map();
 
     panic("kernel test complete. :)\n");

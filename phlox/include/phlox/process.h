@@ -5,13 +5,27 @@
 #ifndef _PHLOX_PROCESS_H_
 #define _PHLOX_PROCESS_H_
 
+#include <phlox/types.h>
 #include <phlox/ktypes.h>
+#include <phlox/kargs.h>
 #include <phlox/arch/process.h>
 #include <phlox/thread_types.h>
 
 /* Reserved ID */
 #define INVALID_PROCESSID  ((proc_id)0)  /* Invalid process ID */
 
+
+/*
+ * Process module init.
+ * Called only during threading init stage!
+*/
+status_t process_init(kernel_args_t *kargs);
+
+/*
+ * Process module per CPU init.
+ * Called only during threading init stage!
+*/
+status_t process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 
 /*
  * Returns kernel process ID to caller

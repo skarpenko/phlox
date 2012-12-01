@@ -62,6 +62,46 @@ static proc_id get_next_process_id(void)
 
 /*** Public routines ***/
 
+/* process module init */
+status_t process_init(kernel_args_t *kargs)
+{
+    status_t err;
+
+    /* call arch-specific init */
+    err = arch_process_init(kargs);
+    if(err != NO_ERROR)
+        return err;
+
+    /* valid process ids and processes group ids starts from 1 */
+    next_process_id = 1;
+
+    /* data structures spinlock init */
+    spin_init(&processes_lock);
+
+    /* list init */
+    xlist_init(&processes_list);
+
+    /* tree init */
+    avl_tree_create( &processes_tree, compare_process_id,
+                     sizeof(process_t),
+                     offsetof(process_t, procs_tree_node) );
+
+    return NO_ERROR;
+}
+
+/* process module per CPU init */
+status_t process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
+{
+    status_t err;
+
+    /* call arch-specific per cpu init */
+    err = arch_process_init_per_cpu(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        return err;
+
+    return NO_ERROR;
+}
+
 /* returns kernel process id */
 proc_id proc_get_kernel_proc_id(void)
 {

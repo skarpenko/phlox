@@ -10,7 +10,10 @@
 #include <phlox/avl_tree.h>
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
+#include <phlox/processor.h>
 #include <phlox/thread_private.h>
+#include <phlox/scheduler.h>
+#include <phlox/process.h>
 #include <phlox/thread.h>
 
 
@@ -148,5 +151,80 @@ static thread_t *get_thread_from_dead_list(void)
       return containerof(item, thread_t, threads_list_node);
     else
       return NULL; /* list is empty */
+}
+
+
+/*** Public routines ***/
+
+/* threading init routine */
+status_t threading_init(kernel_args_t *kargs, uint curr_cpu)
+{
+    status_t err;
+
+    if(curr_cpu == BOOTSTRAP_CPU) {
+        /* Start threading initialization */
+
+        /* arch-dependend init */
+        err = arch_threading_init(kargs);
+        if(err != NO_ERROR)
+            return err;
+
+        /* process module init */
+        err = process_init(kargs);
+        if(err != NO_ERROR)
+            return err;
+
+        /* scheduling engine init */
+        err = scheduler_init(kargs);
+        if(err != NO_ERROR)
+            return err;
+
+        /* next valid id is 1 */
+        next_thread_id = 1;
+
+        /* spinlock for data structures access */
+        spin_init(&threads_lock);
+
+        /* threads lists */
+        xlist_init(&threads_list);
+        xlist_init(&dead_threads_list);
+
+        /* threads tree */
+        avl_tree_create( &threads_tree, compare_thread_id,
+                         sizeof(thread_t),
+                         offsetof(thread_t, threads_tree_node) );
+    } else {
+      /* TODO: wait for bootstrap cpu completes */
+    }
+
+    /* start per CPU initializations */
+    err = threading_init_per_cpu(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        panic("threading_init: initialization for CPU #%d failed!\n", curr_cpu);
+
+    return NO_ERROR;
+}
+
+/* per CPU threading init routine */
+status_t threading_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
+{
+    status_t err;
+
+    /* arch-dependend per cpu init */
+    err = arch_threading_init_per_cpu(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        return err;
+
+    /* process module per cpu init */
+    err = process_init_per_cpu(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        return err;
+
+    /* scheduler per cpu init */
+    err = scheduler_init_per_cpu(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        return err;
+
+    return NO_ERROR;
 }
 

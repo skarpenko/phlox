@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <arch/cpu.h>
+#include <phlox/errors.h>
 #include <phlox/types.h>
 #include <phlox/kernel.h>
 #include <phlox/processor.h>
@@ -13,6 +14,7 @@
 #include <phlox/timer.h>
 #include <phlox/kargs.h>
 #include <phlox/vm.h>
+#include <phlox/thread.h>
 #include <phlox/klog.h>
 #include <phlox/debug.h>
 #include <boot/bootfs.h>
@@ -26,6 +28,8 @@ void print_kernel_memory_map(void); /* for DEBUG only */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 {
+    status_t err;
+
     /* if we are bootstrap processor,
      * store kernel args to global variable and
      * init kernel logging.
@@ -77,6 +81,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 
     /* processor set initialization continue */
     processor_set_init_after_vm(&globalKargs, num_cpu);
+
+    /* threading init */
+    err = threading_init(&globalKargs, num_cpu);
+    if(err != NO_ERROR)
+        panic("Threading initialization stage failed!\n");
 
 
     /* enable interrupts */

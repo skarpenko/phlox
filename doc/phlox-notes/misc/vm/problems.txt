@@ -1,0 +1,23 @@
+1. refs_count in structures of VM? When Inc and when Dec?
+2. How Copy-on-Write will work?
+2a. Multiple COWs of one object?
+2b. Partial COW of object?
+3. How Page-Fault handler will work?
+4. Shared memory
+
+
+We need:
+soft_page_fault - can be called from software
+hard_page_fault - on PageFault exception, calles sot_page_fault
+
+Shadow chain:
+
+obj1 -> obj2 -> obj3
+ RO      RO      RW
+
+parent is always RO
+
+
+structured types definitions
+struct vm_object {
+} vm_object_t;

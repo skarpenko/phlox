@@ -1,0 +1,37 @@
+kernel console - basic console for kernel text output.
+
+console_t {
+   uint w, h; // width, height
+   uint x, y; // current x,y
+   uint bg_color; // bg color
+   uint tx_color; // text color
+   ....
+   console_ops_t  ops;
+   hwdep_console_t hwdep; // hardware dependent
+};
+
+
+console_ops_t {
+    gotoxy(x,y);               // goto x, y
+    setbgndcolor(color);       // set bg color
+    settextcolor(color);       // set text color
+    putch(c);                  // put char on current x,y and update x,y
+    putstr(s);                 // put string on current x,y and update x,y
+    putchxy(x,y,c);            // put char on  x,y without coords update
+    putstrxy(x,y,s);           // put string on  x,y without coords update
+    clear();                   // clear screen
+    clearline();               // clear current line
+    extputch(x,y,bg,tx,u,c);   // put char in x,y, with given colors and update cursor if u=true
+    extputstr(x,y,bg,tx,u,s)   // put string in x,y, with given colors and update cursor if u=true
+    scrup(nlines);             // scrollup
+    scrdown(nlines);           // scrolldown
+    getx();                    // get routines
+    gety();
+    getbgndcolor();
+    gettextcolor();
+};
+
+
+// additional but not obvious
+showcursor(true/false);
+set/get textattributes (blink, underline, strikeout....);

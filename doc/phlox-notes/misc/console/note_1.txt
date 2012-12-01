@@ -1,0 +1,16 @@
+console operations
+1. kprintf
+2. kprintf_xy
+3. kputchar
+4. kputchar_xy
+5. kgotoxy
+???
+6. advanced features? (text color / background color?)
+
+
+1. several consoles ? (no! in kernel only one)
+2. always active screen (?)
+?
+
+
+1. Kernel console and others consoles

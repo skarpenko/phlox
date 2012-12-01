@@ -1,0 +1,1 @@
+"process_t" is a set of "thread_t" in common "aspace_t"

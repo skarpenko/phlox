@@ -1,0 +1,2 @@
+vm_object_t
+vm_upage_t

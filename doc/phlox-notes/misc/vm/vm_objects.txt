@@ -1,0 +1,115 @@
+vm_address_space_t {
+    list next, prev;
+    aspace_id                id;
+    lock
+    vm_translation_map_t     tmap;
+    vm_virtual_memory_map_t  map;
+    
+    uint refs_count; //?? where taken to use by someone
+};
+
+vm_translation_map_t {
+    list next, prev;
+    lock
+    vm_translation_map_ops_t   ops
+    arch_vm_translation_map_t  arch;
+};
+
+arch_vm_translation_map_t {
+    pgdir_virt;
+    pgdir_phys;
+    
+    pages_in_cache;
+    invalidation_cache;
+};
+
+vm_virtual_memory_map_t {
+    lock
+    vm_region_t  prev, next; /* sorted regions list ?? */
+    vm_region_t  avl_root;   /* avl tree root */
+};
+
+vm_region_t {
+    region_id   id;
+    vm_obj_t    obj;
+    address_t   base;
+    size_t      size;
+    offset_t    offset; /* in object */
+    list        prev, next;
+    tree        left, right;
+
+    uint refs_count; //?? where taken to use by someone
+    
+    /** ?? inheritance by child tasks ?? ***/
+    /** Shared, Copy, None. See. Mach/Darwin **/
+    /** submaps? **/
+};
+
+vm_object_t {
+    objid    id;
+    char     name; /* optional */
+    uint     size; /* page aligned */
+    
+    owner;   /* user / kernel */ 
+    access  rights;  /* r w x */
+    
+    vm_object_t  parent;  /* we have parent if shadow */
+    
+    flags / type ?;
+    
+    uint   refs_count;  /* references count */
+    
+    vm_region_t  list; /* list of referenced regions */
+    maintainerid   id; /* mainainer of this object (type vm_maintainerid?) */
+    
+    vm_object_t list; /* list of vm_objects*/
+    
+    /* may be only resident pages ??? */
+    vm_upage_t  list;       /* universal page list */
+    vm_upage_t  tree_root;  /* universal page tree */
+    
+    /*** Some newer ideas  ***/
+    visibility (old one is owner)  private / public;
+    /* private - only kernel can map this */
+    
+    /* COW */
+    vm_obj_t *prev, *next;
+    flags COW (member of cow chaint) / SHADOW (is a shadow)
+    /* COW flag, may be is not used, and be removed? */
+    /* end of COW */
+    
+    /* flags */
+    flags auto_life; /* destroy when rev_count counts down to 0 */
+    
+    state { CREATING, READY, DESTROYING };
+    
+};
+
+vm_upage_t {
+   uint onum;    /* number within object */
+   
+   uint uoffs;   /* physical page number or offset in file? */
+
+   /* problem: on load it may be not possible to allocate continuous
+    set of physical pages. split this??
+    */
+   uint size;    /* size (hardware page aligned) */
+   
+   uint state_flags;
+   
+   /*** Some newer ideas ***/
+   /* if we want varying page size we need */
+   uint base;
+   uint size;
+};
+
+vm_page_t {
+link to vm_object
+and offset in vm)object
+};
+
+
+types:
+vm_size_t
+vm_offset_t
+vm_address_t

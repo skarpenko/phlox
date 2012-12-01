@@ -53,6 +53,12 @@ typedef struct vm_translation_map_ops_struct {
 status_t vm_translation_map_init(kernel_args_t *kargs);
 
 /*
+ * Translation map module prefinal stage of initialization.
+ * Called during VM initialization.
+*/
+status_t vm_translation_map_init_prefinal(kernel_args_t *kargs);
+
+/*
  * Translation map module final stage of initialization.
  * Called during final stage of VM initialization.
 */

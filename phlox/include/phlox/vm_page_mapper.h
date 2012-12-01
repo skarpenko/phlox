@@ -29,6 +29,12 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
                              map_chunk_func_t map_chunk_func);
 
 /*
+ * Page mapper final initialization stage. Called during system init.
+ * Sets up virtual memory bookkeeping structures.
+ */
+status_t vm_page_mapper_init_final(kernel_args_t *kargs);
+
+/*
  * Get physical page.
  * If no free slots in mappings pool and can_wait is true then
  * caller thread be suspended until free slots appears.

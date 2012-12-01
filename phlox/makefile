@@ -37,7 +37,7 @@ help:
 	@echo
 	@echo "Phlox Makefile options"
 	@echo
-	@echo "example: make <command> CPU=<cpu type>"
+	@echo "example: make <command> CPU=<cpu type> DEBUG=<yes/no>"
 	@echo
 	@echo "Commands:"
 	@echo "  help     - this help message;"

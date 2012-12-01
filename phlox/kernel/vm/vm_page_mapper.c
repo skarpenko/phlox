@@ -164,6 +164,36 @@ status_t vm_page_mapper_init(kernel_args_t *kargs, addr_t *pool_base, size_t poo
     return NO_ERROR;
 }
 
+/* final stage of page mapper init */
+status_t vm_page_mapper_init_final(kernel_args_t *kargs)
+{
+    aspace_id kid = vm_get_kernel_aspace_id();
+    object_id id;
+    status_t err;
+
+    /* create memory hole for mappings area */
+    err = vm_create_memory_hole(kid, map_pool_base, map_pool_size);
+    if(err != NO_ERROR)
+        return err;
+
+    /* create mapping descriptors object ... */
+    id = vm_create_virtmem_object("kernel_mapping_descr", kid, (addr_t)mappings,
+                                  mappings_count * sizeof(mapping_desc_t),
+                                  VM_OBJECT_PROTECT_ALL);
+    if(id == VM_INVALID_OBJECTID)
+        return ERR_GENERAL;
+
+    /* ... and its mapping */
+    err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, (addr_t)mappings);
+    if(err != NO_ERROR)
+        return err;
+
+    /* init page reference counters */
+    err = vm_page_init_wire_counters((addr_t)mappings, mappings_count * sizeof(mapping_desc_t));
+
+    return NO_ERROR;
+}
+
 /* get physical page */
 status_t vm_pmap_get_ppage(addr_t pa, addr_t *va, bool can_wait)
 {

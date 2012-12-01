@@ -22,6 +22,8 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
 /* init virtual memory */
 status_t vm_init(kernel_args_t *kargs)
 {
+    addr_t heap_base;  /* Kernel's heap base */
+    size_t heap_size;  /* Kernel's heap size */
     status_t err;
 
     /* clear VM statistics */
@@ -49,9 +51,6 @@ status_t vm_init(kernel_args_t *kargs)
 
     /* init kernel's heap */
     {
-        addr_t heap_base;
-        size_t heap_size;
-
         /* compute heap size */
         heap_size = ROUNDUP(
                       vm_phys_mem_size() / SYSCFG_KERNEL_HEAP_FRAC,
@@ -77,6 +76,37 @@ status_t vm_init(kernel_args_t *kargs)
  *** because physical pages bookkeping is turned on.
  ***/
  
+    /* prefinal stage of translation map module init */
+    err = vm_translation_map_init_prefinal(kargs);
+    if(err)
+       panic("vm_init: prefinal stage of translation map init failed!\n");
+
+    /* start prefinal init stage of architecture-specific parts */
+    err = arch_vm_init_prefinal(kargs);
+    if(err)
+       panic("arch_vm_init_prefinal: stage failed!\n");
+
+    /* start prefinal stages of platform-specific init */
+    err = platform_vm_init_prefinal(kargs);
+    if(err)
+       panic("platform_vm_init_prefinal: stage failed!\n");
+
+    /* init address spaces module */
+    err = vm_address_spaces_init(kargs);
+    if(err)
+       panic("vm_address_spaces_init: failed!\n");
+
+    /* init vm objects module */
+    err = vm_objects_init(kargs);
+    if(err)
+       panic("vm_objects_init: failed!\n");
+
+    /* create initial kernel space */
+    if(vm_create_kernel_aspace("kernel_space", KERNEL_BASE, KERNEL_SIZE) == VM_INVALID_ASPACEID)
+       panic("vm_init: failed to create initial kernel space!\n");
+
+    /*** Final stages of VM init ***/
+
     /* final stage of translation map module init */
     err = vm_translation_map_init_final(kargs);
     if(err)
@@ -92,19 +122,77 @@ status_t vm_init(kernel_args_t *kargs)
     if(err)
        panic("platform_vm_init_final: final stage failed!\n");
 
-    /* init address spaces module */
-    err = vm_address_spaces_init(kargs);
+    /* final stages of vm page module init */
+    err = vm_page_init_final(kargs);
     if(err)
-       panic("vm_address_spaces_init: failed!\n");
+       panic("vm_page_init_final: failed!\n");
 
-    /* init vm objects module */
-    err = vm_objects_init(kargs);
-    if(err)
-       panic("vm_objects_init: failed!\n");
+    /* init memory structures */
+    {
+#       define _NAME_LEN  30
+        aspace_id kid = vm_get_kernel_aspace_id();
+        object_id id;
+        char name[_NAME_LEN];
+        int i;
 
-    /* create initial kernel space */
-    if(vm_create_kernel_aspace("kernel_space", KERNEL_BASE, KERNEL_SIZE) == VM_INVALID_ASPACEID)
-       panic("vm_init: failed to create initial kernel space!\n");
+        /* create kernel_image memory object and its mapping */
+        id = vm_create_physmem_object("kernel_image", kargs->phys_kernel_addr.start,
+                                      kargs->phys_kernel_addr.size, VM_OBJECT_PROTECT_ALL);
+        if(id == VM_INVALID_OBJECTID)
+            panic("vm_init: failed to create kernel_image object!\n");
+
+        err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, kargs->virt_kernel_addr.start);
+        if(err != NO_ERROR)
+            panic("vm_init: failed to create mapping of kernel_image object!\n");
+
+        /* init physical page counters */
+        err = vm_page_init_wire_counters(kargs->virt_kernel_addr.start,
+                                         kargs->virt_kernel_addr.size);
+        if(err != NO_ERROR)
+            panic("vm_init: failed to init counters for kernel_image object!\n");
+
+        /* create kernel stacks memory objects and mappings */
+        for(i = 0; i < SYSCFG_MAX_CPUS; i++) {
+            snprintf(name, _NAME_LEN, "kernel_cpu%d_stack", i);
+            id = vm_create_physmem_object(name, kargs->phys_cpu_kstack[i].start,
+                                          kargs->phys_cpu_kstack[i].size, VM_OBJECT_PROTECT_ALL);
+            if(id == VM_INVALID_OBJECTID)
+                panic("vm_init: failed to create %s object!\n", name);
+
+            err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, kargs->virt_cpu_kstack[i].start);
+            if(err != NO_ERROR)
+                panic("vm_init: failed to create mapping of %s object!\n", name);
+
+            /* init counters */
+            err = vm_page_init_wire_counters(kargs->virt_cpu_kstack[i].start,
+                                             kargs->virt_cpu_kstack[i].size);
+            if(err != NO_ERROR)
+                panic("vm_init: failed to init counters for %s object!\n", name);
+        }
+
+        /* create kernel_heap memory object and its mapping */
+        id = vm_create_virtmem_object("kernel_heap", kid, heap_base, heap_size, VM_OBJECT_PROTECT_ALL);
+        if(id == VM_INVALID_OBJECTID)
+            panic("vm_init: failed to create kernel_heap object!\n");
+
+        err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, heap_base);
+        if(err != NO_ERROR)
+            panic("vm_init: failed to create mapping of kernel_heap object!\n");
+
+        /* init counters for heap pages */
+        err = vm_page_init_wire_counters(heap_base, heap_size);
+        if(err != NO_ERROR)
+            panic("vm_init: failed to init counters for kernel_heap object!\n");
+
+        /* create bootfs_image memory object */
+        id = vm_create_physmem_object("bootfs_image", kargs->btfs_image_addr.start,
+                                      kargs->btfs_image_addr.size, VM_OBJECT_PROTECT_ALL);
+        if(id == VM_INVALID_OBJECTID)
+            panic("vm_init: failed to create bootfs_image object!\n");
+
+#       undef _NAME_LEN
+    }
+    /* end of init memory structures */
 
     return NO_ERROR;
 }

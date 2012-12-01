@@ -751,14 +751,74 @@ status_t vm_translation_map_init(kernel_args_t *kargs)
     return NO_ERROR;
 }
 
-/* final initialization stage */
-status_t vm_translation_map_init_final(kernel_args_t *kargs)
+/* prefinal initialization stage */
+status_t vm_translation_map_init_prefinal(kernel_args_t *kargs)
 {
     /* deallocate page hole */
     deallocate_page_hole(kernel_pgdir_virt, page_hole_pdeidx, true);
     page_hole        = NULL;
     page_hole_pgdir  = NULL;
     page_hole_pdeidx = (-1);
+
+    return NO_ERROR;
+}
+
+/* final initialization stage */
+status_t vm_translation_map_init_final(kernel_args_t *kargs)
+{
+    aspace_id kid = vm_get_kernel_aspace_id();
+    object_id id;
+    status_t err;
+
+    /* create kernel's page directory object */
+    id = vm_create_physmem_object("kernel_page_dir", (addr_t)kernel_pgdir_phys,
+                                  PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
+    if(id == VM_INVALID_OBJECTID)
+        panic("vm_translation_map_init_final: failed to create kernel_page_dir object!\n");
+
+    /* ... and mapping */
+    err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, (addr_t)kernel_pgdir_virt);
+    if(err != NO_ERROR)
+        panic("vm_translation_map_init_final: failed to create kernel_page_dir mapping!\n");
+
+    /* and init page reference counter for it */
+    err = vm_page_init_wire_counters((addr_t)kernel_pgdir_virt, PAGE_SIZE);
+    if(err != NO_ERROR)
+        panic("vm_translation_map_init_final: failed to init page reference counter for kernel_page_dir!\n");
+
+    /* create mapping pool page tables object and its mapping */
+    id = vm_create_virtmem_object("kernel_map_pool_pgtables", kid, (addr_t)map_pool_pgtables,
+                                  MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
+    if(id == VM_INVALID_OBJECTID)
+        panic("vm_translation_map_init_final: failed to create kernel_map_pool_pgtables object!\n");
+
+    err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, (addr_t)map_pool_pgtables);
+    if(err != NO_ERROR)
+        panic("vm_translation_map_init_final: failed to create kernel_map_pool_pgtables mapping!\n");
+
+    /* and init reference counters */
+    err = vm_page_init_wire_counters((addr_t)map_pool_pgtables, MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE);
+    if(err != NO_ERROR)
+        panic("vm_translation_map_init_final: failed to init page reference counter for kernel_map_pool_pgtables!\n");
+
+    /* now set wired state to all additional kernel's page tabel from kargs */
+    {
+        uint i;
+        vm_page_t *page;
+
+        for(i = 0; i < kargs->arch_args.num_pgtables; i++) {
+            page = vm_page_lookup(PAGE_NUMBER(kargs->arch_args.phys_pgtables[i]));
+            if(page == NULL)
+                panic("vm_translation_map_init_final: failed to get page!\n");
+            vm_page_set_state(page, VM_PAGE_STATE_WIRED);
+        }
+    }
+    /* end */
+
+    /* call final init stage of page mapper */
+    err = vm_page_mapper_init_final(kargs);
+    if(err != NO_ERROR)
+        panic("vm_translation_map_init_final: page mapper final stage failed!\n");
 
     return NO_ERROR;
 }

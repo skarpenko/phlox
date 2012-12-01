@@ -20,6 +20,7 @@
 /* Global kernel args */
 kernel_args_t globalKargs;
 
+void print_kernel_memory_map(void); /* for DEBUG only */
 
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu);  /* keep compiler happy */
 void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
@@ -72,5 +73,35 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
     /* enable interrupts */
     local_irqs_enable();
 
+    print_kernel_memory_map();
+
     panic("kernel test complete. :)\n");
+}
+
+/*
+ * Prints kernel's memory map.
+ * used for debug and will be removed
+ */
+void print_kernel_memory_map(void)
+{
+    vm_address_space_t *aspace = vm_get_kernel_aspace();
+    vm_mapping_t *mapping;
+    list_elem_t *item;
+    int i = 0;
+
+    kprint("\nKernel address space:\n");
+
+    item = xlist_peek_first(&aspace->mmap.mappings_list);
+    while(item != NULL) {
+        mapping = containerof(item, vm_mapping_t, list_node);
+        kprint("mapping %2d: %x - %x ", ++i, mapping->start, mapping->end);
+        if(mapping->type != VM_MAPPING_TYPE_HOLE) {
+           kprint("Object -> %s\n", mapping->object->name);
+        } else
+            kprint("Hole\n");
+
+        item = xlist_peek_next(item);
+    }
+
+    vm_put_aspace(aspace);
 }

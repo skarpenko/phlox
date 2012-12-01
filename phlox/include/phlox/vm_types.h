@@ -112,6 +112,7 @@ enum {
 #define VM_OBJECT_PROTECT_READ     0x01
 #define VM_OBJECT_PROTECT_WRITE    0x02
 #define VM_OBJECT_PROTECT_EXECUTE  0x04
+#define VM_OBJECT_PROTECT_ALL      0x07
 #define VM_OBJECT_PROTECT_MASK     0x07
 
 /* Universal page */

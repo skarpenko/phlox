@@ -50,6 +50,13 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size);
 addr_t vm_alloc_from_kargs(kernel_args_t *kargs, size_t size, uint protection);
 
 /*
+ * Initializes physical pages reference counters
+ * for already mapped pages to kernel's address space.
+ * Used only during VM subsystem init!
+ */
+status_t vm_page_init_wire_counters(addr_t vbase, size_t size);
+
+/*
  * Create kernel address space.
  * Called only once during system init stage.
  */

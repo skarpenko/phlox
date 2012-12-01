@@ -8,6 +8,7 @@
 #include <phlox/list.h>
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/processor.h>
+#include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/errors.h>
 #include <phlox/vm_private.h>
@@ -231,7 +232,32 @@ status_t vm_page_init(kernel_args_t *kargs)
                                  kargs->phys_alloc_range[i].size / PAGE_SIZE);
     }
 
-    return 0;
+    return NO_ERROR;
+}
+
+/* final stage of module initialization */
+status_t vm_page_init_final(kernel_args_t *kargs)
+{
+    aspace_id kid = vm_get_kernel_aspace_id();
+    object_id id;
+    status_t err;
+
+    /* create object of pages array ... */
+    id = vm_create_virtmem_object("kernel_physical_pages", kid, (addr_t)all_pages,
+                                  total_pages_count * sizeof(vm_page_t),
+                                  VM_OBJECT_PROTECT_ALL);
+    if(id == VM_INVALID_OBJECTID)
+        return ERR_GENERAL;
+
+    /* ... and its mapping */
+    err = vm_map_object_exactly(kid, id, VM_PROT_KERNEL_ALL, (addr_t)all_pages);
+    if(err != NO_ERROR)
+        return err;
+
+    /* init page reference counters */
+    err = vm_page_init_wire_counters((addr_t)all_pages, total_pages_count * sizeof(vm_page_t));
+
+    return err;
 }
 
 /* horrible brute-force method of determining if the page can be allocated */
@@ -279,6 +305,49 @@ addr_t vm_alloc_ppage_from_kargs(kernel_args_t *kargs)
     }
     /* could not allocate a block :( */
     return 0;
+}
+
+/* init reference counters of physical pages */
+status_t vm_page_init_wire_counters(addr_t vbase, size_t size)
+{
+    vm_address_space_t *aspace = vm_get_kernel_aspace();
+    addr_t vaddr, paddr, end_addr;
+    uint flags;
+    vm_page_t *page;
+    status_t err = NO_ERROR;
+
+    /* init variables */
+    vbase = ROUNDOWN(vbase, PAGE_SIZE);
+    size = PAGE_ALIGN(size);
+    end_addr = vbase + size - 1;
+
+    /* now query all physical pages and set wired counter to 1 */
+    for(vaddr = vbase; vaddr < end_addr; vaddr += PAGE_SIZE) {
+        /* query physical page */
+        (*aspace->tmap.ops->query)(&aspace->tmap, vaddr, &paddr, &flags);
+
+        /* page must present in address space */
+        if( !(flags & VM_FLAG_PAGE_PRESENT) ) {
+            err = ERR_VM_PAGE_NOT_PRESENT;
+            goto exit_init;
+        }
+
+        /* get page */
+        page = vm_page_lookup(PAGE_NUMBER(paddr));
+        if(page == NULL) {
+            err = ERR_VM_GENERAL;
+            goto exit_init;
+        }
+
+        /* atomically set value */
+        atomic_set(&page->wire_count, 1);
+    }
+
+exit_init:
+    /* put address space back and exit */
+    vm_put_aspace(aspace);
+
+    return err;
 }
 
 /* mark physical page as used */

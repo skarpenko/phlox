@@ -24,6 +24,12 @@ status_t vm_page_preinit(kernel_args_t *kargs);
 status_t vm_page_init(kernel_args_t *kargs);
 
 /*
+ * Final stage of module initialization. Called during VM init stage.
+ * Initializes memory map data.
+ */
+status_t vm_page_init_final(kernel_args_t *kargs);
+
+/*
  * Mark given physical page as in use, but still not
  * used by VM
 */

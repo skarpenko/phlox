@@ -109,11 +109,17 @@ enum {
 /* Universal page */
 typedef struct vm_upage {
     uint              upn;        /* Universal page number within object */
+    uint              ppn;        /* Refered physical page number */
+    int               state : 2;  /* Universal page state */
     struct vm_object *object;     /* Parent object */
-    struct vm_page   *page;       /* Link to physical page */
     list_elem_t       list_node;  /* Node of universal pages list */
     avl_tree_node_t   tree_node;  /* Node of universal pages tree */
 } vm_upage_t;
 
+/* Universal page states */
+enum {
+    VM_UPAGE_STATE_UNWIRED = 0,   /* No data wired to page (Initial state) */
+    VM_UPAGE_STATE_RESIDENT       /* Page data is resident */
+};
 
 #endif

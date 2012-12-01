@@ -69,5 +69,8 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint32 num_cpu)
        /* wait until BSP completes? */
     }
 
+    /* enable interrupts */
+    local_irqs_enable();
+
     panic("kernel test complete. :)\n");
 }

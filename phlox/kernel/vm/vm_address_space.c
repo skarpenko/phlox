@@ -171,6 +171,59 @@ error:
     return NULL; /* failed */
 }
 
+/* locates free gap in memory map of address space (no lock acquired for access) */
+static bool locate_memory_gap(vm_memory_map_t *mmap, size_t size, addr_t *base_vaddr)
+{
+    list_elem_t *item;
+    vm_mapping_t *mapping;
+    addr_t start, end;
+
+    /* fetch first item of mappings list */
+    item = xlist_peek_first(&mmap->mappings_list);
+
+    /* if no mappings, check that requested size
+     * fits into address space
+     */
+    if(item == NULL) {
+        if(size <= mmap->size) {
+            *base_vaddr = mmap->base;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /* search for gap of sufficient size */
+    start = mmap->base;
+    while(item != NULL) {
+        mapping = containerof(item, vm_mapping_t, list_node);
+        end = mapping->start - 1;
+        if(size <= end - start + 1) {
+            /* gap found! */
+            *base_vaddr = start;
+            return true;
+        }
+
+        /* step to next mapping */
+        start = mapping->end + 1;
+        item = xlist_peek_next(item);
+    }
+
+    /* no gap of sufficient size found between mappings.
+     * so.... check space after last mapping till the end
+     * of memory map.
+     */
+    end = mmap->base + mmap->size - 1;
+    if(size <= end - start + 1) {
+        /* gap size is enought */
+        *base_vaddr = start;
+        return true;
+    }
+
+    /* no gap found */
+    return false;
+}
+
 
 /*** Public routines ***/
 

@@ -4,6 +4,8 @@
 */
 #include <string.h>
 #include <sys/debug.h>
+#include <phlox/kernel.h>
+#include <phlox/param.h>
 #include <phlox/errors.h>
 #include <phlox/heap.h>
 #include <phlox/list.h>
@@ -11,6 +13,7 @@
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/processor.h>
+#include <phlox/vm.h>
 #include <phlox/scheduler.h>
 #include <phlox/process.h>
 #include <phlox/thread.h>
@@ -181,6 +184,9 @@ static thread_t *create_thread_struct(void)
     /* init fields */
     memset(thread, 0, sizeof(thread_t));
     thread->id = get_next_thread_id(); /* Thread ID */
+    thread->in_kernel = true; /* initially thread is always executed
+                               * at kernel side
+                               */
 
     return thread;
 }
@@ -209,6 +215,9 @@ static thread_t *get_thread_struct(void)
         thread->state = THREAD_STATE_BIRTH;
         put_thread_to_list(thread);
     }
+
+    /* executed at kernel side initially */
+    thread->in_kernel = true;
 
     return thread;
 }
@@ -285,7 +294,68 @@ status_t threading_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
     if(err != NO_ERROR)
         return err;
 
+    /* create idle thread for this cpu */
+    err = thread_continue_as_idle(kargs, curr_cpu);
+    if(err != NO_ERROR)
+        return err;
+
     return NO_ERROR;
+}
+
+/* continues execution of current instructions flow as idle thread */
+status_t thread_continue_as_idle(kernel_args_t *kargs, uint curr_cpu)
+{
+    char name[SYS_MAX_OS_NAME_LEN];
+    thread_t *thread;
+
+    /* allocate new thread structure */
+    thread = create_thread_struct();
+    if(!thread)
+        return ERR_MT_GENERAL;
+
+    /* add to threads list */
+    thread->state = THREAD_STATE_BIRTH;
+    put_thread_to_list(thread);
+
+    /* locate stack object for this cpu */
+    snprintf(name, SYS_MAX_OS_NAME_LEN, "kernel_cpu%d_stack", curr_cpu);
+    thread->kstack_id = vm_find_object_by_name(name);
+    if(thread->kstack_id == VM_INVALID_OBJECTID)
+        goto exit_on_error;
+
+    /* set kernel-side stack */
+    thread->kstack_base = kargs->virt_cpu_kstack[curr_cpu].start;
+    thread->kstack_top = thread->kstack_base +
+                         kargs->virt_cpu_kstack[curr_cpu].size - 1;
+
+    /* set pointer to thread struct into the stack */
+    *(thread_t **)(thread->kstack_base) = thread;
+
+    /* set thread name */
+    snprintf(name, SYS_MAX_OS_NAME_LEN, "kernel_cpu%d_idle", curr_cpu);
+    thread->name = kstrdup(name);
+    if(!thread->name)
+        goto exit_on_error;
+
+    /* thread owning process */
+    thread->process = proc_get_kernel_process();
+    /* thread executing on this cpu */
+    thread->cpu = &ProcessorSet.processors[curr_cpu];
+
+    /* init arch-specific parts */
+    arch_thread_init_struct(thread);
+
+    /* add to scheduling */
+    sched_add_idle_thread(thread, curr_cpu);
+
+    return NO_ERROR; /* all fine */
+
+    /* error occurs */
+exit_on_error:
+    /* move to deads */
+    move_thread_to_list(thread, DEAD_THREADS_LIST);
+
+    return ERR_MT_GENERAL;
 }
 
 /* returns current thread structure */
@@ -294,10 +364,10 @@ thread_t *thread_get_current_thread(void)
     /* pointer to thread struct stored in a bottom
      * of a thread kernel-side stack. So... Just get
      * a pointer to the bottom of current stack and
-     * return it.
+     * return stored address.
     */
     addr_t stack_ptr = arch_current_stack_pointer();
-    return (thread_t *)(stack_ptr & (~(THREAD_KSTACK_SIZE-1)));
+    return *(thread_t **)(stack_ptr & (~(THREAD_KSTACK_SIZE-1)));
 }
 
 /* returns current thread id */

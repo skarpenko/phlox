@@ -111,6 +111,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     /* kernel's memory map */
     print_kernel_memory_map();
 
+    /* current thread */
+    kprint("\nCurrent thread: id = %d, name = %s\n",
+        thread_get_current_thread()->id,
+        thread_get_current_thread()->name);
+
     panic("kernel test complete. :)\n");
 }
 

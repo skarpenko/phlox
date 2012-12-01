@@ -28,6 +28,10 @@ void arch_sched_context_switch(thread_t *t_from, thread_t *t_to)
     addr_t from_pgdir = (addr_t)t_from->process->aspace->tmap.arch.pgdir_phys;
     addr_t to_pgdir = (addr_t)t_to->process->aspace->tmap.arch.pgdir_phys;
 
+    /* exit if try switch to ourself */
+    if(t_from == t_to)
+        return;
+
     /* switch page directory if switching to
      * new address space
      */

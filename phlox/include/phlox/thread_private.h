@@ -10,7 +10,7 @@
  *******************************************************************/
 
 /* Thread kernel-side stack size */
-#define THREAD_KSTACK_SIZE  (8192)
+#define THREAD_KSTACK_SIZE  (KERNEL_STACK_SIZE*PAGE_SIZE)
 /* Thread kernel-side stack warning value */
 #define THREAD_KSTACK_WARN  (THREAD_KSTACK_SIZE/8)
 /*
@@ -36,6 +36,12 @@
 status_t threading_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 
 /*
+ * Continue execution of current instructions flow as idle thread.
+ * Used during system startup.
+*/
+status_t thread_continue_as_idle(kernel_args_t *kargs, uint curr_cpu);
+
+/*
  * Process module init.
  * Called only during threading init stage!
 */
@@ -58,6 +64,17 @@ status_t scheduler_init(kernel_args_t *kargs);
  * Called only during threading init!
 */
 status_t scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
+
+/*
+ * Add idle thread for specified CPU.
+ * Called during threading subsystem init.
+*/
+void sched_add_idle_thread(thread_t *thread, uint cpu);
+
+/*
+ * Add thread for scheduling.
+*/
+void sched_add_thread(thread_t *thread);
 
 /*
  * Create kernel process.

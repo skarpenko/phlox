@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_SEGMENTS_H_
@@ -16,5 +16,11 @@
 /* User segments */
 #define USER_CODE_SEG     0x1b
 #define USER_DATA_SEG     0x23
+
+/* Double fault TSS */
+#define DOUBLE_FAULT_TSS  0x28
+
+/* Per CPU TSS */
+#define CPU0_TSS          0x30
 
 #endif

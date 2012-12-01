@@ -1,7 +1,8 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
+#include <string.h>
 #include <arch/cpu.h>
 #include <arch/arch_bits.h>
 #include <arch/arch_data.h>
@@ -16,6 +17,12 @@
 
 /* Interrupt Descriptors Table */
 cpu_gate_desc *idt = NULL;
+
+/* State segment of special task which is called on double fault */
+static cpu_tss doublefault_tss;
+#define DOUBLEFAULT_STACKSIZE   (1024)
+#define DOUBLEFAULT_STACKSTART  (uint32)(doublefault_stack + DOUBLEFAULT_STACKSIZE)
+static uint32 doublefault_stack[DOUBLEFAULT_STACKSIZE];
 
 
 /*
@@ -73,6 +80,8 @@ static void i386_set_task_gate(uint32 n, uint16 tss_seg)
 status_t arch_interrupt_init(kernel_args_t *kargs)
 {
     uint32 i;
+    cpu_seg_desc *gdt;
+    cpu_sys_desc *tss_d;
 
     /* init local idt pointer */
     idt = (cpu_gate_desc *)kargs->arch_args.virt_idt;
@@ -90,7 +99,7 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
     i386_set_intr_gate(5,   &interrupt5);
     i386_set_intr_gate(6,   &interrupt6);
     i386_set_intr_gate(7,   &interrupt7);
-    i386_set_intr_gate(8,   &interrupt8);
+    /* Double fault handled in special manner */
     i386_set_intr_gate(9,   &interrupt9);
     /**/
     i386_set_intr_gate(10,  &interrupt10);
@@ -120,6 +129,43 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
     i386_set_intr_gate(45,  &interrupt45);
     i386_set_intr_gate(46,  &interrupt46);
     i386_set_intr_gate(47,  &interrupt47);
+
+    /* Init double fault handler TSS */
+    gdt = (cpu_seg_desc *)kargs->arch_args.virt_gdt;
+    tss_d = (cpu_sys_desc *)&gdt[DOUBLE_FAULT_TSS >> 3];
+
+    memset(&doublefault_tss, 0, sizeof(cpu_tss));
+
+    /* Init TSS fields */
+    doublefault_tss.esp0 = DOUBLEFAULT_STACKSTART;
+    doublefault_tss.ss0  = KERNEL_DATA_SEG;
+    doublefault_tss.cr3  = read_cr3();
+    doublefault_tss.eip  = (uint32)&interrupt8;
+    doublefault_tss.esp  = DOUBLEFAULT_STACKSTART;
+    doublefault_tss.cs   = KERNEL_CODE_SEG;
+    doublefault_tss.ss   = KERNEL_DATA_SEG;
+    doublefault_tss.ds   = KERNEL_DATA_SEG;
+    doublefault_tss.es   = KERNEL_DATA_SEG;
+    doublefault_tss.fs   = KERNEL_DATA_SEG;
+    doublefault_tss.ldt  = 0;
+    doublefault_tss.eflags = 0x2; /* second bit is always set */
+
+    /* Init TSS descriptor */
+    tss_d->stru.limit_00_15 = sizeof(cpu_tss) & 0xffff;
+    tss_d->stru.limit_16_19 = 0;
+    tss_d->stru.base_00_15  = (addr_t)&doublefault_tss & 0xffff;
+    tss_d->stru.base_16_23  = ((addr_t)&doublefault_tss >> 16) & 0xff;
+    tss_d->stru.base_24_31  = (addr_t)&doublefault_tss >> 24;
+    tss_d->stru.type        = 0x9; /* TSS descriptor, not busy */
+    tss_d->stru.dpl         = 0;
+    tss_d->stru.p           = 1;
+    tss_d->stru.g           = 1;
+    tss_d->stru.zero0       = 0;
+    tss_d->stru.zero1       = 0;
+    tss_d->stru.zero2       = 0;
+    tss_d->stru.zero3       = 0;
+
+    i386_set_task_gate(8, DOUBLE_FAULT_TSS);
 
     /* completed with no error */
     return 0;
@@ -206,7 +252,6 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
         /* Double Fault Exception */
         case 8:
            kprint("\n\nDouble Fault Exception\n");
-           print_int_frame(frame);
            panic(":(");
             break;
 

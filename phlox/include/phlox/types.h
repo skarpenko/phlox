@@ -155,14 +155,14 @@ typedef int64 bigtime_t;
 typedef uint64 vnode_id;
 typedef uint object_id;     /* vm object id     */
 typedef uint aspace_id;     /* address space id */
-typedef int thread_id;      /* thread id        */
-typedef int proc_id;        /* process id       */
-typedef int pgrp_id;        /* process group id */
-typedef int sess_id;        /* session id       */
-typedef int sem_id;         /* semaphore id     */
-typedef int port_id;        /* ipc port id      */
-typedef int image_id;       /* binary image id  */
-typedef int timeout_id;     /* timeout call id  */
+typedef uint thread_id;     /* thread id        */
+typedef uint proc_id;       /* process id       */
+typedef uint pgrp_id;       /* process group id */
+typedef uint sess_id;       /* session id       */
+typedef uint sem_id;        /* semaphore id     */
+typedef uint port_id;       /* ipc port id      */
+typedef uint image_id;      /* binary image id  */
+typedef uint timeout_id;    /* timeout call id  */
 
 # include <stddef.h>
 

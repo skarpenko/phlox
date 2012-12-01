@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -12,6 +12,7 @@
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/vm.h>
+#include <phlox/thread.h>
 #include <phlox/process.h>
 #include <phlox/thread_private.h>
 
@@ -346,6 +347,24 @@ process_t *proc_get_process_by_id(proc_id pid)
     /* release lock */
     spin_unlock_irqrstor(&processes_lock, irqs_state);
 
+    return proc;
+}
+
+/* return current process id */
+proc_id proc_get_current_process_id(void)
+{
+    return thread_get_current_thread()->process->id;
+}
+
+/* return current process structure */
+process_t *proc_get_current_process(void)
+{
+    process_t *proc = thread_get_current_thread()->process;
+
+    /* atomically increment reference count */
+    atomic_inc(&proc->ref_count);
+
+    /* return to caller */
     return proc;
 }
 

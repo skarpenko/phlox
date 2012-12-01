@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_PARAM_H_
@@ -24,5 +24,11 @@
  * Max. process arguments length
  */
 #define SYS_MAX_PROC_ARGS_LEN  512
+
+/*
+ * Max. semaphores count (must be power of 2)
+ */
+#define SYS_MAX_SEM_COUNT      8192
+
 
 #endif

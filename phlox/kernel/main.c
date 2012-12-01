@@ -16,6 +16,7 @@
 #include <phlox/vm.h>
 #include <phlox/heap.h>
 #include <phlox/thread.h>
+#include <phlox/sem.h>
 #include <phlox/klog.h>
 #include <phlox/debug.h>
 #include <boot/bootfs.h>
@@ -118,6 +119,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
         err = timer_init_after_threading(&globalKargs);
         if(err != NO_ERROR)
             panic("Timer threading dependent part initialization failed!\n");
+
+        /* init semaphores module */
+        err = semaphores_init(&globalKargs);
+        if(err != NO_ERROR)
+            panic("Semaphores initialization failed!\n");
     } else {
        /* wait until BSP completes? */
     }

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_PROCESS_H_
@@ -30,6 +30,16 @@ process_t *proc_get_kernel_process(void);
  * Returns process structure by its id
 */
 process_t *proc_get_process_by_id(proc_id pid);
+
+/*
+ * Returns current process id
+*/
+proc_id proc_get_current_process_id(void);
+
+/*
+ * Returns current process structure
+*/
+process_t *proc_get_current_process(void);
 
 /*
  * Put previously taken process structure

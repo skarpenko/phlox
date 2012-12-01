@@ -39,7 +39,7 @@ hash_table_t hash_table_init(uint table_size, uintptr_t node_offset,
     if(ht == NULL)
         return NULL;
 
-    /* allocate slots table */
+    /* allocate hash table */
     ht->table = (hash_node_t *)kmalloc(sizeof(hash_node_t) * table_size);
     if(ht->table == NULL) {
         kfree(ht);
@@ -52,7 +52,7 @@ hash_table_t hash_table_init(uint table_size, uintptr_t node_offset,
     ht->table_size = table_size;
     ht->node_offset = node_offset;
     ht->num_elems = 0;
-    ht->num_slots = 0;
+    ht->num_buckets = 0;
     ht->flags = 0;
     ht->compare_func = compare_func;
     ht->hash_func = hash_func;
@@ -68,7 +68,7 @@ hash_table_t hash_table_init_static(void *area, size_t area_size, uintptr_t node
     struct hash_table *ht = area;
     uint i;
 
-    /* check size argument. size must be enought at least for 1 slot table. */
+    /* check size argument. size must be enought at least for 1 bucket table. */
     if(area_size < HASH_TABLE_STATIC_SIZE(1))
         return NULL;
 
@@ -81,7 +81,7 @@ hash_table_t hash_table_init_static(void *area, size_t area_size, uintptr_t node
         ht->table[i] = NULL;
     ht->node_offset = node_offset;
     ht->num_elems = 0;
-    ht->num_slots = 0;
+    ht->num_buckets = 0;
     ht->flags = HASH_TABLE_FLAG_STATIC;
     ht->compare_func = compare_func;
     ht->hash_func = hash_func;
@@ -123,7 +123,7 @@ int hash_table_resize(hash_table_t table, uint new_size)
     /* init temporary table */
     tmp = *ht;
     tmp.num_elems = 0;
-    tmp.num_slots = 0;
+    tmp.num_buckets = 0;
     tmp.table_size = new_size;
     tmp.table = (hash_node_t *)kmalloc(sizeof(hash_node_t) * new_size);
     if(tmp.table == NULL)
@@ -140,7 +140,7 @@ int hash_table_resize(hash_table_t table, uint new_size)
     while( (elem = hash_table_next(&itr)) != NULL)
         hash_table_insert(&tmp, elem);
 
-    /* free old slots table and set new control fields */
+    /* free old hash table and set new control fields */
     kfree(ht->table);
     *ht = tmp;
 
@@ -159,9 +159,9 @@ int hash_table_insert(hash_table_t table, void *elem)
     /* prepend chain */
     PUT_IN_NEXT(ht, elem, ht->table[hash]);
 
-    /* update slot */
+    /* update bucket */
     if(ht->table[hash] == NULL)
-        ht->num_slots++;
+        ht->num_buckets++;
     ht->table[hash] = elem;
 
     ht->num_elems++;
@@ -187,9 +187,9 @@ int hash_table_insert_safe(hash_table_t table, void *elem)
     /* prepend chain */
     PUT_IN_NEXT(ht, elem, ht->table[hash]);
 
-    /* update hash table slot */
+    /* update hash table bucket */
     if(ht->table[hash] == NULL)
-        ht->num_slots++;
+        ht->num_buckets++;
     ht->table[hash] = elem;
 
     ht->num_elems++;
@@ -211,7 +211,7 @@ int hash_table_remove(hash_table_t table, void *elem)
     last_i = NULL;
     for(i = ht->table[hash]; i != NULL; last_i = i, i = NEXT(ht, i)) {
         if(i == elem) { /* Bingo! */
-            /* update chain and slot */
+            /* update chain and bucket */
             if(last_i != NULL)
                 PUT_IN_NEXT(ht, last_i, NEXT(ht, i));
             else
@@ -219,7 +219,7 @@ int hash_table_remove(hash_table_t table, void *elem)
 
             /* bookkeeping */
             if(ht->table[hash] == NULL)
-                ht->num_slots--;
+                ht->num_buckets--;
 
             ht->num_elems--;
 
@@ -311,7 +311,7 @@ void *hash_table_next(hash_table_iterator_t itr)
 
     do {
         if(!i->node) { /* initial iterator state or end of chain */
-            /* search for used slot in table */
+            /* search for used bucket in table */
             for(index = (uint)(i->bucket + 1); index < ht->table_size; index++) {
                 if(ht->table[index]) {
                     i->node = ht->table[index];
@@ -355,11 +355,11 @@ uint hash_table_count(hash_table_t table)
     return ht->num_elems;
 }
 
-/* return used slots count */
-uint hash_table_slots(hash_table_t table)
+/* return used buckets count */
+uint hash_table_buckets(hash_table_t table)
 {
     struct hash_table *ht = table;
-    return ht->num_slots;
+    return ht->num_buckets;
 }
 
 

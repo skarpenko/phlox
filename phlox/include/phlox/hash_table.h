@@ -37,11 +37,11 @@ typedef void (hash_table_foreach_t)(void *elem);
 
 /* Hash table */
 struct hash_table {
-    hash_node_t *table;                   /* array of hash table slots */
+    hash_node_t *table;                   /* array of hash table buckets */
     uintptr_t node_offset;                /* hash node offset within element */
-    uint table_size;                      /* total slots count in table */
+    uint table_size;                      /* total buckets count in table */
     uint num_elems;                       /* number of elements in table */
-    uint num_slots;                       /* number of used slots */
+    uint num_buckets;                     /* number of used buckets */
     uint flags;                           /* flags */
     hash_table_compare_t *compare_func;   /* ptr to compare function */
     hash_table_hasher_t *hash_func;       /* ptr to hash function */
@@ -66,7 +66,7 @@ struct hash_table_iterator {
 
 /*
  * Init new hash table.
- * table_size - count of slots in table;
+ * table_size - count of buckets in hash table;
  * node_offset - offset of hash table node within element;
  * compare_func - pointer to compare function;
  * hash_func - pointer to hasher function.
@@ -130,7 +130,7 @@ void *hash_table_next(hash_table_iterator_t itr);
 void hash_table_foreach(hash_table_t table, hash_table_foreach_t callback);
 
 /*
- * Count of slots in table.
+ * Count of buckets in table.
 */
 uint hash_table_size(hash_table_t table);
 
@@ -140,9 +140,9 @@ uint hash_table_size(hash_table_t table);
 uint hash_table_count(hash_table_t table);
 
 /*
- * Count of used slots.
+ * Count of used buckets.
 */
-uint hash_table_slots(hash_table_t table);
+uint hash_table_buckets(hash_table_t table);
 
 
 /*

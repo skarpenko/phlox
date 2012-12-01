@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ERRORS_H
@@ -54,6 +54,17 @@ enum PhloxSemaphoresErrors {
     ERR_SEM_TIMEOUT,
     ERR_SEM_TRY_FAILED,
     ERR_SEM_GENERAL_LIMIT
+};
+
+/* Mutexes errors */
+enum PhloxMutexesErrors {
+    ERR_MTX_GENERAL_BASE = 0x83100000,
+    ERR_MTX_GENERAL = ERR_MTX_GENERAL_BASE,
+    ERR_MTX_INVALID_MUTEX,
+    ERR_MTX_SEM_FAILURE,
+    ERR_MTX_NOT_AN_OWNER,
+    ERR_MTX_TRY_FAILED,
+    ERR_MTX_GENERAL_LIMIT
 };
 
 #endif

@@ -131,7 +131,12 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
 
     dprintf("Kernel entry point address: 0x%X\n", kentry);
 
-    /* map kernel stack into virtual space */
+    /*** map kernel stack into virtual space ***/
+    /* align next address to kernel stack size boundary,
+     * that is important for threading model.
+     */
+    next_virtaddr = (next_virtaddr + (KERNEL_STACK_SIZE*PAGE_SIZE) - 1) /
+                    (KERNEL_STACK_SIZE*PAGE_SIZE) * (KERNEL_STACK_SIZE*PAGE_SIZE);
     kstack_start = next_virtaddr;
     kargs->phys_cpu_kstack[0].start = next_physaddr;
     kargs->virt_cpu_kstack[0].start = next_virtaddr;

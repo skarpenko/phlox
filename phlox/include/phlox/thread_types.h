@@ -34,6 +34,8 @@ typedef struct thread {
     uint             flags;              /* Thread flags */
     int              preemt_count;       /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
+    /* Fields used by scheduler */
+    uint jiffies;                        /* Jiffies count */
     /* Thread timing */
     bigtime_t        kernel_time;        /* Kernel-side execution time */
     bigtime_t        user_time;          /* User-side execution time */

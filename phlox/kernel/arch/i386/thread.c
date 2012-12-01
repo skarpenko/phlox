@@ -54,3 +54,12 @@ status_t arch_thread_init_kstack(thread_t *thread, int (*stub_func)(void))
 
     return NO_ERROR;
 }
+
+/* called after just created thread gets control */
+status_t arch_thread_first_start_init(thread_t *thread)
+{
+    /* this simulates return from interrupt */
+    asm("sti"); /* turn on interrupts */
+
+    return NO_ERROR;
+}

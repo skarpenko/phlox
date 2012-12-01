@@ -1,10 +1,12 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
 #include <phlox/errors.h>
 #include <phlox/debug.h>
+#include <phlox/processor.h>
+#include <phlox/thread.h>
 #include <phlox/vm_page_mapper.h>
 #include <phlox/klog.h>
 
@@ -16,6 +18,7 @@
 static unsigned short *screenBase = NULL;
 static unsigned int    screenOffset = 0;
 static unsigned int    line = 0;
+static unsigned int    klog_ctr = 0; /* klog line counter */
 
 
 /** Temporary locally used routines. Will be removed later! **/
@@ -65,7 +68,7 @@ static int _puts(const char *str)
 static void _dump_klog()
 {
     addr_t va;
-    uint c = 0, o = 0;
+    uint c;
     char tmp[SYSCFG_KLOG_NCOLS + 1];
     char nl[2] = "\n";
 
@@ -80,19 +83,62 @@ static void _dump_klog()
     screenBase = (unsigned short *)va;
 
     /* fetch klog rows one-by-one */
-    while(o != (c = klog_get_new_row(o, tmp))) {
+    while(klog_ctr != (c = klog_get_new_row(klog_ctr, tmp))) {
         /* put row to screen */
         _puts(tmp);
         /* if row terminated with zero put new line */
         if(!tmp[SYSCFG_KLOG_NCOLS-1])
             _puts(nl);
-        o = c;
+        klog_ctr = c;
     }
 
     /* put page back */
     vm_pmap_put_ppage(va);
 }
 
+/* temporary used console-writer */
+static int console_writer(void *data)
+{
+    addr_t console_addr;
+    uint c;
+    char tmp[SYSCFG_KLOG_NCOLS + 1];
+    char nl[2] = "\n";
+
+    /* set zero terminator */
+    tmp[SYSCFG_KLOG_NCOLS] = 0;
+
+    /* try to get screen page */
+    if(vm_pmap_get_ppage(SCREEN_PHYS, &console_addr, false))
+        return 0;
+
+    /* set screen base addres */
+    screenBase = (unsigned short *)console_addr;
+
+    /* fetch klog rows one-by-one */
+    while(1) {
+        while(klog_ctr != (c = klog_get_new_row(klog_ctr, tmp))) {
+            /* put row to screen */
+            _puts(tmp);
+            /* if row terminated with zero put new line */
+            if(!tmp[SYSCFG_KLOG_NCOLS-1])
+                _puts(nl);
+            klog_ctr = c;
+        }
+    }
+}
+
+/* init console writer thread */
+void init_console_writer(void);
+void init_console_writer(void)
+{
+    thread_id tid;
+
+    /* create console output thread */
+    tid = thread_create_kernel_thread("kernel_console_writer",
+                                      &console_writer, NULL);
+    if(tid == INVALID_THREADID)
+        panic("\nFailed to create console writer thread!\n");
+}
 
 
 /* init kernel debugging facilities */
@@ -129,6 +175,9 @@ int panic(const char *fmt, ...)
     int ret;
     va_list args;
     char temp[256];
+
+    /* disable interrupts */
+    local_irqs_disable();
 
     /* print into temp string */
     va_start(args, fmt);

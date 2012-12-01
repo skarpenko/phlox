@@ -64,9 +64,12 @@ aspace_id vm_create_kernel_aspace(const char* name, addr_t base, size_t size);
 
 /*
  * Create mapping of specified size and put it into memory map of address space.
+ * Parameter named "npg_align" specifies number of pages for alignment of
+ * mapping base address. Values 0 and 1 acts the same, base address aligned by
+ * hardware page boundary.
  * Address space access lock must be acquired before call!
  */
-status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_mapping_t **mapping);
+status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, uint npg_align, vm_mapping_t **mapping);
 
 /*
  * Create mapping of specified size at given address and put it into

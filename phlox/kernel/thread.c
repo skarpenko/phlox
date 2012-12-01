@@ -255,11 +255,16 @@ static int stub_for_kernel_thread(void)
     /* get current thread */
     thread = thread_get_current_thread();
 
+    /* init at first time */
+    if( arch_thread_first_start_init(thread) != NO_ERROR )
+        panic("\nFailed to start thread id = %d\n", thread->id);
+
     /* call entry and pass user-data into it */
     func = (void *)thread->entry;
     retcode = func(thread->data);
 
     /* TODO: exit thread stages */
+    panic("\nkernel thread termination is not implemented yet!\n");
 
     return 0;
 }
@@ -283,8 +288,12 @@ static status_t create_thread_kstack_area(thread_t *thread, const char *name)
         return ERR_VM_GENERAL;
 
     /* map created object into kernel address space */
-    err = vm_map_object(vm_get_kernel_aspace_id(), thread->kstack_id,
-                        VM_PROT_KERNEL_ALL, &thread->kstack_base);
+    err = vm_map_object_aligned(vm_get_kernel_aspace_id(), thread->kstack_id,
+                        VM_PROT_KERNEL_ALL, THREAD_KSTACK_SIZE, &thread->kstack_base);
+    /*
+     * IMPORTANT NOTE: Alignment of mapped kernel-side stack to its size
+     * boundary is very important for thread_get_current_thread() routine.
+    */
     if(err != NO_ERROR)
         goto exit_on_error;
 
@@ -493,12 +502,19 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     /* set pointer to thread struct at the bottom of kernel stack */
     *(thread_t **)(thread->kstack_base) = thread;
 
-    /* set entry point and user data */
-    thread->entry = (addr_t)&stub_for_kernel_thread;
-    thread->data = data;
-
-    /* init arch-specific parts */
+    /* init arch-specific parts, before setting other arch-dependend
+     * options.
+     */
     arch_thread_init_struct(thread);
+
+    /* init kernel stack */
+    err = arch_thread_init_kstack(thread, &stub_for_kernel_thread);
+    if(err != NO_ERROR)
+        goto exit_on_error;
+
+    /* set entry point and user data */
+    thread->entry = (addr_t)func;
+    thread->data = data;
 
     /* attach to kernel process */
     proc_attach_thread(thread->process, thread);

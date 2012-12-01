@@ -28,6 +28,9 @@
  * Ptr - pointer to thread_t structure.
 */
 
+/* Per thread jiffies count */
+#define DEFAULT_PER_THREAD_JIFFIES  25
+
 
 /*
  * Per CPU threading initialization stages.

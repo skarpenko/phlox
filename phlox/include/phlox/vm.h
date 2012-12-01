@@ -165,6 +165,17 @@ status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr);
 status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *vaddr);
 
 /*
+ * Map object into address space at address aligned by specified
+ * pages count.
+ *  INPUTS:
+ *   protection - memory protection flags;
+ *   npg_align - number of pages to align base address,
+ *               0 and 1 values acts the same way;
+ *   *vaddr - recieves address where object mapped.
+*/
+status_t vm_map_object_aligned(aspace_id aid, object_id oid, uint protection, uint npg_align, addr_t *vaddr);
+
+/*
  * Map object exactly at specified address of address space.
  *  INPUTS:
  *   protection - memory protection flags;

@@ -372,6 +372,13 @@ result_t vm_hard_page_fault(addr_t addr, addr_t fault_addr, bool is_write, bool 
 /* map object */
 status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *vaddr)
 {
+    /* call to extended version of routine */
+    return vm_map_object_aligned(aid, oid, protection, 0, vaddr);
+}
+
+/* map object to address aligned by given number of pages */
+status_t vm_map_object_aligned(aspace_id aid, object_id oid, uint protection, uint npg_align, addr_t *vaddr)
+{
     vm_address_space_t *aspace;
     vm_object_t *object;
     vm_mapping_t *mapping;
@@ -398,7 +405,7 @@ status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *va
 #warning "vm_map_object(): Dangerous spinlocks sequence!"
 
     /* create mapping */
-    err = vm_aspace_create_mapping(aspace, object->size, &mapping);
+    err = vm_aspace_create_mapping(aspace, object->size, npg_align, &mapping);
     if(err != NO_ERROR)
         goto exit_map;
 

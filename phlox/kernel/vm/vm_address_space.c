@@ -305,13 +305,31 @@ status_t vm_address_spaces_init(kernel_args_t *kargs)
 }
 
 /* creates mapping structure and puts it into memory map of address space */
-status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_mapping_t **mapping)
+status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, uint npg_align, vm_mapping_t **mapping)
 {
     addr_t base_addr;
+    size_t size_pad;
+
+    /* check arguments */
+    if(size == 0)
+        return ERR_INVALID_ARGS;
+
+    /* align chunk size and size padding */
+    if(npg_align < 2) {
+        npg_align = 0;
+        size_pad  = 0;
+    } else {
+        npg_align *= PAGE_SIZE;
+        size_pad = npg_align - PAGE_SIZE;
+    }
 
     /* locate gap of requested size */
-    if(!locate_memory_gap(&aspace->mmap, size, &base_addr))
+    if(!locate_memory_gap(&aspace->mmap, size + size_pad, &base_addr))
         return ERR_VM_NO_MAPPING_GAP;
+
+    /* align base address if needed */
+    if(npg_align)
+        base_addr = (base_addr + npg_align - 1) / npg_align * npg_align;
 
     /* create mapping exactly */
     return vm_aspace_create_mapping_exactly(aspace, base_addr, size, mapping);
@@ -321,7 +339,7 @@ status_t vm_aspace_create_mapping(vm_address_space_t *aspace, size_t size, vm_ma
 status_t vm_aspace_create_mapping_exactly(vm_address_space_t *aspace, addr_t base, size_t size, vm_mapping_t **mapping)
 {
     /* check arguments */
-    if(base < aspace->mmap.base || size > aspace->mmap.size)
+    if(base < aspace->mmap.base || size > aspace->mmap.size || size == 0)
         return ERR_INVALID_ARGS;
 
     /* allocate memory for structure */

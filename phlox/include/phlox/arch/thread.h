@@ -35,5 +35,10 @@ status_t arch_thread_init_struct(thread_t *thread);
 */
 status_t arch_thread_init_kstack(thread_t *thread, int (*stub_func)(void));
 
+/*
+ * Init new thread after it gets control at first time
+*/
+status_t arch_thread_first_start_init(thread_t *thread);
+
 
 #endif

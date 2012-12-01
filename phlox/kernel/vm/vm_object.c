@@ -170,6 +170,10 @@ static void delete_object_common(vm_object_t *object)
     if(xlist_peek_first(&object->mappings_list) != NULL)
         panic("delete_object_common(): object has mappings!");
 
+    /* check references count */
+    if(object->ref_count != 0)
+        panic("delete_object_common(): references count is not zero!");
+
     /* remove all universal pages */
     while( (item = xlist_extract_first(&object->upages_list)) != NULL ) {
         upage = containerof(item, vm_upage_t, list_node);
@@ -550,6 +554,8 @@ error:
 
     return VM_INVALID_OBJECTID;
 }
+
+/* TODO: status_t vm_delete_object(object_id oid) */
 
 /* returns object by its id */
 vm_object_t *vm_get_object_by_id(object_id oid)

@@ -156,6 +156,28 @@ status_t vm_create_memory_hole(aspace_id aid, addr_t base, size_t size);
 */
 status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr);
 
+/*
+ * Map object into address space.
+ *  INPUTS:
+ *   protection - memory protection flags;
+ *   *vaddr - recieves address where object mapped.
+*/
+status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *vaddr);
+
+/*
+ * Map object exactly at specified address of address space.
+ *  INPUTS:
+ *   protection - memory protection flags;
+ *   vaddr - address where object must be mapped.
+*/
+status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, addr_t vaddr);
+
+/*
+ * Unmap previously mapped object at specified address
+ * of address space.
+*/
+status_t vm_unmap_object(aspace_id aid, addr_t vaddr);
+
 
 /*
  * Global variable with Virtual Memory State

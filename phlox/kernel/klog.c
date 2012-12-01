@@ -80,20 +80,8 @@ uint klog_get_rows_num(void)
 /* returns cyclic rows counter */
 uint klog_get_row_counter(void)
 {
-    uint irqs_state;
-    uint value;
-
-    /* acquire access lock */
-    irqs_state = spin_lock_irqsave(&klog_lock);
-
-    /* copy value to temporary variable */
-    value = row_counter;
-
-    /* release lock */
-    spin_unlock_irqrstor(&klog_lock, irqs_state);
-
     /* return value to caller */
-    return value;
+    return row_counter;
 }
 
 /* return least available row counter */
@@ -105,39 +93,15 @@ uint klog_get_least_row_counter(void)
 /* returns top index */
 uint klog_get_top_index(void)
 {
-    uint irqs_state;
-    uint value;
-
-    /* acquire lock */
-    irqs_state = spin_lock_irqsave(&klog_lock);
-
-    /* copy value */
-    value = top;
-
-    /* release lock */
-    spin_unlock_irqrstor(&klog_lock, irqs_state);
-
     /* return value to caller */
-    return value;
+    return top;
 }
 
 /* returns bottom index */
 uint klog_get_bottom_index(void)
 {
-    uint irqs_state;
-    uint value;
-
-    /* acquire lock */
-    irqs_state = spin_lock_irqsave(&klog_lock);
-
-    /* copy value */
-    value = bottom;
-
-    /* release lock */
-    spin_unlock_irqrstor(&klog_lock, irqs_state);
-
     /* return value to caller */
-    return value;
+    return bottom;
 }
 
 /* get row by absolute index */

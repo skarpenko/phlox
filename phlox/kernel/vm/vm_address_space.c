@@ -524,7 +524,6 @@ status_t vm_create_memory_hole(aspace_id aid, addr_t base, size_t size)
 {
     vm_address_space_t *aspace;
     vm_mapping_t *mapping;
-    unsigned long irqs_state;
     status_t err;
 
     /* try to get address space */
@@ -533,13 +532,14 @@ status_t vm_create_memory_hole(aspace_id aid, addr_t base, size_t size)
         return ERR_VM_INVALID_ASPACE;
 
     /* acquire lock */
-    irqs_state = spin_lock_irqsave(&aspace->lock);
+    spin_lock(&aspace->lock);
+#warning "vm_create_memory_hole(): replace spinlocks!"
 
     /* create mapping, by default it is memory hole */
     err = vm_aspace_create_mapping_exactly(aspace, base, size, &mapping);
 
     /* release lock */
-    spin_unlock_irqrstor(&aspace->lock, irqs_state);
+    spin_unlock(&aspace->lock);
 
     /* put address space back */
     vm_put_aspace(aspace);
@@ -552,7 +552,6 @@ status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr)
 {
     vm_address_space_t *aspace;
     vm_mapping_t *mapping;
-    unsigned long irqs_state;
     status_t err;
 
     /* get specified address space */
@@ -561,7 +560,8 @@ status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr)
         return ERR_VM_INVALID_ASPACE;
 
     /* acquire lock */
-    irqs_state = spin_lock_irqsave(&aspace->lock);
+    spin_lock(&aspace->lock);
+#warning "vm_delete_memory_hole(): replace spinlocks!"
 
     /* get mapping at specified address. it must be memory hole. */
     err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
@@ -574,7 +574,7 @@ status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr)
     }
 
     /* release lock */
-    spin_unlock_irqrstor(&aspace->lock, irqs_state);
+    spin_unlock(&aspace->lock);
 
     /* put address space back */
     vm_put_aspace(aspace);

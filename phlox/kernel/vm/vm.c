@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <phlox/errors.h>
+#include <phlox/spinlock.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
@@ -189,4 +190,177 @@ result_t vm_hard_page_fault(addr_t addr, addr_t fault_addr, bool is_write, bool 
        panic("vm_hard_page_fault(): can't handle!");
 
     return NO_ERROR;
+}
+
+/* map object */
+status_t vm_map_object(aspace_id aid, object_id oid, uint protection, addr_t *vaddr)
+{
+    vm_address_space_t *aspace;
+    vm_object_t *object;
+    vm_mapping_t *mapping;
+    status_t err;
+
+    /* get address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* get memory object */
+    object = vm_get_object_by_id(oid);
+    if(object == NULL) {
+        vm_put_aspace(aspace);
+        return ERR_VM_INVALID_OBJECT;
+    }
+
+    /* acquire locks.
+     * WARNING: If interrupts disabled this can lead into deadlock!
+     *          Spinlocks must be replaced with semaphores or mutexes!
+     */
+    spin_lock(&aspace->lock);
+    spin_lock(&object->lock);
+#warning "vm_map_object(): Dangerous spinlocks sequence!"
+
+    /* create mapping */
+    err = vm_aspace_create_mapping(aspace, object->size, &mapping);
+    if(err != NO_ERROR)
+        goto exit_map;
+
+    /* stick object to mapping */
+    mapping->type = VM_MAPPING_TYPE_OBJECT;
+    mapping->object = object;
+
+    /* store new mapping in mappings list of the object */
+    vm_object_put_mapping(object, mapping);
+
+    /* unlock object */
+    spin_unlock(&object->lock);
+
+    object = NULL;
+
+    /* return start address where object was mapped */
+    *vaddr = mapping->start;
+
+exit_map:
+    /* release locks */
+    if(object != NULL)
+        spin_unlock(&object->lock);
+    spin_unlock(&aspace->lock);
+
+    /* put structures back */
+    if(object != NULL)
+        vm_put_object(object);
+    /* NOTE: If object was mapped successfully it is not needed to put it */
+    vm_put_aspace(aspace);
+
+    return err;
+}
+
+/* map object exactly at provided virtual address */
+status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, addr_t vaddr)
+{
+    vm_address_space_t *aspace;
+    vm_object_t *object;
+    vm_mapping_t *mapping;
+    status_t err;
+
+    /* get address space */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* get memory object */
+    object = vm_get_object_by_id(oid);
+    if(object == NULL) {
+        vm_put_aspace(aspace);
+        return ERR_VM_INVALID_OBJECT;
+    }
+
+    /* acquire locks.
+     * WARNING: If interrupts disabled this can lead into deadlock!
+     *          Spinlocks must be replaced with semaphores or mutexes!
+     */
+    spin_lock(&aspace->lock);
+    spin_lock(&object->lock);
+#warning "vm_map_object_exactly(): Dangerous spinlocks sequence!"
+
+    /* create mapping */
+    err = vm_aspace_create_mapping_exactly(aspace, vaddr, object->size, &mapping);
+    if(err != NO_ERROR)
+        goto exit_map;
+
+    /* ... and assign object to it */
+    mapping->type = VM_MAPPING_TYPE_OBJECT;
+    mapping->object = object;
+
+    /* store new mapping in object mappings list */
+    vm_object_put_mapping(object, mapping);
+
+    /* unlock object */
+    spin_unlock(&object->lock);
+
+    object = NULL;
+
+exit_map:
+    /* release locks */
+    if(object != NULL)
+        spin_unlock(&object->lock);
+    spin_unlock(&aspace->lock);
+
+    /* put structures back */
+    if(object != NULL)
+        vm_put_object(object);
+    vm_put_aspace(aspace);
+
+    return err;
+}
+
+/* unmap object that is mapped at given virtual address */
+status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
+{
+    vm_address_space_t *aspace;
+    vm_mapping_t *mapping;
+    status_t err;
+
+    /* get mapping */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return ERR_VM_INVALID_ASPACE;
+
+    /* acquire lock */
+    spin_lock(&aspace->lock);
+
+    /* get mapping at provided virtual address */
+    err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
+    if(err != NO_ERROR)
+        goto exit_unmap;
+
+    /* check mapping type */
+    if(mapping->type != VM_MAPPING_TYPE_OBJECT) {
+        err = ERR_VM_BAD_ADDRESS;
+        goto exit_unmap;
+    }
+
+    /* acquire object lock */
+    spin_lock(&mapping->object->lock);
+
+    /* remove mapping from object mappings list */
+    vm_object_remove_mapping(mapping->object, mapping);
+
+    /* release lock */
+    spin_unlock(&mapping->object->lock);
+
+    /* ... and put object back */
+    vm_put_object(mapping->object);
+
+    /* delete mapping from address space */
+    vm_aspace_delete_mapping(aspace, mapping);
+
+exit_unmap:
+    /* unlock address space */
+    spin_unlock(&aspace->lock);
+
+    /* ... and but it back */
+    vm_put_aspace(aspace);
+
+    return err;
 }

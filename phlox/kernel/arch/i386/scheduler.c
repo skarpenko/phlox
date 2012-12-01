@@ -23,7 +23,7 @@ status_t arch_scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
 }
 
 /* switch context */
-void arch_scheduler_context_switch(thread_t *t_from, thread_t *t_to)
+void arch_sched_context_switch(thread_t *t_from, thread_t *t_to)
 {
     addr_t from_pgdir = (addr_t)t_from->process->aspace->tmap.arch.pgdir_phys;
     addr_t to_pgdir = (addr_t)t_to->process->aspace->tmap.arch.pgdir_phys;

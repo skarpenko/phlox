@@ -11,8 +11,8 @@
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/vm.h>
-#include <phlox/thread_private.h>
 #include <phlox/process.h>
+#include <phlox/thread_private.h>
 
 
 /* Redefinition for convenience */
@@ -237,8 +237,38 @@ proc_id proc_create_kernel_process(const char* name)
     return id; /* return id to caller */
 }
 
+/* attaches new thread to process */
+void proc_attach_thread(process_t *proc, thread_t *thread)
+{
+    unsigned long irqs_state;
+
+    /* acquire lock before working with process data */
+    irqs_state = spin_lock_irqsave(&proc->lock);
+
+    /* add thread to list */
+    xlist_add_last(&proc->threads, &thread->proc_list_node);
+
+    /* release lock */
+    spin_unlock_irqrstor(&proc->lock, irqs_state);
+}
+
+/* detaches thread from process */
+void proc_detach_thread(process_t *proc, thread_t *thread)
+{
+    unsigned long irqs_state;
+
+    /* acquire lock before touching process data */
+    irqs_state = spin_lock_irqsave(&proc->lock);
+
+    /* remove thread from list */
+    xlist_remove(&proc->threads, &thread->proc_list_node);
+
+    /* release lock */
+    spin_unlock_irqrstor(&proc->lock, irqs_state);
+}
+
 /* returns kernel process id */
-proc_id proc_get_kernel_proc_id(void)
+proc_id proc_get_kernel_process_id(void)
 {
     ASSERT_MSG(kernel_process, "Kernel process is not created!");
 
@@ -246,7 +276,7 @@ proc_id proc_get_kernel_proc_id(void)
 }
 
 /* returns kernel process structure */
-process_t *proc_get_kernel_proc(void)
+process_t *proc_get_kernel_process(void)
 {
     ASSERT_MSG(kernel_process, "Kernel process is not created!");
 
@@ -257,7 +287,7 @@ process_t *proc_get_kernel_proc(void)
 }
 
 /* returns process structure by its id */
-process_t *proc_get_proc_by_id(proc_id pid)
+process_t *proc_get_process_by_id(proc_id pid)
 {
     process_t temp_proc, *proc;
     unsigned int irqs_state;
@@ -280,7 +310,7 @@ process_t *proc_get_proc_by_id(proc_id pid)
 }
 
 /* put previously taken process structure */
-void proc_put_proc(process_t *proc)
+void proc_put_process(process_t *proc)
 {
     /* decrement references count */
     atomic_dec(&proc->ref_count);

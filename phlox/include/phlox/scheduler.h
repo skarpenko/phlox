@@ -21,7 +21,7 @@ bool scheduler_timer(void);
 /*
  * Performs rescheduling and context switch.
 */
-void scheduler_resched(void);
+void sched_reschedule(void);
 
 
 #endif

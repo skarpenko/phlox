@@ -6,8 +6,8 @@
 #include <phlox/errors.h>
 #include <phlox/list.h>
 #include <phlox/spinlock.h>
-#include <phlox/thread_private.h>
 #include <phlox/scheduler.h>
+#include <phlox/thread_private.h>
 
 
 /*** Public routines ***/
@@ -45,6 +45,6 @@ bool scheduler_timer(void)
 }
 
 /* reschedules and performs context switch */
-void scheduler_resched(void)
+void sched_reschedule(void)
 {
 }

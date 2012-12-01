@@ -363,5 +363,5 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
     /* reschedule if needed */
     if(resched_needed)
-        scheduler_resched();
+        sched_reschedule();
 }

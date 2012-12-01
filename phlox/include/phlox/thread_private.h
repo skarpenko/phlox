@@ -65,5 +65,17 @@ status_t scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 */
 proc_id proc_create_kernel_process(const char* name);
 
+/*
+ * Attach new thread to process.
+ * Process lock acquired inside.
+*/
+void proc_attach_thread(process_t *proc, thread_t *thread);
+
+/*
+ * Detach thread from process.
+ * Process lock acquired inside.
+*/
+void proc_detach_thread(process_t *proc, thread_t *thread);
+
 
 #endif

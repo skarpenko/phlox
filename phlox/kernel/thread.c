@@ -11,10 +11,10 @@
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
 #include <phlox/processor.h>
-#include <phlox/thread_private.h>
 #include <phlox/scheduler.h>
 #include <phlox/process.h>
 #include <phlox/thread.h>
+#include <phlox/thread_private.h>
 
 
 /* Redefinition for convenience */
@@ -166,6 +166,51 @@ static thread_t *peek_dead_list_nolock(void)
       return containerof(item, thread_t, threads_list_node);
     else
       return NULL; /* list is empty */
+}
+
+/* create new thread structure */
+static thread_t *create_thread_struct(void)
+{
+    thread_t *thread;
+
+    /* allocate memory for new tread struct */
+    thread = (thread_t *)kmalloc(sizeof(thread_t));
+    if(!thread)
+        panic("create_thread_struct(): out of heap memory!\n");
+
+    /* init fields */
+    memset(thread, 0, sizeof(thread_t));
+    thread->id = get_next_thread_id(); /* Thread ID */
+
+    return thread;
+}
+
+/* get not used or create new thread structure */
+static thread_t *get_thread_struct(void)
+{
+    unsigned long irqs_state;
+    thread_t *thread;
+
+    /* acquire lock before touching dead threads list */
+    irqs_state = spin_lock_irqsave(&threads_lock);
+
+    /* peek first item in list */
+    thread = peek_dead_list_nolock();
+    /* if exists - move to alive threads list */
+    if(thread)
+        move_thread_to_list_nolock(thread, ALIVE_THREADS_LIST);
+    
+    /* release lock */
+    spin_unlock_irqrstor(&threads_lock, irqs_state);
+
+    /* if no thread struct selected - create new one */
+    if(!thread) {
+        thread = create_thread_struct();
+        thread->state = THREAD_STATE_BIRTH;
+        put_thread_to_list(thread);
+    }
+
+    return thread;
 }
 
 

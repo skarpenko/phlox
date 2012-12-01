@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <sys/debug.h>
+#include <phlox/param.h>
 #include <phlox/errors.h>
 #include <phlox/heap.h>
 #include <phlox/list.h>
@@ -386,6 +387,9 @@ aspace_id vm_create_kernel_aspace(const char* name, addr_t base, size_t size)
     vm_address_space_t *aspace;
     aspace_id id;
 
+    ASSERT_MSG(name != NULL && strlen(name) <= SYS_MAX_OS_NAME_LEN,
+        "vm_create_kernel_aspace: kernel address space name is invalid!\n");
+
     /* ensure that kernel space is not created before */
     if(kernel_aspace)
         panic("vm_create_kernel_aspace: kernel space already exists!\n");
@@ -409,6 +413,10 @@ aspace_id vm_create_aspace(const char* name, addr_t base, size_t size)
 {
     vm_address_space_t *aspace;
     aspace_id id;
+
+    /* check name length */
+    if(name != NULL && strlen(name) > SYS_MAX_OS_NAME_LEN)
+        return VM_INVALID_ASPACEID;
 
     /* check that name is unique */
     if(vm_find_aspace_by_name(name) != VM_INVALID_ASPACEID)

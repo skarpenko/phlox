@@ -12,17 +12,6 @@
 #include <phlox/thread_types.h>
 
 
-/*
- * Scheduling engine init.
- * Called only within threading init stages!
-*/
-status_t scheduler_init(kernel_args_t *kargs);
-
-/*
- * Per CPU scheduler init.
- * Called only during threading init!
-*/
-status_t scheduler_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 
 
 #endif

@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <sys/debug.h>
+#include <phlox/param.h>
 #include <phlox/errors.h>
 #include <phlox/heap.h>
 #include <phlox/list.h>
@@ -394,6 +395,10 @@ object_id vm_create_object(const char *name, size_t size, uint protection)
     vm_object_t *object;
     object_id id;
 
+    /* check name length */
+    if(name != NULL && strlen(name) > SYS_MAX_OS_NAME_LEN)
+        return VM_INVALID_OBJECTID;
+
     /* check that name is unique */
     if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)
         return VM_INVALID_OBJECTID;
@@ -419,6 +424,10 @@ object_id vm_create_physmem_object(const char *name, addr_t phys_addr, size_t si
     uint page_num, first_page_num, n_pages;
     addr_t offset;
     vm_upage_t *upage;
+
+    /* check name length */
+    if(name != NULL && strlen(name) > SYS_MAX_OS_NAME_LEN)
+        return VM_INVALID_OBJECTID;
 
     /* check that name is unique */
     if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)
@@ -481,6 +490,10 @@ object_id vm_create_virtmem_object(const char *name, aspace_id aid, addr_t virt_
     addr_t offset;
     addr_t vaddr, paddr;
     uint flags;
+
+    /* check name length */
+    if(name != NULL && strlen(name) > SYS_MAX_OS_NAME_LEN)
+        return VM_INVALID_OBJECTID;
 
     /* check that name is unique */
     if(vm_find_object_by_name(name) != VM_INVALID_OBJECTID)

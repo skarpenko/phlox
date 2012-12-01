@@ -21,3 +21,8 @@ status_t arch_process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
     return NO_ERROR;
 }
 
+/* init arch-specific field of process structure */
+status_t arch_init_process_struct(arch_process_t *arch)
+{
+    return NO_ERROR;
+}

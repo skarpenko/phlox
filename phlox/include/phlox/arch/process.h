@@ -23,5 +23,10 @@ status_t arch_process_init(kernel_args_t *kargs);
 */
 status_t arch_process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 
+/*
+ * Called during creating process for arch-specific initialization.
+ */
+status_t arch_init_process_struct(arch_process_t *arch);
+
 
 #endif

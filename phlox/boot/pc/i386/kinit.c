@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -340,7 +340,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     /* switch to new stack */
     asm(" movl %0,    %%eax; "
         " movl %%eax, %%esp; "
-        :: "m" (kstack_start+kstack_size) );
+        :: "g" (kstack_start+kstack_size) );
     /* jump to kernel */
     asm(" pushl $0x0; " /* we are bootstrap CPU (0) */
         " pushl %0;   " /* kernel args */

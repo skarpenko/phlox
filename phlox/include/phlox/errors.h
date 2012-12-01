@@ -35,4 +35,11 @@ enum PhloxVirtualMemoryErrors {
     ERR_VM_GENERAL_LIMIT
 };
 
+/* Multithreading errors */
+enum PhloxMultithreadingErrors {
+    ERR_MT_GENERAL_BASE = 0x82000000,
+    ERR_MT_GENERAL = ERR_MT_GENERAL_BASE,
+    ERR_MT_GENERAL_LIMIT
+};
+
 #endif

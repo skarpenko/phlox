@@ -10,6 +10,7 @@
 #include <phlox/list.h>
 #include <phlox/atomic.h>
 #include <phlox/spinlock.h>
+#include <phlox/vm.h>
 #include <phlox/thread_private.h>
 #include <phlox/process.h>
 
@@ -59,6 +60,101 @@ static proc_id get_next_process_id(void)
     return retval;
 }
 
+/* put process to the end of processes list */
+static void put_process_to_list(process_t *process)
+{
+    unsigned long irqs_state;
+
+    /* acquire lock before touching bookkeeping structures */
+    irqs_state = spin_lock_irqsave(&processes_lock);
+
+    /* add item */
+    xlist_add_last(&processes_list, &process->procs_list_node);
+
+    /* put process into avl tree */
+    if(!avl_tree_add(&processes_tree, process))
+      panic("put_process_to_list(): failed to add process into tree!\n");
+
+    /* release lock */
+    spin_unlock_irqrstor(&processes_lock, irqs_state);
+}
+
+/* remove process from list */
+static void remove_process_from_list(process_t *process)
+{
+    unsigned long irqs_state;
+
+    /* acquire lock before access */
+    irqs_state = spin_lock_irqsave(&processes_lock);
+
+    /* remove process */
+    xlist_remove_unsafe(&processes_list, &process->procs_list_node);
+
+    /* remove process from tree */
+    if(!avl_tree_remove(&processes_tree, process))
+      panic("remove_process_from_list(): failed to remove process from tree!\n");
+
+    /* release lock */
+    spin_unlock_irqrstor(&processes_lock, irqs_state);
+}
+
+/* common routine for creating processes */
+static process_t *create_process_common(const char *name, const char *args)
+{
+    status_t err;
+    process_t *proc;
+
+    /* allocate process structure */
+    proc = (process_t *)kmalloc(sizeof(process_t));
+    if(!proc)
+        return NULL;
+
+    /* init allocated memory with zeroes */
+    memset(proc, 0, sizeof(process_t));
+
+    /* init arch-dependend part */
+    err = arch_init_process_struct(&proc->arch);
+    if(err != NO_ERROR)
+        goto error;
+
+    /* if process has name - copy it into structure field */
+    if(name) {
+        proc->name = kstrdup(name);
+        if(!proc->name)
+            goto error;
+    }
+
+    /* if arguments passed to process - make a copy */
+    if(args) {
+        proc->args = kstrdup(args);
+        if(!proc->args)
+            goto error;
+    }
+
+    /* init other fields */
+    spin_init(&proc->lock);
+    proc->state = PROCESS_STATE_BIRTH;
+
+    /* init lists */
+    xlist_init(&proc->threads);
+    xlist_init(&proc->children);
+
+    /* assign process id */
+    proc->id = get_next_process_id();
+    proc->gid = proc->id; /* process is a group leader by default */
+
+    /* return result to caller */
+    return proc;
+
+error:
+    /* release memory on error */
+    if(proc->name) kfree(proc->name);
+    if(proc->args) kfree(proc->args);
+    kfree(proc);
+
+    return NULL; /* failed to create process structure */
+}
+
 
 /*** Public routines ***/
 
@@ -66,6 +162,7 @@ static proc_id get_next_process_id(void)
 status_t process_init(kernel_args_t *kargs)
 {
     status_t err;
+    proc_id pid;
 
     /* call arch-specific init */
     err = arch_process_init(kargs);
@@ -86,6 +183,11 @@ status_t process_init(kernel_args_t *kargs)
                      sizeof(process_t),
                      offsetof(process_t, procs_tree_node) );
 
+    /* create kernel process */
+    pid = proc_create_kernel_process("kernel_process");
+    if(pid == INVALID_PROCESSID)
+        return ERR_MT_GENERAL;
+
     return NO_ERROR;
 }
 
@@ -100,6 +202,39 @@ status_t process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu)
         return err;
 
     return NO_ERROR;
+}
+
+/* creates kernel process */
+proc_id proc_create_kernel_process(const char* name)
+{
+    process_t *proc;
+    proc_id id;
+
+    ASSERT_MSG(name != NULL && strlen(name) <= SYS_MAX_OS_NAME_LEN,
+        "proc_create_kernel_process: kernel process name is invalid!\n");
+
+    /* ensure that kernel process was not created before */
+    if(kernel_process)
+        panic("proc_create_kernel_process: kernel process already exists!\n");
+
+    /* create kernel process struct */
+    proc = create_process_common(name, NULL);
+    if(!proc)
+        return INVALID_PROCESSID;
+
+    /* final fields init */
+    proc->state = PROCESS_STATE_NORMAL;
+    id = proc->id;
+    proc->aid = vm_get_kernel_aspace_id();
+    proc->aspace = vm_get_kernel_aspace();
+
+    /* store as global */
+    kernel_process = proc;
+
+    /* add to processes list */
+    put_process_to_list(proc);
+
+    return id; /* return id to caller */
 }
 
 /* returns kernel process id */

@@ -39,6 +39,7 @@ typedef struct thread {
     bigtime_t        user_time;          /* User-side execution time */
     /* Entry */
     addr_t           entry;              /* Entry point address */
+    void             *data;              /* Optional data passed to thread */
     /* List nodes */
     list_elem_t      threads_list_node;  /* Threads list node */
     avl_tree_node_t  threads_tree_node;  /* Threads tree node */

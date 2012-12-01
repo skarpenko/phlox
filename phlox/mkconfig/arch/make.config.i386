@@ -9,79 +9,79 @@ endif
 
 # set cpu-specific flags
 ifeq ($(CPU),i386)
-  GLOBAL_CFLAGS += -mcpu=i386
+  GLOBAL_CFLAGS += -march=i386
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),i486)
-  GLOBAL_CFLAGS += -mcpu=i486
+  GLOBAL_CFLAGS += -march=i486
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),i586)
-  GLOBAL_CFLAGS += -mcpu=i586
+  GLOBAL_CFLAGS += -march=i586
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),i686)
-  GLOBAL_CFLAGS += -mcpu=i686
+  GLOBAL_CFLAGS += -march=i686
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Pentium)
-  GLOBAL_CFLAGS += -mcpu=pentium
+  GLOBAL_CFLAGS += -march=pentium
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),PentiumMMX)
-  GLOBAL_CFLAGS += -mcpu=pentium-mmx
+  GLOBAL_CFLAGS += -march=pentium-mmx
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),PentiumPro)
-  GLOBAL_CFLAGS += -mcpu=pentiumpro
+  GLOBAL_CFLAGS += -march=pentiumpro
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Pentium2)
-  GLOBAL_CFLAGS += -mcpu=pentium2
+  GLOBAL_CFLAGS += -march=pentium2
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Pentium3)
-  GLOBAL_CFLAGS += -mcpu=pentium3
+  GLOBAL_CFLAGS += -march=pentium3
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Pentium4)
-  GLOBAL_CFLAGS += -mcpu=pentium4
+  GLOBAL_CFLAGS += -march=pentium4
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),K6)
-  GLOBAL_CFLAGS += -mcpu=k6
+  GLOBAL_CFLAGS += -march=k6
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),K6_2)
-  GLOBAL_CFLAGS += -mcpu=k6-2
+  GLOBAL_CFLAGS += -march=k6-2
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),K6_3)
-  GLOBAL_CFLAGS += -mcpu=k6-3
+  GLOBAL_CFLAGS += -march=k6-3
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),K7)
-  GLOBAL_CFLAGS += -mcpu=athlon
+  GLOBAL_CFLAGS += -march=athlon
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Athlon)
-  GLOBAL_CFLAGS += -mcpu=athlon
+  GLOBAL_CFLAGS += -march=athlon
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Athlon_Tbird)
-  GLOBAL_CFLAGS += -mcpu=athlon-tbird
+  GLOBAL_CFLAGS += -march=athlon-tbird
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),Athlon4)
-  GLOBAL_CFLAGS += -mcpu=athlon-4
+  GLOBAL_CFLAGS += -march=athlon-4
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),AthlonXP)
-  GLOBAL_CFLAGS += -mcpu=athlon-xp
+  GLOBAL_CFLAGS += -march=athlon-xp
   KNOWN_CPU := true
 endif
 ifeq ($(CPU),AthlonMP)
-  GLOBAL_CFLAGS += -mcpu=athlon-mp
+  GLOBAL_CFLAGS += -march=athlon-mp
   KNOWN_CPU := true
 endif
 

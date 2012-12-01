@@ -104,6 +104,13 @@ void vm_put_aspace(vm_address_space_t *aspace);
 aspace_id vm_find_aspace_by_name(const char *name);
 
 /*
+ * Creates memory object with given name, size and protection.
+ * Returns id of newly created object or VM_INVALID_OBJECTID
+ * on error.
+*/
+object_id vm_create_object(const char *name, size_t size, uint protection);
+
+/*
  * Get object by its id.
  * Returns object or NULL if no object
  * found with given id.

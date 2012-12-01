@@ -41,6 +41,16 @@ static int compare_object_id(const void *o1, const void *o2)
     return 0;
 }
 
+/* compare routine for universal pages tree */
+static int compare_upage(const void *up1, const void *up2)
+{
+    if( ((vm_upage_t *)up1)->upn > ((vm_upage_t *)up2)->upn )
+        return 1;
+    if( ((vm_upage_t *)up1)->upn < ((vm_upage_t *)up2)->upn )
+        return -1;
+    return 0;
+}
+
 /* returns available object id */
 static object_id get_next_object_id(void)
 {
@@ -93,6 +103,55 @@ static void remove_object_from_list(vm_object_t *object)
     spin_unlock_irqrstor(&objects_lock, irqs_state);
 }
 
+/* common routine for creating virtual memory objects */
+static vm_object_t *create_object_common(const char *name, size_t size, uint protection)
+{
+    vm_object_t *object;
+
+    /* allocate object structure */
+    object = (vm_object_t *)kmalloc(sizeof(vm_object_t));
+    if(!object)
+        return NULL;
+
+    /* if creating named object - copy its name into structure field */
+    if(name) {
+        object->name = kstrdup(name);
+        if(!object->name)
+            goto error;
+    } else {
+        object->name = NULL;
+    }
+
+    /* init object structure fields */
+    spin_init(&object->lock);
+    object->size = PAGE_ALIGN(size);
+    object->state = VM_OBJECT_STATE_NORMAL;
+    object->protect = protection;
+    object->flags = 0; /* currently not used */
+    object->ref_count = 0;
+
+    /* init bookkeeping structures */
+    xlist_init(&object->mappings_list);
+    xlist_init(&object->upages_list);
+    avl_tree_create( &object->upages_tree, compare_upage,
+                     sizeof(vm_upage_t),
+                     offsetof(vm_upage_t, tree_node) );
+
+    /* assign object id */
+    object->id = get_next_object_id();
+
+    /* return result to caller */
+    return object;
+
+error:
+    /* release memory on error */
+    if(object->name)
+        kfree(object->name);
+    kfree(object);
+
+    return NULL; /* failed to create object */
+}
+
 
 /*** Public routines ***/
 
@@ -115,6 +174,25 @@ status_t vm_objects_init(kernel_args_t *kargs)
                      offsetof(vm_object_t, tree_node) );
 
     return NO_ERROR;
+}
+
+/* create virtual memory object */
+object_id vm_create_object(const char *name, size_t size, uint protection)
+{
+    vm_object_t *object;
+    object_id id;
+
+    /* create object */
+    object = create_object_common(name, size, protection);
+    if(!object)
+        return VM_INVALID_OBJECTID;
+
+    id = object->id;
+
+    /* add to objects list */
+    put_object_to_list(object);
+
+    return id; /* return id */
 }
 
 /* returns object by its id */

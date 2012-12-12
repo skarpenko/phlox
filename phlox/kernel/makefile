@@ -18,7 +18,8 @@ KERNEL_O_FILES := \
 	process.o \
 	scheduler.o \
 	thread.o \
-	sem.o
+	sem.o \
+	elf_file.o
 
 KERNEL_O_FILES:=$(addprefix $(KERNEL_OUT_DIR)/,$(KERNEL_O_FILES))
 

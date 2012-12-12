@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Copyright 2001-2004, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -341,7 +341,7 @@ struct Elf64_Rela {
 
 #define ELF64_R_SYM(i)      ((i) >> 32)
 #define ELF64_R_TYPE(i)     ((unsigned char)(i))
-#define ELF32_R_INFO(s, t)  (((s) << 32) + (unsigned char)(t))
+#define ELF64_R_INFO(s, t)  (((s) << 32) + (unsigned char)(t))
 
 /* Dynamic structure */
 struct Elf64_Dyn {

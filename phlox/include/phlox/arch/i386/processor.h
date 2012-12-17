@@ -591,6 +591,8 @@ void i386_context_switch(arch_thread_t *t_from, arch_thread_t *t_to);
 void i386_pgdir_switch(addr_t new_pgdir);
 /* set kernel stack for next context switch */
 void i386_set_kstack(addr_t kstack_top);
+/* enter user space via interrupt return simulation */
+void i386_enter_uspace(addr_t entry, void *args, addr_t ustack_top, addr_t ret);
 
 /*
  * Routines for hardware debug context save and load.

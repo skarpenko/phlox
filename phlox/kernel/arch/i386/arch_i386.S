@@ -1,7 +1,10 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
+
+#include <phlox/arch/i386/segments.h>
+#include <arch/i386/cpu_bits.h>
 
 #define FUNCTION(x) .global x; .type x,@function; x
 #define GLOBAL(x) .global x; x
@@ -185,6 +188,31 @@ FUNCTION(i386_pgdir_switch):
     movl ARG0, %eax  /* copy new_pgdir to eax */
     movl %eax, %cr3  /* load new page directory */
     ret
+
+/* void i386_enter_uspace(addr_t entry, void *args, addr_t ustack_top, addr_t ret) */
+FUNCTION(i386_enter_uspace):
+    movl ARG0, %eax      /* get entry point */
+    movl ARG1, %edx      /* get arguments */
+    movl ARG2, %ebx      /* get user stack */
+    movl ARG3, %ebp      /* return address */
+    /* set up user data segments */
+    movw $USER_DATA_SEG, %cx
+    movw %cx, %ds
+    movw %cx, %es
+    movw %cx, %fs
+    movw %cx, %gs
+    /* push the args onto the user stack */
+    movl %edx, -4(%ebx)  /* arguments (should not point to kernel space) */
+    movl %ebp, -8(%ebx)  /* return address (should not point to kernel space) */
+    sub $8, %ebx         /* update stack pointer */
+
+    pushl $USER_DATA_SEG     /* user data segment */
+    pushl %ebx               /* user stack */
+    pushl $X86_EFLAGS_IF | 2 /* user flags */
+
+    pushl $USER_CODE_SEG     /* user code segment */
+    pushl %eax               /* user instruction pointer */
+    iret                     /* simulate return from interrupt */
 
 /* void i386_dbg_regs_save(uint32 *dbg_regs) */
 FUNCTION(i386_dbg_regs_save):

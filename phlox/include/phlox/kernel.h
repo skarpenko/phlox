@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_KERNEL_H_
@@ -25,6 +25,8 @@
 #define BIT(a)           (1<<a)
 
 #define TOUCH(x) ((void)(x))
+#define TOUCH_ADDR(addr) \
+    { char temp = *(volatile char*)(addr); (void)temp; }
 
 #define containerof(ptr, type, member) \
     ((type *)((addr_t)(ptr) - offsetof(type, member)))

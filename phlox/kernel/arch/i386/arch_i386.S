@@ -210,9 +210,10 @@ FUNCTION(i386_enter_uspace):
     pushl %ebx               /* user stack */
     pushl $X86_EFLAGS_IF | 2 /* user flags */
 
-    pushl $USER_CODE_SEG     /* user code segment */
-    pushl %eax               /* user instruction pointer */
-    iret                     /* simulate return from interrupt */
+    pushl $USER_CODE_SEG  /* user code segment */
+    pushl %eax            /* user instruction pointer */
+    cli                   /* disable interrupts (will be reenabled after iret) */
+    iret                  /* simulate return from interrupt */
 
 /* void i386_dbg_regs_save(uint32 *dbg_regs) */
 FUNCTION(i386_dbg_regs_save):

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -545,8 +545,15 @@ vm_address_space_t *vm_get_current_user_aspace(void)
     /* take current thread */
     th = thread_get_current_thread();
 
+#if 0
     /* locate and return address space to caller */
     return vm_get_aspace_by_id(th->process->aid);
+#endif
+
+    /* increase references count */
+    atomic_inc(&th->process->aspace->ref_count);
+
+    return th->process->aspace;
 }
 
 /* returns current user address space id */

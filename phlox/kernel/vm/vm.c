@@ -295,8 +295,9 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     if(is_kernel_address(addr)) {
         aspace = vm_get_kernel_aspace();
     } else {
-        panic("vm_soft_page_fault: page fault at user space address %x!\n", addr);
-        aspace = NULL; /* keep compiler happy */
+        aspace = vm_get_current_user_aspace();
+        if(!aspace)
+            panic("vm_soft_page_fault: no user address space!\n");
     }
 
     /* increment address space faults counter */
@@ -362,6 +363,9 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
 
     /* .. and finally unlock address space */
     spin_unlock(&aspace->lock);
+
+    /* return address space to the kernel */
+    vm_put_aspace(aspace);
 
     /* page fault handled successfully */
     return NO_ERROR;

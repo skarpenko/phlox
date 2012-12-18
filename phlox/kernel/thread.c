@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -354,7 +354,23 @@ static int stub_for_kernel_thread(void)
 /* stub function for user-side threads */
 static int stub_for_user_thread(void)
 {
-/* TODO: */
+    thread_t *thread;
+
+    /* get current thread */
+    thread = thread_get_current_thread();
+
+    /* init at first time */
+    if( arch_thread_first_start_init(thread) != NO_ERROR )
+        panic("\nFailed to start thread id = %d\n", thread->id);
+
+    /* notify scheduler about new thread start */
+    sched_complete_context_switch();
+
+    /* pass control to user-space code */
+    arch_thread_enter_uspace(thread);
+
+    /*** Control never goes here ***/
+
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_THREAD_H_
@@ -34,6 +34,13 @@ status_t arch_thread_init_struct(thread_t *thread);
  * scheduled for execution.
 */
 status_t arch_thread_init_kstack(thread_t *thread, int (*stub_func)(void));
+
+/*
+ * Transfer control to user space code.
+ * Called once for new user thread after it scheduled
+ * for execution at first time. This function never returns.
+*/
+void arch_thread_enter_uspace(thread_t *thread);
 
 /*
  * Init new thread after it gets control at first time

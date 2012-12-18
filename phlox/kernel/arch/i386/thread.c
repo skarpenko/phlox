@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -72,6 +72,21 @@ status_t arch_thread_init_kstack(thread_t *thread, int (*stub_func)(void))
     thread->arch.current_stack.ss  = KERNEL_DATA_SEG;
 
     return NO_ERROR;
+}
+
+/* transfers control to user space for newly created user thread */
+void arch_thread_enter_uspace(thread_t *thread)
+{
+    /* TODO: Locate and map return stub object here ?*/
+
+    /* reinit FPU to ensure it is in good state */
+    asm("fninit");
+
+    /* touch user stack to ensure its top page mapped */
+    TOUCH_ADDR(thread->ustack_top - 4);
+
+    /* pass control to user code */
+    i386_enter_uspace(thread->entry, thread->data, thread->ustack_top - 4, 0 /* ret addr */);
 }
 
 /* called after just created thread gets control */

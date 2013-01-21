@@ -1,5 +1,5 @@
 /*
-* Copyright 2007, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Copyright 2005, Michael Noisternig. All rights reserved.
 * Copyright 2001, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
@@ -10,7 +10,7 @@
 void *memset(void *s, int c, size_t count)
 {
     char *xs = (char *) s;
-    size_t len = (-(size_t)s) & (sizeof(size_t)-1);
+    size_t len = (-(size_t)s) & (sizeof(int)-1);
     int cc = c & 0xff;
 
     if ( count > len ) {
@@ -23,10 +23,10 @@ void *memset(void *s, int c, size_t count)
             *xs++ = c;
 
         /* write to aligned memory dword-wise */
-        for ( len = count/sizeof(size_t); len > 0; len-- )
-            *((size_t *)xs)++ = cc;
+        for ( len = count/sizeof(int); len > 0; len--, xs += sizeof(int) )
+            *((int *)xs) = cc;
 
-        count &= sizeof(size_t)-1;
+        count &= sizeof(int)-1;
     }
 
     /* write remaining bytes */

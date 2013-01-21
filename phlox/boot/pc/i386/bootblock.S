@@ -26,7 +26,7 @@
  */
 
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -341,7 +341,7 @@ gdt:
     .long 0x008f9200  /* type: 16 bit, data read/write, <present>, privilege 0 */
 
 /***************/
-.skip (510 - .)
+.skip (_start + 510 - .)
     .word   0xaa55    /* magic number for boot sector */
 
 
@@ -485,4 +485,4 @@ done_vesa_bad:
     xor     %ax, %ax
     ret
 
-.skip (1024 - .)
+.skip (_start + 1024 - .)

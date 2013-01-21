@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -53,9 +53,11 @@ static void sort_addr_ranges(addr_range_t *ranges, uint32 count);
  * Stack somewhere below 1Mb
  * Paging disabled
  *
+ * Put the function into separate section to avoid being sorted by the compiler.
 */
-void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
-            int in_vesa, uint32 vesa_ptr, uint32 console_ptr)
+void __attribute__((section(".startup_entry")))
+_start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
+       int in_vesa, uint32 vesa_ptr, uint32 console_ptr)
 {
     bootfs_t btfs;
     btfs_dir_entry *en;
@@ -74,7 +76,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
 
     asm("cld");  /* Ain't nothing but a GCC thang. (from NewOS's stage2) */
     asm("cli");  /* ensure that interrupts is still masked. */
-    
+
     screenOffset = console_ptr;
 
     memset(kargs, 0, PAGE_SIZE); /* prepare kernel args page */
@@ -256,7 +258,7 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
                      /* extend the previous buffer */
                      kargs->phys_mem_range[kargs->num_phys_mem_ranges-1].size += (buf[i].base_addr - previous_end) +
                                                                                  buf[i].length;
-                         
+
                      /* mark the gap between the two allocated ranges in use */
                      kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].start = previous_end;
                      kargs->phys_alloc_range[kargs->num_phys_alloc_ranges].size  = buf[i].base_addr - previous_end;
@@ -342,17 +344,20 @@ void _start(uint32 memsize, void *ext_mem_block, uint32 ext_mem_count,
     kargs->cons_line = screenOffset / SCREEN_WIDTH;
     kargs->magic = KARGS_MAGIC;  /* magic field */
 
-    /* switch to new stack */
-    asm(" movl %0,    %%eax; "
+    /*** Kernel trampoline ***/
+
+    asm(
+        /* switch to new stack */
+        " movl %0,    %%eax; "
         " movl %%eax, %%esp; "
-        :: "g" (kstack_start+kstack_size) );
-    /* jump to kernel */
-    asm(" pushl $0x0; " /* we are bootstrap CPU (0) */
-        " pushl %0;   " /* kernel args */
+        /* jump to kernel */
+        " pushl $0x0; " /* we are bootstrap CPU (0) */
+        " pushl %1;   " /* kernel args */
         " pushl $0x0; " /* dummy return value for call to kernel main() */
-        " pushl %1;   " /* push return address */
+        " pushl %2;   " /* push return address */
         " ret;        " /* return */
-        :: "g" (kargs), "g" (kentry) );
+        :: "c" (kstack_start+kstack_size), "d" (kargs), "b" (kentry)
+    );
 }
 
 void clearscreen()

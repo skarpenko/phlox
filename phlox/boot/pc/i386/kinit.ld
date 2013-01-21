@@ -6,6 +6,9 @@ SECTIONS
 {
     . = 0x101000 + SIZEOF_HEADERS;
 
+    /* startup entry code */
+    .startup_entry :    { *(.startup_entry) }
+
     /* text/read-only data */
     .text : { *(.text .gnu.linkonce.t.*) }
 

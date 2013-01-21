@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -23,8 +23,16 @@ static unsigned char *heap_ptr = (unsigned char *)0x400000;
 #define TARGET ((void *)0x100000)
 extern void *_compressed_image;
 
-void _start(unsigned int mem, void *ext_mem_block, int ext_mem_count,
-            int in_vesa, unsigned int vesa_ptr)
+
+/*
+ * Boot image decompression code entry
+ * 
+ * Put it into separate section to avoid being placed at arbitrary address by
+ * the compiler during optimization stage.
+ */
+void __attribute__((section(".startup_entry")))
+_start(unsigned int mem, void *ext_mem_block, int ext_mem_count,
+       int in_vesa, unsigned int vesa_ptr)
 {
     unsigned long len;
     bootfs_t btfs;

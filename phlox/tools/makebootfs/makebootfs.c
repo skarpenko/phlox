@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 *
 * Portions Copyright 2001-2004, Travis Geiselbrecht.
 * Portions Copyright 1998 Brian J. Swetland.
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include <boot/bootfs_struct.h>
 #define PAGE_SIZE 4096
 
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
     char *script = NULL;
     char *image  = NULL;
     char *module = argv[0];
-    
+
     if(argc < 3)
        usage(module);
 
@@ -229,18 +230,18 @@ int main(int argc, char **argv)
             image = *argv;
         } else
             usage(module);
-    
+
         argc--;
         argv++;
     }
 
     if(!loadscript(script))
         error("cannot load script \"%s\"!", script);
-        
+
     mkbootfs(image);
-    
+
     printf("All done.\n");
-       
+
     return 0;
 }
 
@@ -259,7 +260,7 @@ void error(char *fmt, ...)
       vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
-    
+
     free_sections();
     free_pages();
     exit(1);
@@ -271,7 +272,7 @@ void *loadfile(char *file, int *size, int *npages)
     char *data;
     int nread;
     int newsize;
-    
+
     /* open file and get file size */
     *size = 0;
     fh = fopen(file, "rb");
@@ -279,7 +280,7 @@ void *loadfile(char *file, int *size, int *npages)
       return NULL;
     fseek(fh, 0, SEEK_END);
     *size = ftell(fh);
-    
+
     /* allocate memory */
     if(npages) data = (char *) alloc_buf(*size, &newsize);
           else data = (char *) malloc(*size);
@@ -469,7 +470,7 @@ void free_sections()
        free(p);
     }
     scr_first = scr_last = NULL;
-    
+
     if(scr_data) {
        free(scr_data);
        scr_data = NULL;
@@ -480,7 +481,7 @@ dir_page *alloc_dir_page(unsigned int num, unsigned int parent)
 {
     dir_page *page;
     btfs_dir_entry *en;
-    
+
     page = (dir_page *)malloc(sizeof(dir_page));
     memset(page->data, 0, PAGE_SIZE);
     page->num = num;
@@ -516,17 +517,17 @@ dir_page *alloc_dir_page(unsigned int num, unsigned int parent)
 dir_page *dir_page_by_num(unsigned int num)
 {
     dir_page *p;
-    
+
     for(p = dir_first; p; p = p->next)
       if(p->num == num) return p;
-    
+
     return NULL;
 }
 
 void free_pages()
 {
     dir_page *p, *pb;
-    
+
     for(p = dir_first; p; p = pb) {
         pb = p->next;
         free(p);
@@ -693,7 +694,7 @@ void mkbootfs(char *image)
         if(!file) {
            nwrite = reserv * PAGE_SIZE;
            npages = reserv;
-           
+
            entr->size   = fix(reserv);
            entr->vsize  = fix(nwrite);
 
@@ -727,7 +728,7 @@ void mkbootfs(char *image)
              default:
                 error("unrecognized section type \"%s\"!", scr_getval(p, "type"));
            }
-            
+
         }
 
         fseek(fh, PAGE_SIZE * next_free_page, SEEK_SET);

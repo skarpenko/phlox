@@ -1,2 +1,2 @@
-# IBM PC specific options
+## IBM PC specific options
 

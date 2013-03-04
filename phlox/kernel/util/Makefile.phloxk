@@ -1,0 +1,6 @@
+PHLOXK_SRC +=                  \
+	$(LOCDIR)/list.c       \
+	$(LOCDIR)/avl_tree.c   \
+	$(LOCDIR)/hash_table.c \
+	$(LOCDIR)/queue.c      \
+	$(LOCDIR)/mutex.c

@@ -1,0 +1,26 @@
+PHLOXK_SRC +=                          \
+	$(LOCDIR)/atomic_init.c        \
+	$(LOCDIR)/atomic.S             \
+	$(LOCDIR)/arch_i386.S          \
+	$(LOCDIR)/processor.c          \
+	$(LOCDIR)/vm.c                 \
+	$(LOCDIR)/vm_translation_map.c \
+	$(LOCDIR)/process.c            \
+	$(LOCDIR)/scheduler.c          \
+	$(LOCDIR)/thread.c             \
+	$(LOCDIR)/interrupt.c          \
+	$(LOCDIR)/timer.c              \
+	$(LOCDIR)/exceptions.c         \
+	$(LOCDIR)/int_entry.S
+
+# Linker script
+PHLOXK_LDSCRIPT := $(LOCDIR)/kernel.ld
+
+# Additional dependencies
+PHLOXK_DEP = $(PHLOXK_LDSCRIPT) $(LIBSTRING) $(LIBPHLOX)
+
+PHLOXK_ASFLAGS += $(GLOBAL_ASFLAGS) $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
+
+$(PHLOXK):
+	$(Q)echo "Linking [$(PHLOXK)]..."
+	$(Q)$(LD) $(GLOBAL_LDFLAGS) -L$(LIBGCC_PATH) -dN -script=$(PHLOXK_LDSCRIPT) -o $(PHLOXK) $(PHLOXK_OBJ) $(LIBPHLOX) $(LIBSTRING) $(LIBGCC)

@@ -1,0 +1,6 @@
+PHLOXK_SRC +=                        \
+	$(LOCDIR)/vm.c               \
+	$(LOCDIR)/vm_page.c          \
+	$(LOCDIR)/vm_page_mapper.c   \
+	$(LOCDIR)/vm_address_space.c \
+	$(LOCDIR)/vm_object.c

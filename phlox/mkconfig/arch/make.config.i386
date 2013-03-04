@@ -1,96 +1,74 @@
-# IA-32 specific options
+## IA-32 specific options
 
-KNOWN_CPU := false
 
-# if CPU type not specified optimize for i486 by default
+# If CPU type not specified optimize for i486 by default
 ifeq ($(CPU), )
 CPU := i486
 endif
 
-# set cpu-specific flags
+# Set cpu-specific flags
 ifeq ($(CPU),i386)
-  GLOBAL_CFLAGS += -march=i386
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=i386
 endif
 ifeq ($(CPU),i486)
-  GLOBAL_CFLAGS += -march=i486
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=i486
 endif
 ifeq ($(CPU),i586)
-  GLOBAL_CFLAGS += -march=i586
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=i586
 endif
 ifeq ($(CPU),i686)
-  GLOBAL_CFLAGS += -march=i686
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=i686
 endif
 ifeq ($(CPU),Pentium)
-  GLOBAL_CFLAGS += -march=pentium
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentium
 endif
 ifeq ($(CPU),PentiumMMX)
-  GLOBAL_CFLAGS += -march=pentium-mmx
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentium-mmx
 endif
 ifeq ($(CPU),PentiumPro)
-  GLOBAL_CFLAGS += -march=pentiumpro
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentiumpro
 endif
 ifeq ($(CPU),Pentium2)
-  GLOBAL_CFLAGS += -march=pentium2
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentium2
 endif
 ifeq ($(CPU),Pentium3)
-  GLOBAL_CFLAGS += -march=pentium3
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentium3
 endif
 ifeq ($(CPU),Pentium4)
-  GLOBAL_CFLAGS += -march=pentium4
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=pentium4
 endif
 ifeq ($(CPU),K6)
-  GLOBAL_CFLAGS += -march=k6
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=k6
 endif
 ifeq ($(CPU),K6_2)
-  GLOBAL_CFLAGS += -march=k6-2
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=k6-2
 endif
 ifeq ($(CPU),K6_3)
-  GLOBAL_CFLAGS += -march=k6-3
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=k6-3
 endif
 ifeq ($(CPU),K7)
-  GLOBAL_CFLAGS += -march=athlon
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon
 endif
 ifeq ($(CPU),Athlon)
-  GLOBAL_CFLAGS += -march=athlon
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon
 endif
 ifeq ($(CPU),Athlon_Tbird)
-  GLOBAL_CFLAGS += -march=athlon-tbird
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon-tbird
 endif
 ifeq ($(CPU),Athlon4)
-  GLOBAL_CFLAGS += -march=athlon-4
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon-4
 endif
 ifeq ($(CPU),AthlonXP)
-  GLOBAL_CFLAGS += -march=athlon-xp
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon-xp
 endif
 ifeq ($(CPU),AthlonMP)
-  GLOBAL_CFLAGS += -march=athlon-mp
-  KNOWN_CPU := true
+  ARCH_CFLAGS += -march=athlon-mp
 endif
 
-ifeq ($(KNOWN_CPU),false)
+ifeq ($(ARCH_CFLAGS),)
   $(error Unknown CPU specified. List of known CPUs is: i386, i486, i586, \
 i686, Pentium, PentiumMMX, PentiumPro, Pentium2, Pentium3, Pentium4, K6, \
 K6_2, K6_3, K7, Athlon, Athlon_Tbird, Athlon4, AthlonXP, AthlonMP)
 endif
 
-GLOBAL_CFLAGS += -DCPU_$(CPU)=1
-
-KNOWN_CPU :=
+ARCH_CFLAGS += -m32 -DCPU_$(CPU)=1

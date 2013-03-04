@@ -1,0 +1,7 @@
+PHLOXK_SRC +=               \
+	$(LOCDIR)/machine.c \
+	$(LOCDIR)/pit.c     \
+	$(LOCDIR)/pic.c     \
+	$(LOCDIR)/nvram.c   \
+	$(LOCDIR)/timer.c   \
+	$(LOCDIR)/vm.c

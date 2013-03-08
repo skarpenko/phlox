@@ -10,7 +10,7 @@ FINAL_DEP += $(PHLOXZ)
 PHLOXZ_DEP = $(MAKEFLOP) $(BOOTBLOCK) $(IMAGEZ)
 
 $(PHLOXZ):
-	$(Q)echo "Building [$(PHLOXZ)]..."
+	$(Q)echo "Creating [$(PHLOXZ)]"
 	$(Q)$(MAKEFLOP) -v -b 512 $(BOOTBLOCK) $(IMAGEZ) $(PHLOXZ)
 
 
@@ -26,10 +26,12 @@ BOOTBLOCK_ASFLAGS += $(GLOBAL_ASFLAGS) $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS)
 BOOTBLOCK_DEP = $(BOOTBLOCK_LDSCRIPT)
 
 $(BOOTBLOCK):
-	$(Q)echo "Building [$(BOOTBLOCK)]..."
+	$(Q)echo "Creating [$(BOOTBLOCK)]"
 	$(Q)$(LD) $(GLOBAL_LDFLAGS) -dN -script=$(BOOTBLOCK_LDSCRIPT) -o $(basename $(BOOTBLOCK)).elf $(BOOTBLOCK_OBJ)
 	$(Q)$(OBJCOPY) -O binary $(basename $(BOOTBLOCK)).elf $(BOOTBLOCK)
-	$(Q)rm $(basename $(BOOTBLOCK)).elf
+
+BOOTBLOCK_clean:
+	-$(Q)rm -f $(basename $(BOOTBLOCK)).elf
 
 # Generate explicit rules for boot block source
 $(call gen-explicit-s-rule,BOOTBLOCK,$(BUILD_DIR),$(LOCDIR),$(notdir $(BOOTBLOCK_SRC)))
@@ -44,7 +46,7 @@ MAKEFLOP_SRC := \
 MAKEFLOP_CFLAGS += $(TOOLS_CFLAGS) $(TOOLS_INCLUDES)
 
 $(MAKEFLOP):
-	$(Q)echo "Linking [$(MAKEFLOP)]..."
+	$(Q)echo "Linking [$(MAKEFLOP)]"
 	$(Q)$(CC) -o $(MAKEFLOP) $(MAKEFLOP_OBJ)
 
 # Generate explicit rules for makeflop sources
@@ -64,10 +66,12 @@ BOOTDECOMP_LDSCRIPT := $(LOCDIR)/bootdecomp.ld
 BOOTDECOMP_DEP = $(BOOTDECOMP_LDSCRIPT) $(LIBSTRING) $(LIBPHLOX)
 
 $(BOOTDECOMP):
-	$(Q)echo "Building [$(BOOTDECOMP)]..."
+	$(Q)echo "Creating [$(BOOTDECOMP)]"
 	$(Q)$(LD) $(GLOBAL_LDFLAGS) -L$(LIBGCC_PATH) -dN -script=$(BOOTDECOMP_LDSCRIPT) -o $(basename $(BOOTDECOMP)).elf $(BOOTDECOMP_OBJ) $(LIBPHLOX) $(LIBSTRING) $(LIBGCC)
 	$(Q)$(OBJCOPY) -O binary $(basename $(BOOTDECOMP)).elf $(BOOTDECOMP)
-	$(Q)rm $(basename $(BOOTDECOMP)).elf
+
+BOOTDECOMP_clean:
+	-$(Q)rm -f $(basename $(BOOTDECOMP)).elf
 
 
 # Generate explicit rules for decompressor sources
@@ -81,11 +85,13 @@ IMAGEZ_INI := $(LOCDIR)/bootfs.ini
 IMAGEZ_DEP = $(IMAGEZ_INI) $(MAKEBOOTFS) $(BOOTDECOMP) $(KINIT) $(PHLOXK)
 
 $(IMAGEZ):
-	$(Q)echo "Building [$(IMAGEZ)]..."
+	$(Q)echo "Creating [$(IMAGEZ)]"
 	$(Q)$(MAKEBOOTFS) $(IMAGEZ_INI) $(dir $(IMAGEZ))image
 	$(Q)gzip -f -9 $(dir $(IMAGEZ))image
 	$(Q)cat $(BOOTDECOMP) $(dir $(IMAGEZ))image.gz > $(IMAGEZ)
-	$(Q)rm $(dir $(IMAGEZ))image.gz
+
+IMAGEZ_clean:
+	-$(Q)rm -f $(dir $(IMAGEZ))image.gz
 
 
 #### Kernel init stage
@@ -100,7 +106,7 @@ KINIT_LDSCRIPT := $(LOCDIR)/kinit.ld
 KINIT_DEP = $(KINIT_LDSCRIPT) $(LIBSTRING) $(LIBPHLOX)
 
 $(KINIT):
-	$(Q)echo "Linking [$(KINIT)]..."
+	$(Q)echo "Linking [$(KINIT)]"
 	$(Q)$(LD) $(GLOBAL_LDFLAGS) -L$(LIBGCC_PATH) -dN -script=$(KINIT_LDSCRIPT) -o $(KINIT) $(KINIT_OBJ) $(LIBPHLOX) $(LIBSTRING) $(LIBGCC)
 
 # Generate explicit rules for kinit

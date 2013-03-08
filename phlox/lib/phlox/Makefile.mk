@@ -8,5 +8,5 @@ LIBPHLOX_SRC +=              \
 LIBPHLOX_CFLAGS += $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
 
 $(LIBPHLOX):
-	$(Q)echo "Assembling [$(LIBPHLOX)]..."
+	$(Q)echo "Creating [$(LIBPHLOX)]"
 	$(Q)$(AR) r $(LIBPHLOX) $(LIBPHLOX_OBJ)

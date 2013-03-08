@@ -1,9 +1,10 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define BOOTCODESIZE 1024
@@ -143,7 +144,7 @@ int main(int argc, char *argv[])
    /* first sector */
    bootcode[2] = LOBYTE(blocks); /* byte 3 */
    bootcode[3] = HIBYTE(blocks); /* byte 4 */
-   printf("payload: size %d, blocks %d (size %d)\n", payld_size, blocks, blocks*512);
+   printf("payload: size %ld, blocks %u (size %u)\n", payld_size, blocks, blocks*512);
 
    /* patch second sector */
    if(use_vesa >= 0)
@@ -190,13 +191,12 @@ int main(int argc, char *argv[])
          total_bytes += align;
          fwrite(buffer, 1, align, outf);
          free(buffer);
-         printf("%d bytes added to output file for align\n", align);
-         
+         printf("%ld bytes added to output file for align\n", align);
       }
 
    fclose(outf);
 
-   printf("Done. %d bytes written to %s.\n", total_bytes, argv[3]);
+   printf("Done. %ld bytes written to %s.\n", total_bytes, argv[3]);
 
    return 0;
 }

@@ -38,7 +38,7 @@ endef
 define gen-c-rule
 $(eval \
 $$(subst //,/,$2/$3/%.o): $$(subst //,/,$3/%.c)
-	$$(Q)echo "Compiling [$$<]..."
+	$$(Q)echo "Compiling [$$<]"
 	$$(Q)$$(CREATE_DIR_RULE)
 	$$(Q)$$(call make-depend,$$<,$$@,$$(subst .o,.d,$$@),$$($1_CFLAGS))
 	$$(Q)$$(CC) $$($1_CFLAGS) -c $$< -o $$@
@@ -50,7 +50,7 @@ endef
 define gen-s-rule
 $(eval \
 $$(subst //,/,$2/$3/%.o): $$(subst //,/,$3/%.S)
-	$$(Q)echo "Compiling [$$<]..."
+	$$(Q)echo "Compiling [$$<]"
 	$$(Q)$$(CREATE_DIR_RULE)
 	$$(Q)$$(call make-depend,$$<,$$@,$$(subst .o,.d,$$@),$$($1_ASFLAGS))
 	$$(Q)$$(CC) $$($1_ASFLAGS) -c $$< -o $$@
@@ -72,7 +72,7 @@ define gen-explicit-c-rule
 $(foreach src,$(filter %.c,$4), \
 $(eval \
 $$(subst //,/,$2/$3/$$(subst .c,.o,$(src))): $$(subst //,/,$3/$(src))
-	$$(Q)echo "Compiling [$$<]..."
+	$$(Q)echo "Compiling [$$<]"
 	$$(Q)$$(CREATE_DIR_RULE)
 	$$(Q)$$(call make-depend,$$<,$$@,$$(subst .o,.d,$$@),$$($1_CFLAGS))
 	$$(Q)$$(CC) $$($1_CFLAGS) -c $$< -o $$@
@@ -85,7 +85,7 @@ define gen-explicit-s-rule
 $(foreach src,$(filter %.S,$4), \
 $(eval \
 $$(subst //,/,$2/$3/$$(subst .S,.o,$(src))): $$(subst //,/,$3/$(src))
-	$$(Q)echo "Compiling [$$<]..."
+	$$(Q)echo "Compiling [$$<]"
 	$$(Q)$$(CREATE_DIR_RULE)
 	$$(Q)$$(call make-depend,$$<,$$@,$$(subst .o,.d,$$@),$$($1_ASFLAGS))
 	$$(Q)$$(CC) $$($1_ASFLAGS) -c $$< -o $$@
@@ -126,4 +126,17 @@ endef
 # include $(call include-makefiles, makefile_name, search_dir_optional)
 define include-makefiles
 $(addsuffix /$1,$(subst /$1,,$(shell find $(if $2,$2,.) -name $1)))
+endef
+
+# Returns 1 if two lists intersects otherwise empty string
+# $(call lists-intersect, list1, list2)
+lists-intersect = $(sort $(foreach ITM,$1,$(if $(filter $(ITM),$2),1,)))
+
+# Defines PHONY target
+# $(call def-phony-target, target_name)
+define def-phony-target
+$(eval \
+    .PHONY: $1
+    $1:
+)
 endef

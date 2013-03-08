@@ -35,5 +35,5 @@ LIBSTRING_CFLAGS += $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
 -include $(LOCDIR)/arch/$(ARCH)/Makefile.arch
 
 $(LIBSTRING):
-	$(Q)echo "Assembling [$(LIBSTRING)]..."
+	$(Q)echo "Creating [$(LIBSTRING)]"
 	$(Q)$(AR) r $(LIBSTRING) $(LIBSTRING_OBJ)

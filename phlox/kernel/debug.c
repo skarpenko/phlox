@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -117,6 +117,8 @@ static int console_writer(void *data)
         /* pass control to another thread */
         thread_yield();
     }
+
+    return 0;
 }
 
 /* init console writer thread */

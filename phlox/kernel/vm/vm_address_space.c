@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -71,7 +71,7 @@ static aspace_id get_next_aspace_id(void)
     aspace_id retval;
 
     /* atomically increment and get previous value */
-    retval = (aspace_id)atomic_inc_ret(&next_aspace_id);
+    retval = (aspace_id)atomic_inc_ret((atomic_t*)&next_aspace_id);
     if(retval == VM_INVALID_ASPACEID)
         panic("No available address space IDs!");
     /* TODO: Implement better approach for reliability? */
@@ -517,7 +517,7 @@ vm_address_space_t *vm_get_kernel_aspace(void)
     ASSERT_MSG(kernel_aspace, "Kernel address space is not created!");
 
     /* increase references count */
-    atomic_inc(&kernel_aspace->ref_count);
+    atomic_inc((atomic_t*)&kernel_aspace->ref_count);
     /* ... and return to caller */
     return kernel_aspace;
 }
@@ -551,7 +551,7 @@ vm_address_space_t *vm_get_current_user_aspace(void)
 #endif
 
     /* increase references count */
-    atomic_inc(&th->process->aspace->ref_count);
+    atomic_inc((atomic_t*)&th->process->aspace->ref_count);
 
     return th->process->aspace;
 }
@@ -589,7 +589,7 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
 
     /* increase references count if aspace found and in proper state */
     if(aspace && aspace->state == VM_ASPACE_STATE_NORMAL)
-        atomic_inc(&aspace->ref_count);
+        atomic_inc((atomic_t*)&aspace->ref_count);
     else
         aspace = NULL;
 
@@ -603,7 +603,7 @@ vm_address_space_t* vm_get_aspace_by_id(aspace_id aid)
 void vm_put_aspace(vm_address_space_t *aspace)
 {
     /* decrease references count */
-    atomic_dec(&aspace->ref_count);
+    atomic_dec((atomic_t*)&aspace->ref_count);
 
     /* if state is DELETION and no more referers exists, start
      * destruction stage or exit.

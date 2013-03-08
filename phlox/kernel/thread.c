@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -71,7 +71,7 @@ static thread_id get_next_thread_id(void)
     thread_id retval;
 
     /* atomically increment and get previous value */
-    retval = (thread_id)atomic_inc_ret(&next_thread_id);
+    retval = (thread_id)atomic_inc_ret((atomic_t*)&next_thread_id);
     if(retval == INVALID_THREADID)
         panic("No available thread IDs!");
     /* TODO: Implement better approach for reliability. */

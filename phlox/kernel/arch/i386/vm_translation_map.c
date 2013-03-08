@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -248,7 +248,7 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
     /* increment wired counter (count of refered maps) */
     page = vm_page_lookup(pgtbl[index].stru.base);
     ASSERT_MSG(page, "map_tmap(): page = NULL!");
-    atomic_inc(&page->wire_count);
+    atomic_inc((atomic_t*)&page->wire_count);
 
     /* put page back */
     put_physical_page_tmap((addr_t)pgtbl);
@@ -308,7 +308,7 @@ restart:
         /* decrement wired counter (count of refered maps) */
         page = vm_page_lookup(pgtbl[index].stru.base);
         ASSERT_MSG(page, "unmap_tmap(): page = NULL!");
-        atomic_dec(&page->wire_count);
+        atomic_dec((atomic_t*)&page->wire_count);
 
         /* add page address into invalidation cache */
         if(tmap->arch.num_invalidate_pages < PAGE_INVALIDATE_CACHE_SIZE) {

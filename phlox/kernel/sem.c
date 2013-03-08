@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -110,13 +110,13 @@ static sem_id get_next_gid(bool nozero)
 {
     sem_id retval;
     do {
-        retval = (sem_id)atomic_inc_ret(&next_sem_gid);
+        retval = (sem_id)atomic_inc_ret((atomic_t*)&next_sem_gid);
         if(retval > SEM_GID((sem_id)(-1))) {
             /* next_sem_id update here is safe, because
              * gid can be non-unique.
              */
             retval = 0;
-            atomic_set(&next_sem_gid, retval);
+            atomic_set((atomic_t*)&next_sem_gid, retval);
         }
     } while(nozero && !retval);
 

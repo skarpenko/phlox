@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -82,7 +82,7 @@ static proc_id get_next_process_id(void)
     proc_id retval;
 
     /* atomically increment and get previous value */
-    retval = (proc_id)atomic_inc_ret(&next_process_id);
+    retval = (proc_id)atomic_inc_ret((atomic_t*)&next_process_id);
     if(retval == INVALID_PROCESSID)
         panic("No available process IDs!");
     /* TODO: Implement better approach for reliability. */
@@ -322,7 +322,7 @@ process_t *proc_get_kernel_process(void)
     ASSERT_MSG(kernel_process, "Kernel process is not created!");
 
     /* atomically increment reference count */
-    atomic_inc(&kernel_process->ref_count);
+    atomic_inc((atomic_t*)&kernel_process->ref_count);
     /* return to caller */
     return kernel_process;
 }
@@ -343,7 +343,7 @@ process_t *proc_get_process_by_id(proc_id pid)
     proc = avl_tree_find(&processes_tree, look4, NULL);
 
     /* increment refs count on success search */
-    if(proc) atomic_inc(&proc->ref_count);
+    if(proc) atomic_inc((atomic_t*)&proc->ref_count);
 
     /* release lock */
     spin_unlock_irqrstor(&processes_lock, irqs_state);
@@ -363,7 +363,7 @@ process_t *proc_get_current_process(void)
     process_t *proc = thread_get_current_thread()->process;
 
     /* atomically increment reference count */
-    atomic_inc(&proc->ref_count);
+    atomic_inc((atomic_t*)&proc->ref_count);
 
     /* return to caller */
     return proc;
@@ -373,7 +373,7 @@ process_t *proc_get_current_process(void)
 void proc_put_process(process_t *proc)
 {
     /* decrement references count */
-    atomic_dec(&proc->ref_count);
+    atomic_dec((atomic_t*)&proc->ref_count);
 
     /* TODO: implement additional functionality */
 }

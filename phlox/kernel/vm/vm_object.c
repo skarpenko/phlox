@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -60,7 +60,7 @@ static object_id get_next_object_id(void)
     object_id retval;
 
     /* atomically increment and get previous value */
-    retval = (object_id)atomic_inc_ret(&next_object_id);
+    retval = (object_id)atomic_inc_ret((atomic_t*)&next_object_id);
     if(retval == VM_INVALID_OBJECTID)
         panic("No available VM object IDs!");
     /* TODO: Implement better approach for reliability? */
@@ -664,7 +664,7 @@ vm_object_t *vm_get_object_by_id(object_id oid)
 
     /* if object found and in proper state - increase references count */
     if(object && object->state == VM_OBJECT_STATE_NORMAL)
-        atomic_inc(&object->ref_count);
+        atomic_inc((atomic_t*)&object->ref_count);
     else
         object = NULL;
 
@@ -678,7 +678,7 @@ vm_object_t *vm_get_object_by_id(object_id oid)
 void vm_put_object(vm_object_t *object)
 {
     /* decrease references count */
-    atomic_dec(&object->ref_count);
+    atomic_dec((atomic_t*)&object->ref_count);
 
     /* if state is DELETION and no more referers exists, start object
      * destruction stage or exit.

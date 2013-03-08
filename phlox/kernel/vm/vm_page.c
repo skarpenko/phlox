@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Copyright 2001-2004, Travis Geiselbrecht. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
@@ -340,7 +340,7 @@ status_t vm_page_init_wire_counters(addr_t vbase, size_t size)
         }
 
         /* atomically set value */
-        atomic_set(&page->wire_count, 1);
+        atomic_set((atomic_t*)&page->wire_count, 1);
     }
 
 exit_init:

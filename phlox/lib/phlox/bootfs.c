@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -282,7 +282,7 @@ int btfs_seek(bootfs_fh_t *fh, int offs, unsigned int whence)
 
     if(base < 0)
       base = 0;
-    else if(base > fh->ent->vsize)
+    else if((unsigned)base > fh->ent->vsize)
       base = fh->ent->vsize;
 
     fh->pos = base;

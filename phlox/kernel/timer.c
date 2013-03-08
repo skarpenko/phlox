@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <sys/debug.h>
@@ -87,7 +87,7 @@ static timeout_id get_next_timeout_id(void)
     timeout_id retval;
 
     /* atomically increment and get previous value */
-    retval = (timeout_id)atomic_inc_ret(&next_timeout_id);
+    retval = (timeout_id)atomic_inc_ret((atomic_t*)&next_timeout_id);
     if(retval == INVALID_TIMEOUTID)
         panic("No available timeout IDs!");
 
@@ -222,6 +222,8 @@ static int timeout_calls_handler(void *data)
 
         kfree(evt); /* return memory to kernel */
     }
+
+    return 0; /* control never goes here, but keep compiler happy */
 }
 
 

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -8,6 +8,7 @@
 #include <phlox/spinlock.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
+#include <phlox/vm_page_mapper.h>
 #include <phlox/vm.h>
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/heap.h>
@@ -215,7 +216,7 @@ addr_t vm_alloc_vspace_from_kargs(kernel_args_t *kargs, size_t size)
     int last_valloc_entry = 0;
 
     size = PAGE_ALIGN(size);
-    
+
     /* find a slot in the virtual allocation addr_t range */
     for(i=1; i < kargs->num_virt_alloc_ranges; i++) {
         last_valloc_entry = i;
@@ -301,7 +302,7 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     }
 
     /* increment address space faults counter */
-    atomic_inc(&aspace->faults_count);
+    atomic_inc((atomic_t*)&aspace->faults_count);
 
     /* acquire lock before touching address space */
     spin_lock(&aspace->lock);

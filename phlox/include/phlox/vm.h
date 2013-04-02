@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_VM_H_
@@ -133,6 +133,13 @@ void vm_put_aspace(vm_address_space_t *aspace);
  * If no address space found returns VM_INVALID_ASPACEID.
 */
 aspace_id vm_find_aspace_by_name(const char *name);
+
+/*
+ * Increment address space references count.
+ * Returns address space or NULL if address space is not
+ * available anymore.
+*/
+vm_address_space_t *vm_inc_aspace_refcnt(vm_address_space_t *aspace);
 
 /*
  * Creates memory object with given name, size and protection.

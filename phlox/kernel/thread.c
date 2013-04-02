@@ -681,6 +681,7 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
 
     /* set thread data */
     thread->name = kstrdup(name);
+    if(!thread->name) goto exit_on_error;
     thread->process = proc_get_kernel_process();
     thread->cpu = get_current_processor_struct();
 
@@ -1014,4 +1015,48 @@ void thread_unregister_term_cb(thread_cbd_t *cbd)
 
     /* remove callback from the callbacks list */
     xlist_remove_unsafe(&cbd->thread->term_cbs_list, &cbd->list_node);
+}
+
+/* return process data */
+process_t *thread_get_process(thread_t *thread)
+{
+    process_t *proc;
+
+    /* disable interrupts on this cpu and lock thread */
+    local_irqs_disable();
+    thread_lock_thread(thread);
+
+    proc = thread_get_process_nolock(thread);
+    
+    /* unlock thread and restore irqs */
+    thread_unlock_thread(thread);
+    local_irqs_enable();
+
+    return proc;
+}
+
+/* return process data without locking thread */
+process_t *thread_get_process_nolock(thread_t *thread)
+{
+    ASSERT_MSG(thread->lock != 0, "thread_get_process_nolock(): thread was not locked.");
+    return (thread->process) ? proc_inc_refcnt(thread->process) : NULL;
+}
+
+/* return process id */
+proc_id thread_get_process_id(thread_t *thread)
+{
+    proc_id id = INVALID_PROCESSID;
+
+    /* disable interrupts on this cpu and lock thread */
+    local_irqs_disable();
+    thread_lock_thread(thread);
+
+    if(thread->process)
+        id = thread->process->id;
+
+    /* unlock thread and restore irqs */
+    thread_unlock_thread(thread);
+    local_irqs_enable();
+
+    return id;
 }

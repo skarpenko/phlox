@@ -745,3 +745,23 @@ status_t vm_delete_memory_hole(aspace_id aid, addr_t vaddr)
 
     return err;
 }
+
+/* increment references count */
+vm_address_space_t *vm_inc_aspace_refcnt(vm_address_space_t *aspace)
+{
+    unsigned long irqs_state;
+
+    /* acquire address spaces lock  */
+    irqs_state = spin_lock_irqsave(&aspaces_lock);
+
+    /* increase references count only if aspace is in proper state */
+    if(aspace->state == VM_ASPACE_STATE_NORMAL)
+        atomic_inc((atomic_t*)&aspace->ref_count);
+    else
+        aspace = NULL;
+
+    /* release lock */
+    spin_unlock_irqrstor(&aspaces_lock, irqs_state);
+
+    return aspace;
+}

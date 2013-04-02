@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_H_
@@ -185,6 +185,26 @@ thread_cbd_t *thread_register_term_cb(thread_cbd_t *cbd);
  * cbd structure must be the same as used in register call.
 */
 void thread_unregister_term_cb(thread_cbd_t *cbd);
+
+/*
+ * Return process data for the thread.
+ * May return NULL.
+*/
+process_t *thread_get_process(thread_t *thread);
+
+/*
+ * Return process data for the thread.
+ * Assumes thread lock was acquired before call and
+ * interrupts was disabled.
+ * May return NULL.
+*/
+process_t *thread_get_process_nolock(thread_t *thread);
+
+/*
+ * Return process id for the thread.
+ * May return INVALID_PROCESSID.
+*/
+proc_id thread_get_process_id(thread_t *thread);
 
 
 #endif

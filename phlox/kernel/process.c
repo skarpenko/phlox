@@ -343,7 +343,8 @@ process_t *proc_get_process_by_id(proc_id pid)
     proc = avl_tree_find(&processes_tree, look4, NULL);
 
     /* increment refs count on success search */
-    if(proc) atomic_inc((atomic_t*)&proc->ref_count);
+    if(proc && proc->state != PROCESS_STATE_DEATH)
+        atomic_inc((atomic_t*)&proc->ref_count);
 
     /* release lock */
     spin_unlock_irqrstor(&processes_lock, irqs_state);
@@ -376,4 +377,68 @@ void proc_put_process(process_t *proc)
     atomic_dec((atomic_t*)&proc->ref_count);
 
     /* TODO: implement additional functionality */
+}
+
+/* increment references count */
+process_t *proc_inc_refcnt(process_t *proc)
+{
+    unsigned int irqs_state;
+
+    /* acquire processes lock */
+    irqs_state = spin_lock_irqsave(&processes_lock);
+
+    /* increment only if not in death state */
+    if(proc->state != PROCESS_STATE_DEATH)
+        atomic_inc((atomic_t*)&proc->ref_count);
+    else
+        proc = NULL;
+
+    /* release lock */
+    spin_unlock_irqrstor(&processes_lock, irqs_state);
+
+    return proc;
+}
+
+/* return main thread id */
+thread_id proc_get_main_thread_id(process_t *proc)
+{
+    ASSERT_MSG(proc->ref_count, "proc_get_main_thread_id(): ref_count==0!");
+
+    return (proc->main) ? proc->main->id : INVALID_THREADID;
+}
+
+/* return main thread structure */
+thread_t *proc_get_main_thread(process_t *proc)
+{
+    ASSERT_MSG(proc->ref_count, "proc_get_main_thread(): ref_count==0!");
+
+    return (proc->main) ? proc->main : NULL;
+}
+
+/* return main thread structure with lock acquired */
+thread_t *proc_get_main_thread_locked(process_t *proc)
+{
+    ASSERT_MSG(proc->ref_count, "proc_get_main_thread_locked(): ref_count==0!");
+
+    if(proc->main) {
+        thread_lock_thread(proc->main);
+        return proc->main;
+    } else
+        return NULL;
+}
+
+/* return address space id for the process */
+aspace_id proc_get_aspace_id(process_t *proc)
+{
+    ASSERT_MSG(proc->ref_count, "proc_get_aspace_id(): ref_count==0!");
+
+    return (proc->aspace) ? proc->aspace->id : VM_INVALID_ASPACEID;
+}
+
+/* return address space for the process */
+vm_address_space_t *proc_get_aspace(process_t *proc)
+{
+    ASSERT_MSG(proc->ref_count, "proc_get_aspace(): ref_count==0!");
+
+    return (proc->aspace) ? vm_inc_aspace_refcnt(proc->aspace) : NULL;
 }

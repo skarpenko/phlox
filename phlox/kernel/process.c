@@ -186,6 +186,16 @@ error:
     return NULL; /* failed to create process structure */
 }
 
+/* common routine for destroying processes */
+static void destroy_process_common(process_t *proc)
+{
+    /* NOTE: proc should be empty structure (without threads and etc.)! */
+
+    if(proc->name) kfree(proc->name);
+    if(proc->args) kfree(proc->args);
+    kfree(proc);
+}
+
 
 /*** Public routines ***/
 
@@ -270,6 +280,55 @@ proc_id proc_create_kernel_process(const char* name)
     put_process_to_list(proc);
 
     return id; /* return id to caller */
+}
+
+/* create user process */
+process_t *proc_create_user_process(const char *name, process_t *parent,
+    vm_address_space_t *aspace, const char *args, uint role)
+{
+    process_t *proc;
+
+    ASSERT_MSG(name != NULL && strlen(name) <= SYS_MAX_OS_NAME_LEN,
+        "proc_create_user_process: user process name is invalid!\n");
+
+    /* check args */
+    if(aspace == NULL || role > PROCESS_ROLES_COUNT)
+        return NULL;
+
+    /* create process struct */
+    proc = create_process_common(name, args);
+    if(!proc)
+        return INVALID_PROCESSID;
+
+    /* init struct fields */
+    proc->aspace = vm_inc_aspace_refcnt(aspace);
+    if(!proc->aspace)
+        goto error_exit;
+    if(parent) {
+        proc->parent = proc_inc_refcnt(parent);
+        if(!proc->parent)
+            goto error_exit;
+    }
+    
+    proc->aid = proc->aspace->id;
+    proc->process_role = role;
+    proc->def_prio = process_roles_props[proc->process_role].def_prio;
+    proc->def_sched_policy.raw =
+        process_roles_props[proc->process_role].def_sched_policy.raw;
+
+    /* add to processes list */
+    put_process_to_list(proc);
+
+    return proc; /* return to caller */
+
+/* exit on errors */
+error_exit:
+    if(proc->aspace) vm_put_aspace(proc->aspace);
+    if(proc->parent) proc_put_process(proc->parent);
+
+    destroy_process_common(proc);
+
+    return NULL;
 }
 
 /* attaches new thread to process */
@@ -377,6 +436,8 @@ void proc_put_process(process_t *proc)
     atomic_dec((atomic_t*)&proc->ref_count);
 
     /* TODO: implement additional functionality */
+
+    /* NOTE: If ref_count == 0 BIRTH and DEATH processes should be freed. */
 }
 
 /* increment references count */

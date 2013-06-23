@@ -69,11 +69,29 @@ bool thread_is_kernel_thread(void);
  * Returns new thread id or INVALID_THREADID on error.
  *
  * Params:
- *  name - thread name; func - thread routine; data - optional data;
+ *  name - thread name;
+ *  func - thread routine;
+ *  data - optional data;
  *  suspended - if =true thread created initially in suspended state.
 */
 thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     void *data, bool suspended);
+
+/*
+ * Create new user-side thread of execution.
+ * Returns new thread id or INVALID_THREADID on error.
+ *
+ * Params:
+ *  name - thread name;
+ *  proc - owning user process;
+ *  entry - entry address;
+ *  data - optional user data;
+ *  stack_obj - stack memory object id;
+ *  stack_base - base address for stack mapping (0 for auto);
+ *  suspended - if =true thread created initially in suspended state.
+*/
+thread_id thread_create_user_thread(const char *name, process_t *proc, addr_t entry,
+    void *data, object_id stack_obj, addr_t stack_base, bool suspended);
 
 /*
  * Transfer control to another thread

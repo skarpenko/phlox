@@ -126,8 +126,8 @@ static void put_pgtable_in_pgdir(mmu_pde *pdentry, addr_t pgtable_phys, uint pro
     /* mark it system and read/write.
      * The page table entries will override it.
      */
-    pdentry->stru.us = 0;
-    pdentry->stru.rw = 1;
+    pdentry->stru.us = !(protection & VM_PROT_KERNEL) != 0;
+    pdentry->stru.rw = (protection & VM_PROT_WRITE) != 0;
     pdentry->stru.p  = 1;
 }
 
@@ -234,6 +234,7 @@ static status_t map_tmap(vm_translation_map_t *tmap, addr_t va, addr_t pa, uint 
         status = get_physical_page_tmap(ADDR_REVERSE_SHIFT(pgdir[index].stru.base),
                                         (addr_t *)&pgtbl, false);
     } while(status != NO_ERROR);
+
     index = VADDR_TO_PTENT(va);
 
     /* init page table entry */
@@ -937,10 +938,42 @@ status_t vm_tmap_kernel_create(vm_translation_map_t *kernel_tmap)
 /* Create translation map for user-space */
 status_t vm_tmap_create(vm_translation_map_t *new_tmap)
 {
+    mmu_pde *pgdir_virt;
+    mmu_pde *pgdir_phys;
+    vm_address_space_t *kaspace;
+    status_t err;
+
+    /* check input arguments */
     if(new_tmap == NULL)
         return ERR_INVALID_ARGS;
 
-    panic("vm_tmap_create: not implemented!");
+    /* allocate a page for Page Directory */
+    pgdir_virt = (mmu_pde *)kmalloc_pages(1);
+    if(!pgdir_virt)
+        return ERR_NO_MEMORY;
+
+    /* get kernel address space */
+    kaspace = vm_get_kernel_aspace();
+
+    /* query physical address of allocated Page Directory */
+    err = vm_query_paddr(kaspace, (addr_t)pgdir_virt, (addr_t*)&pgdir_phys, NULL);
+    if(err != NO_ERROR)
+        goto error_exit;
+
+    /* create new address space */
+    err = vm_tmap_common_create(new_tmap, pgdir_virt, pgdir_phys);
+    if(err != NO_ERROR)
+        goto error_exit;
+
+    /* return kernel space */
+    vm_put_aspace(kaspace);
 
     return NO_ERROR;
+
+error_exit:
+    /* release resources on error */
+    vm_put_aspace(kaspace);
+    kfree(pgdir_virt);
+
+    return err;
 }

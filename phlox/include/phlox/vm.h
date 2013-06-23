@@ -240,6 +240,16 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr);
 */
 status_t vm_simulate_pf(addr_t start, addr_t end);
 
+/*
+ * Query physical address and flags for given virtual address.
+ *  INPUTS:
+ *   aspace    - address space;
+ *   vaddr     - virtual address;
+ *   out_paddr - output physical address;
+ *   out_flags - output flags (may be NULL).
+*/
+status_t vm_query_paddr(vm_address_space_t *aspace, addr_t vaddr, addr_t *out_paddr, uint *out_flags);
+
 
 /*
  * Global variable with Virtual Memory State

@@ -589,3 +589,21 @@ status_t vm_simulate_pf(addr_t start, addr_t end)
 
     return err;
 }
+
+/* query physical address and flags */
+status_t vm_query_paddr(vm_address_space_t *aspace, addr_t vaddr, addr_t *out_paddr, uint *out_flags)
+{
+    status_t err;
+    uint flags = 0;
+
+    /* query physical address information from given translation map */
+    aspace->tmap.ops->lock(&aspace->tmap);
+    err = aspace->tmap.ops->query(&aspace->tmap, vaddr, out_paddr, &flags);
+    aspace->tmap.ops->unlock(&aspace->tmap);
+
+    /* return flags if requested */
+    if(out_flags)
+        *out_flags = flags;
+
+    return err;
+}

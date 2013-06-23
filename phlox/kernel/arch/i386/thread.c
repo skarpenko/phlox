@@ -86,7 +86,7 @@ void arch_thread_enter_uspace(thread_t *thread)
     TOUCH_ADDR(thread->ustack_top - 4);
 
     /* pass control to user code */
-    i386_enter_uspace(thread->entry, thread->data, thread->ustack_top - 4, 0 /* ret addr */);
+    i386_enter_uspace(thread->entry, thread->data, thread->ustack_top, 0 /* ret addr */);
 }
 
 /* called after just created thread gets control */

@@ -399,7 +399,7 @@ static status_t create_thread_kstack_area(thread_t *thread, const char *name)
         goto exit_on_error;
 
     /* compute stack top address */
-    thread->kstack_top = thread->kstack_base + THREAD_KSTACK_SIZE - 1;
+    thread->kstack_top = thread->kstack_base + THREAD_KSTACK_SIZE;
 
     /* simulate page fault to actually map all stack pages */
     err = vm_simulate_pf(thread->kstack_base, thread->kstack_top);
@@ -681,7 +681,7 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
 
     /* set thread data */
     thread->name = kstrdup(name);
-    if(!thread->name) goto exit_on_error;
+    if(name && !thread->name) goto exit_on_error;
     thread->process = proc_get_kernel_process();
     thread->cpu = get_current_processor_struct();
 
@@ -735,6 +735,142 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
 
   /* if error state */
 exit_on_error:
+    /* deinit thread structure */
+    deinit_thread_struct(thread);
+
+    /* move to deads */
+    move_thread_to_list(thread, DEAD_THREADS_LIST);
+
+    /* return error state */
+    return INVALID_THREADID;
+}
+
+/* create new user-side thread of execution */
+thread_id thread_create_user_thread(const char *name, process_t *proc, addr_t entry,
+    void *data, object_id stack_obj, addr_t stack_base, bool suspended)
+{
+    char tmp_name[SYS_MAX_OS_NAME_LEN];
+    status_t err;
+    vm_object_t *stack_obj_dat;
+    aspace_id proc_aid;
+    size_t stack_size;
+    thread_t *thread;
+
+    /* ensure that not a kernel process passed */
+    if(proc == proc_get_kernel_process())
+        return INVALID_THREADID;
+
+    /* check that owning process is in correct state */
+    if(proc->state != PROCESS_STATE_BIRTH && proc->state != PROCESS_STATE_NORMAL)
+        return INVALID_THREADID;
+
+    /* get process address space id */
+    proc_aid = proc_get_aspace_id(proc);
+    if(proc_aid == VM_INVALID_ASPACEID)
+        return INVALID_THREADID;
+
+    /* get stack object data */
+    stack_obj_dat = vm_get_object_by_id(stack_obj);
+    if(!stack_obj_dat)
+        return INVALID_THREADID;
+
+    /* stack size */
+    stack_size = stack_obj_dat->size;
+
+    /* if stack base address was specified than map stack using it otherwise let
+     * VM subsystem choose.
+     */
+    if(stack_base)
+        err = vm_map_object_exactly(proc_aid, stack_obj, VM_PROT_USER_DEFAULT, stack_base);
+    else
+        err = vm_map_object(proc_aid, stack_obj, VM_PROT_USER_DEFAULT, &stack_base);
+
+    if(err != NO_ERROR)
+        goto exit_on_error;
+
+    /* get thread struct */
+    thread = get_thread_struct();
+    if(!thread)
+        goto exit_on_error_unmap;
+
+    /* set thread data */
+    thread->name = kstrdup(name);
+    if(name && !thread->name) goto exit_on_error_unmap;
+    thread->cpu = get_current_processor_struct();
+    thread->process = proc_inc_refcnt(proc);
+
+    /* create kernel stack area, if was not created before */
+    if(thread->kstack_id == VM_INVALID_OBJECTID) {
+        snprintf(tmp_name, SYS_MAX_OS_NAME_LEN, "user_thread_%d_kstack", thread->id);
+        err = create_thread_kstack_area(thread, tmp_name);
+        if(err != NO_ERROR)
+            goto exit_on_error_proc_detach;
+    }
+
+    /* set pointer to thread struct at the bottom of kernel stack */
+    *(thread_t **)(thread->kstack_base) = thread;
+
+    /* set user space stack */
+    thread->ustack_id   = stack_obj;
+    thread->ustack_base = stack_base;
+    thread->ustack_top  = stack_base + stack_size;
+
+    /* init arch-specific parts, before setting other arch-dependend
+     * options.
+     */
+    arch_thread_init_struct(thread);
+
+    /* init kernel stack */
+    err = arch_thread_init_kstack(thread, &stub_for_user_thread);
+    if(err != NO_ERROR)
+        goto exit_on_error_proc_detach;
+
+    /* set entry point and user data */
+    thread->entry = entry;
+    thread->data = data;
+
+    /* set default priority and scheduling policy */
+    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
+    thread->s_prio = thread->process->def_prio;
+
+    /* attach to kernel process */
+    proc_attach_thread(thread->process, thread);
+
+    /* switch process state to normal if main thread was added */
+    if(thread->process->state == PROCESS_STATE_BIRTH) {
+        thread->process->main = thread;
+        thread->process->state = PROCESS_STATE_NORMAL;
+    }
+
+    /* add to scheduling scheme if creating in
+     * not suspended state initially, or set proper
+     * state and skip adding to scheduling.
+     */
+    if(suspended) {
+        thread->state = THREAD_STATE_SUSPENDED;
+        thread->next_state = THREAD_STATE_READY;
+    } else
+       sched_add_thread(thread);
+
+    /* unlock thread struct */
+    thread_unlock_thread(thread);
+
+    /* return new thread id to caller */
+    return thread->id;
+
+/* if error state */
+exit_on_error_proc_detach:
+    proc_put_process(thread->process);
+    thread->process = NULL;
+
+exit_on_error_unmap:
+    err = vm_unmap_object(proc_aid, stack_base);
+    if(err != NO_ERROR)
+        panic("thread_create_user_thread(): failed to unmap stack!\n");
+
+exit_on_error:
+    vm_put_object(stack_obj_dat);
+
     /* deinit thread structure */
     deinit_thread_struct(thread);
 

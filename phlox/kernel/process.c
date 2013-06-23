@@ -309,12 +309,12 @@ process_t *proc_create_user_process(const char *name, process_t *parent,
         if(!proc->parent)
             goto error_exit;
     }
-    
     proc->aid = proc->aspace->id;
     proc->process_role = role;
     proc->def_prio = process_roles_props[proc->process_role].def_prio;
     proc->def_sched_policy.raw =
         process_roles_props[proc->process_role].def_sched_policy.raw;
+    atomic_set((atomic_t*)&proc->ref_count, 1); /* already has one ref owned by caller */
 
     /* add to processes list */
     put_process_to_list(proc);

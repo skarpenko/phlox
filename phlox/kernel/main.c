@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -15,6 +15,7 @@
 #include <phlox/kargs.h>
 #include <phlox/vm.h>
 #include <phlox/heap.h>
+#include <phlox/process.h>
 #include <phlox/thread.h>
 #include <phlox/sem.h>
 #include <phlox/klog.h>
@@ -45,6 +46,7 @@ int thread_sem0(void *data);
 int thread_sem1(void *data);
 int thread_sem2(void *data);
 int thread_sem3(void *data);
+int thread_proc0(void *data);
 
 
 /* Main entry point on kernel start */
@@ -189,6 +191,9 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
         /* semaphores test */
         tid = thread_create_kernel_thread("kernel_thread_sem0", &thread_sem0, NULL, false);
         if(tid == INVALID_THREADID) kprint("Failed to create thread_sem0!\n");
+        /* user-space processes test */
+        tid = thread_create_kernel_thread("kernel_thread_proc0", &thread_proc0, NULL, false);
+        if(tid == INVALID_THREADID) kprint("Failed to create thread_proc0!\n");
     }
 
     /* init console writer */
@@ -480,4 +485,142 @@ int thread_sem3(void *data)
     kprint("thread_sem3: semaphore acquired, err = 0x%x\n", err);
 
     return 0;
+}
+
+/*** user-space process creation test ***/
+
+/* this code is copied to user-space for execution */
+asm (
+  ".text; "
+  ".global _userspace_func_start; "
+  ".type _userspace_func_start,@function; "
+  "_userspace_func_start: "
+  /* reserve 4-bytes for counter */
+  " nop; "
+  " nop; "
+  " nop; "
+  " nop; "
+  /* uncommenting this line should give GP fault because
+   * access to control registers is privileged.
+   */
+/*  " movl %cr0, %eax; " */
+  " movl $0x1000, %ebx; "  /* assume that user-space code mapped at 0x1000 */
+  " movl $0, %eax; "       /* initial counter value */
+  "1: "
+  " incl %eax; "           /* inclrement counter */
+  " movl %eax, (%ebx); "   /* copy value to 0x1000 */
+  " jmp 1b; "
+  ".global _userspace_func_end; "
+  ".type _userspace_func_end,@function; "
+  "_userspace_func_end: "
+  ".previous; "
+);
+
+extern unsigned char _userspace_func_start[];
+extern unsigned char _userspace_func_end[];
+
+/* User process creation test thread */
+int thread_proc0(void *data)
+{
+    thread_id me = thread_get_current_thread_id();
+    process_t *proc;
+    thread_id main_thread;
+    aspace_id aid;
+    object_id stkid;
+    object_id codeid;
+    vm_address_space_t *aspace;
+    addr_t vaddr;
+    status_t err;
+    unsigned char *p, *dst;
+    int *usr_cntr;
+
+    kprint("thread_proc0: started id = %d\n", me);
+
+    /* create user address space */
+    aid = vm_create_aspace(NULL, USER_BASE+PAGE_SIZE, USER_SIZE-2*PAGE_SIZE);
+    if(aid == VM_INVALID_ASPACEID) {
+       while(1) {
+          kprint("thread_proc0: failed to create aspace!\n");
+          thread_yield();
+       }
+    }
+
+    /* create user process */
+    aspace = vm_get_aspace_by_id(aid);
+    proc = proc_create_user_process("usr_prog0", proc_get_kernel_process(), aspace, NULL, PROCESS_ROLE_USER);
+    if(!proc) {
+       while(1) {
+           kprint("thread_proc0: failed to create process!\n");
+           thread_yield();
+       }
+    }
+
+    /* return address space */
+    vm_put_aspace(aspace);
+
+    /* create memory object for user thread stack */
+    stkid = vm_create_object(NULL, 8192, VM_PROT_USER_DEFAULT);
+    if(stkid == VM_INVALID_OBJECTID) {
+       while(1) {
+          kprint("thread_proc0: failed to create object!\n");
+          thread_yield();
+       }
+    }
+
+    /* create memory object for user code */
+    codeid = vm_create_object(NULL, 8192, VM_PROT_USER_DEFAULT);
+    if(codeid == VM_INVALID_OBJECTID) {
+       while(1) {
+          kprint("thread_proc0: failed to create code object!\n");
+          thread_yield();
+       }
+    }
+
+    /* map user code memory to kernel space */
+    err = vm_map_object(vm_get_kernel_aspace_id(), codeid, VM_PROT_KERNEL_ALL, &vaddr);
+    if(err) {
+       while(1) {
+          kprint("thread_proc0: failed to map code to kernel space!\n");
+          thread_yield();
+       }
+    }
+
+    usr_cntr = (int *)vaddr; /* user space counter */
+    /* copy user code to mapped memory object */
+    dst = (unsigned char *)vaddr;
+    for(p = _userspace_func_start; p != _userspace_func_end; ++p, ++dst) {
+       *dst = *p;
+    }
+
+    /* map user code to user process address space */
+    err = vm_map_object(aid, codeid, VM_PROT_USER_ALL, &vaddr);
+    if(err) {
+       while(1) {
+          kprint("thread_proc0: failed to map code to user space!\n");
+          thread_yield();
+       }
+    }
+
+    /* create main user thread */
+    main_thread = thread_create_user_thread("main_thread", proc, vaddr, NULL, stkid, 0, false);
+    if(main_thread == INVALID_THREADID) {
+       while(1) {
+          kprint("thread_proc0: failed to create user thread!\n");
+          thread_yield();
+       }
+    }
+
+    /** at this point user code scheduled for execution or already executed **/
+
+    /* return process structure to the system */
+    proc_put_process(proc);
+
+    /* wait to ensure user code started execution */
+    thread_sleep(1000);
+
+    /* print counter value incremented by user code */
+    while(1) {
+        kprint("thread_proc0: user_counter = %d\n", *usr_cntr);
+        thread_sleep(10);
+    }
 }

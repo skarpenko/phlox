@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ERRORS_H
@@ -65,6 +65,15 @@ enum PhloxMutexesErrors {
     ERR_MTX_NOT_AN_OWNER,
     ERR_MTX_TRY_FAILED,
     ERR_MTX_GENERAL_LIMIT
+};
+
+/* System calls errors */
+enum SystemCallsErrors {
+    ERR_SCL_GENERAL_BASE = 0x84000000,
+    ERR_SCL_GENERAL = ERR_SCL_GENERAL_BASE,
+    ERR_SCL_INVALID,
+    ERR_SCL_NOT_IMPLEMENTED,
+    ERR_SCL_GENERAL_LIMIT
 };
 
 #endif

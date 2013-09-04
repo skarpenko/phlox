@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2010, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -51,7 +51,7 @@ static void i386_set_gate(cpu_gate_desc *gate_ptr, addr_t addr, uint32 type, uin
 /* Sets given gate as system call gate */
 static void i386_set_syscall_gate(uint32 n, void *addr)
 {
-    i386_set_gate(&idt[n], (addr_t)addr, X86_ACB_TYP_CALLGATE386, X86_ACB_DPL3);
+    i386_set_gate(&idt[n], (addr_t)addr, X86_ACB_TYP_TRAPGATE386, X86_ACB_DPL3);
 }
 
 /* Sets given gate as interrupt gate */
@@ -134,6 +134,9 @@ status_t arch_interrupt_init(kernel_args_t *kargs)
     i386_set_intr_gate(45,  &interrupt45);
     i386_set_intr_gate(46,  &interrupt46);
     i386_set_intr_gate(47,  &interrupt47);
+
+    /* system call */
+    i386_set_syscall_gate(0xc0, &system_call);
 
     /* Init double fault handler TSS */
     gdt = (cpu_seg_desc *)kargs->arch_args.virt_gdt;

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/arch/i386/segments.h>
@@ -239,3 +239,75 @@ interrupt_start:
     addl    $8, %esp
     /* return from interrupt */
     iret
+
+/*
+ * System calls enters here
+ *
+ * ABI is the following:
+ *   eax - system call number;
+ *   ebx - arg0;
+ *   ecx - arg1;
+ *   edx - arg2;
+ *   esi - arg3.
+ * Return code:
+ *   eax - low part;
+ *   edx - high part.
+ */
+.align 16
+.globl system_call
+system_call:
+    /* push error code and vector */
+    pushl   $0
+    pushl   $0xC0
+    /* store registers */
+    pusha
+    pushl   %ds
+    pushl   %es
+    pushl   %fs
+    pushl   %gs
+    /* set Kernel's data segment */
+    movl    $KERNEL_DATA_SEG, %edi
+    cld
+    movl    %edi, %ds
+    movl    %edi, %es
+
+    /* check syscall number is correct */
+    cmp     nr_syscall_table_entries, %eax
+    jge     invalid_syscall
+
+    /* TODO: do things before call */
+
+    /* push args and do call */
+    pushl   %esi  /* arg3 */
+    pushl   %edx  /* arg2 */
+    pushl   %ecx  /* arg1 */
+    pushl   %ebx  /* arg0 */
+    movl    $syscall_table, %ebp
+    call    *(%ebp,%eax,4)
+    addl    $16, %esp
+    /* return value */
+    xorl    %ecx, %ecx /* syscall handled */
+    movl    %edx, 0x24(%esp)
+    movl    %ecx, 0x28(%esp)
+    movl    %eax, 0x2c(%esp)
+
+    /* TODO: do things after call */
+
+syscall_exit:
+    /* restore registers */
+    popl    %gs
+    popl    %fs
+    popl    %es
+    popl    %ds
+    popa
+    /* no need to restore vector and err_code, so... just add 8 */
+    addl    $8, %esp
+    /* return from interrupt */
+    iret
+invalid_syscall:
+    /* syscall was not handled */
+    movl    $-1, %eax
+    movl    %eax, 0x24(%esp)
+    movl    %eax, 0x28(%esp)
+    movl    %eax, 0x2c(%esp)
+    jmp syscall_exit

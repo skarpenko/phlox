@@ -17,7 +17,8 @@ PHLOXK_SRC +=                 \
 	$(LOCDIR)/scheduler.c \
 	$(LOCDIR)/thread.c    \
 	$(LOCDIR)/sem.c       \
-	$(LOCDIR)/elf_file.c
+	$(LOCDIR)/elf_file.c  \
+	$(LOCDIR)/syscall.c
 
 PHLOXK_CFLAGS += $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
 

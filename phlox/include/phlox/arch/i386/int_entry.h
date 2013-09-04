@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_INT_ENTRY_H_
@@ -21,5 +21,8 @@ void interrupt46(void);  void interrupt47(void);
 
 /* dummy interrupt handler */
 void dummy_interrupt();
+
+/* system call entry */
+void system_call();
 
 #endif

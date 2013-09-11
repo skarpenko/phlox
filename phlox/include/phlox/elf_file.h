@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ELFFILE_H
@@ -28,7 +28,8 @@ enum elff_err_codes {
     ELFF_NO_ERR,   /* No error */
     ELFF_RD_ERR,   /* Read error */
     ELFF_NO_REC,   /* No record */
-    ELFF_INV_REC   /* Invalid record */
+    ELFF_INV_REC,  /* Invalid record */
+    ELFF_USR_ERR   /* User errors base */
 };
 
 /* ELF object structure */

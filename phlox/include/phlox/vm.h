@@ -17,14 +17,20 @@
 #define VM_PROT_READ     0x01  /* Read permission            */
 #define VM_PROT_WRITE    0x02  /* Write permission           */
 #define VM_PROT_EXECUTE  0x04  /* Execute permission         */
-#define VM_PROT_KERNEL   0x08  /* Kernels memory             */
+#define VM_PROT_KERNEL   0x08  /* Kernel memory              */
 #define VM_PROT_MASK     0x0F  /* Protection attributes mask */
 #define VM_PROT_KERNEL_ALL      (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_KERNEL_DEFAULT  (VM_PROT_KERNEL | VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_KERNEL_NONE     (VM_PROT_KERNEL)
+#define VM_PROT_KERNEL_READ     (VM_PROT_KERNEL | VM_PROT_READ)
+#define VM_PROT_KERNEL_WRITE    (VM_PROT_KERNEL | VM_PROT_WRITE)
+#define VM_PROT_KERNEL_EXECUTE  (VM_PROT_KERNEL | VM_PROT_EXECUTE)
 #define VM_PROT_USER_ALL        (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_USER_DEFAULT    (VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_USER_NONE       (0)
+#define VM_PROT_USER_READ       (VM_PROT_READ)
+#define VM_PROT_USER_WRITE      (VM_PROT_WRITE)
+#define VM_PROT_USER_EXECUTE    (VM_PROT_EXECUTE)
 
 /* Page state flags */
 #define VM_FLAG_PAGE_PRESENT   0x10  /* Page present  */

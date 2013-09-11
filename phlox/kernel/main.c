@@ -568,7 +568,7 @@ int thread_proc0(void *data)
     }
 
     /* create memory object for user code */
-    codeid = vm_create_object(NULL, 8192, VM_PROT_USER_DEFAULT);
+    codeid = vm_create_object(NULL, 8192, VM_PROT_USER_ALL);
     if(codeid == VM_INVALID_OBJECTID) {
        while(1) {
           kprint("thread_proc0: failed to create code object!\n");

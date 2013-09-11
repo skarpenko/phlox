@@ -21,6 +21,28 @@ vm_stat_t VM_State;
 static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, bool is_user);
 
 
+/* ensure object and requested permissions match */
+static inline int check_object_prot(unsigned obj_prot, unsigned req_prot)
+{
+    const int rwx_mask = (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+    /* Check if object permissions match requested rwx set */
+    int rwx_match = ((obj_prot & req_prot & rwx_mask) == (req_prot & rwx_mask));
+
+    /* Permission type kernel or user */
+    obj_prot &= VM_PROT_KERNEL;
+    req_prot &= VM_PROT_KERNEL;
+
+    /* if permission types equals - rwx should match */
+    if(obj_prot == req_prot)
+        return rwx_match;
+    else
+        /* Object with kernel permission cannot be mapped with user permission,
+         * but user can be mapped as a kernel regardless rwx set
+         */
+        return (obj_prot) ? 0 : 1;
+}
+
+
 /* init virtual memory */
 status_t vm_init(kernel_args_t *kargs)
 {
@@ -411,6 +433,13 @@ status_t vm_map_object_aligned(aspace_id aid, object_id oid, uint protection, ui
         return ERR_VM_INVALID_OBJECT;
     }
 
+    /* check protection */
+    if(!check_object_prot(object->protect, protection)) {
+        vm_put_object(object);
+        vm_put_aspace(aspace);
+        return ERR_VM_NO_PERMISSION;
+    }
+
     /* acquire locks.
      * WARNING: If interrupts disabled this can lead into deadlock!
      *          Spinlocks must be replaced with semaphores or mutexes!
@@ -473,6 +502,13 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
     if(object == NULL) {
         vm_put_aspace(aspace);
         return ERR_VM_INVALID_OBJECT;
+    }
+
+    /* check protection */
+    if(!check_object_prot(object->protect, protection)) {
+        vm_put_object(object);
+        vm_put_aspace(aspace);
+        return ERR_VM_NO_PERMISSION;
     }
 
     /* acquire locks.

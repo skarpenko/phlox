@@ -32,6 +32,7 @@ enum PhloxVirtualMemoryErrors {
     ERR_VM_NO_UPAGE,
     ERR_VM_UPAGE_EXISTS,
     ERR_VM_PAGE_NOT_PRESENT,
+    ERR_VM_NO_PERMISSION,
     ERR_VM_GENERAL_LIMIT
 };
 

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -57,10 +57,10 @@ int btfs_set_cur_fs(bootfs_t *fs);
 /* locate directory entry
  * returns NULL on error.
 */
-btfs_dir_entry *btfs_locate(char *path);
+btfs_dir_entry *btfs_locate(const char *path);
 
 /* change current directory. returns 0 on success */
-int btfs_chdir(char *path);
+int btfs_chdir(const char *path);
 
 /* open/close file.
  * fh - file handle;
@@ -68,7 +68,7 @@ int btfs_chdir(char *path);
  * path - path;
  * returns 0 on success.
 */
-int btfs_open_p(bootfs_fh_t *fh, char *path);
+int btfs_open_p(bootfs_fh_t *fh, const char *path);
 int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e);
 int btfs_close(bootfs_fh_t *fh);
 

@@ -3,6 +3,7 @@
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
+#include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/param.h>
 #include <phlox/spinlock.h>
@@ -25,21 +26,11 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
 static inline int check_object_prot(unsigned obj_prot, unsigned req_prot)
 {
     const int rwx_mask = (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+
+    ASSERT_MSG(rwx_mask == VM_OBJECT_PROTECT_ALL, "VM permissions flags broken!\n");
+
     /* Check if object permissions match requested rwx set */
-    int rwx_match = ((obj_prot & req_prot & rwx_mask) == (req_prot & rwx_mask));
-
-    /* Permission type kernel or user */
-    obj_prot &= VM_PROT_KERNEL;
-    req_prot &= VM_PROT_KERNEL;
-
-    /* if permission types equals - rwx should match */
-    if(obj_prot == req_prot)
-        return rwx_match;
-    else
-        /* Object with kernel permission cannot be mapped with user permission,
-         * but user can be mapped as a kernel regardless rwx set
-         */
-        return (obj_prot) ? 0 : 1;
+    return ((obj_prot & req_prot & rwx_mask) == (req_prot & rwx_mask));
 }
 
 

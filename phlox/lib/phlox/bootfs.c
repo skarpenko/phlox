@@ -15,7 +15,7 @@ static bootfs_t *_cur_fs = NULL;   /* current FS */
 
 #ifndef USE_STRING
 /* returns string length */
-static unsigned int _str_len(char *str)
+static unsigned int _str_len(const char *str)
 {
     unsigned int i = 0;
 
@@ -25,7 +25,7 @@ static unsigned int _str_len(char *str)
 }
 
 /* string compare. returns 0 if equal */
-static unsigned int _str_cmp(char *s1, char *s2)
+static unsigned int _str_cmp(const char *s1, const char *s2)
 {
     unsigned int i = 0;
 
@@ -54,7 +54,7 @@ static void *_memncpy(void *dst, void *src, unsigned int n)
 #endif
 
 /* returns items count in path */
-static unsigned int _path_itms_count(char *path)
+static unsigned int _path_itms_count(const char *path)
 {
     unsigned int cnt = 1;
     unsigned int n;
@@ -71,7 +71,7 @@ static unsigned int _path_itms_count(char *path)
 }
 
 /* returns path item by its index */
-static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsigned int size)
+static unsigned int _path_get_item(const char *path, unsigned int idx, char *out, unsigned int size)
 {
     unsigned int cnt = 0;
     unsigned int n;
@@ -98,7 +98,7 @@ static unsigned int _path_get_item(char *path, unsigned int idx, char *out, unsi
 }
 
 /* locate directory entry by name */
-static btfs_dir_entry *_ent_locate(btfs_dir_entry *first, unsigned int count, char *name)
+static btfs_dir_entry *_ent_locate(btfs_dir_entry *first, unsigned int count, const char *name)
 {
     unsigned int i;
 
@@ -143,6 +143,8 @@ int btfs_umount(bootfs_t *fsinfo)
     fsinfo->cwd  = 0;
     fsinfo->scwd = 0;
 
+    _cur_fs = NULL;
+
     return 0;
 }
 
@@ -155,7 +157,7 @@ int btfs_set_cur_fs(bootfs_t *fs)
     return 1;
 }
 
-btfs_dir_entry *btfs_locate(char *path)
+btfs_dir_entry *btfs_locate(const char *path)
 {
     unsigned int page, npages;
     btfs_dir_entry *first = NULL, *en = NULL;
@@ -203,7 +205,7 @@ btfs_dir_entry *btfs_locate(char *path)
     return en;
 }
 
-int btfs_chdir(char *path)
+int btfs_chdir(const char *path)
 {
     btfs_dir_entry *en = NULL;
 
@@ -238,7 +240,7 @@ int btfs_open_e(bootfs_fh_t *fh, btfs_dir_entry *e)
     return 0;
 }
 
-int btfs_open_p(bootfs_fh_t *fh, char *path)
+int btfs_open_p(bootfs_fh_t *fh, const char *path)
 {
     btfs_dir_entry *e = NULL;
 

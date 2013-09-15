@@ -13,6 +13,7 @@
 #include <phlox/errors.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/vm_page_mapper.h>
 #include <phlox/vm_page.h>
 
@@ -243,7 +244,7 @@ status_t vm_page_init_final(kernel_args_t *kargs)
     status_t err;
 
     /* create object of pages array ... */
-    id = vm_create_virtmem_object("kernel_physical_pages", kid, (addr_t)all_pages,
+    id = vm_create_virtmem_object(VM_NAME_KERNEL_PHYSICAL_PAGES, kid, (addr_t)all_pages,
                                   total_pages_count * sizeof(vm_page_t),
                                   VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)

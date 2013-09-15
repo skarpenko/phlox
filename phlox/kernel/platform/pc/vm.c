@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/types.h>
@@ -11,6 +11,7 @@
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 
 
 /* Platform-specific definitions */
@@ -44,14 +45,14 @@ status_t platform_vm_init_final(kernel_args_t *kargs)
     object_id id;
 
     /* create DMA area object */
-    id = vm_create_physmem_object("kernel_dma_area", DMA_AREA_BASE, DMA_AREA_SIZE,
-                                  VM_OBJECT_PROTECT_ALL);
+    id = vm_create_physmem_object(VM_NAME_PC_KERNEL_DMA_AREA, DMA_AREA_BASE,
+                                  DMA_AREA_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         return ERR_GENERAL;
 
     /* create screen area object */
-    id = vm_create_physmem_object("kernel_screen_area", SCREEN_AREA_BASE, SCREEN_AREA_SIZE,
-                                  VM_OBJECT_PROTECT_ALL);
+    id = vm_create_physmem_object(VM_NAME_PC_KERNEL_SCREEN_AREA, SCREEN_AREA_BASE,
+                                  SCREEN_AREA_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         return ERR_GENERAL;
 

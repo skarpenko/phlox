@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -10,6 +10,7 @@
 #include <phlox/kargs.h>
 #include <phlox/errors.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/heap.h>
 #include <phlox/processor.h>
 
@@ -130,7 +131,7 @@ status_t arch_processor_set_init_after_vm(arch_processor_set_t *aps, kernel_args
         return ERR_NO_MEMORY;
 
     /* create memory object for array of per CPU TSS */
-    oid = vm_create_object("kernel_tss", ProcessorSet.processors_num * tss_size,
+    oid = vm_create_object(VM_NAME_I386_KERNEL_TSS, ProcessorSet.processors_num * tss_size,
                            VM_OBJECT_PROTECT_ALL);
     if(oid == VM_INVALID_OBJECTID)
         return ERR_VM_GENERAL;

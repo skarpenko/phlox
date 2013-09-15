@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2008, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <phlox/types.h>
@@ -11,6 +11,7 @@
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/vm_private.h>
 
 
@@ -34,7 +35,7 @@ status_t arch_vm_init_final(kernel_args_t *kargs)
     status_t err;
 
     /* create GDT object and its mapping */
-    id = vm_create_physmem_object("kernel_gdt", kargs->arch_args.phys_gdt,
+    id = vm_create_physmem_object(VM_NAME_I386_KERNEL_GDT, kargs->arch_args.phys_gdt,
                                   PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         return ERR_GENERAL;
@@ -49,7 +50,7 @@ status_t arch_vm_init_final(kernel_args_t *kargs)
         return err;
 
     /* create IDT object and its mapping */
-    id = vm_create_physmem_object("kernel_idt", kargs->arch_args.phys_idt,
+    id = vm_create_physmem_object(VM_NAME_I386_KERNEL_IDT, kargs->arch_args.phys_idt,
                                   PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         return ERR_GENERAL;

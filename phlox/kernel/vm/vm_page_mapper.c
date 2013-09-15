@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
@@ -11,6 +11,7 @@
 #include <phlox/mutex.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/vm_page_mapper.h>
 
 /* A little notification for future */
@@ -178,7 +179,7 @@ status_t vm_page_mapper_init_final(kernel_args_t *kargs)
         return err;
 
     /* create mapping descriptors object ... */
-    id = vm_create_virtmem_object("kernel_mapping_descr", kid, (addr_t)mappings,
+    id = vm_create_virtmem_object(VM_NAME_KERNEL_MAPPING_DESCR, kid, (addr_t)mappings,
                                   mappings_count * sizeof(mapping_desc_t),
                                   VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)

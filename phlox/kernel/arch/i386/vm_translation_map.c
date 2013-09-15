@@ -19,6 +19,7 @@
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/vm_page_mapper.h>
 
 /* Kernel's page directory */
@@ -789,7 +790,7 @@ status_t vm_translation_map_init_final(kernel_args_t *kargs)
     status_t err;
 
     /* create kernel's page directory object */
-    id = vm_create_physmem_object("kernel_page_dir", (addr_t)kernel_pgdir_phys,
+    id = vm_create_physmem_object(VM_NAME_I386_KERNEL_PAGE_DIR, (addr_t)kernel_pgdir_phys,
                                   PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         panic("vm_translation_map_init_final: failed to create kernel_page_dir object!\n");
@@ -805,7 +806,7 @@ status_t vm_translation_map_init_final(kernel_args_t *kargs)
         panic("vm_translation_map_init_final: failed to init page reference counter for kernel_page_dir!\n");
 
     /* create mapping pool page tables object and its mapping */
-    id = vm_create_virtmem_object("kernel_map_pool_pgtables", kid, (addr_t)map_pool_pgtables,
+    id = vm_create_virtmem_object(VM_NAME_I386_KERNEL_MAP_POOL_PGTABLES, kid, (addr_t)map_pool_pgtables,
                                   MAP_POOL_PGTABLE_CHUNKS * PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
     if(id == VM_INVALID_OBJECTID)
         panic("vm_translation_map_init_final: failed to create kernel_map_pool_pgtables object!\n");

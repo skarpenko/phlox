@@ -11,6 +11,7 @@
 #include <phlox/vm_page.h>
 #include <phlox/vm_page_mapper.h>
 #include <phlox/vm.h>
+#include <phlox/vm_names.h>
 #include <phlox/arch/vm_translation_map.h>
 #include <phlox/heap.h>
 
@@ -150,7 +151,7 @@ status_t vm_init(kernel_args_t *kargs)
         int i;
 
         /* create kernel_image memory object and its mapping */
-        id = vm_create_physmem_object("kernel_image", kargs->phys_kernel_addr.start,
+        id = vm_create_physmem_object(VM_NAME_KERNEL_IMAGE, kargs->phys_kernel_addr.start,
                                       kargs->phys_kernel_addr.size, VM_OBJECT_PROTECT_ALL);
         if(id == VM_INVALID_OBJECTID)
             panic("vm_init: failed to create kernel_image object!\n");
@@ -167,7 +168,7 @@ status_t vm_init(kernel_args_t *kargs)
 
         /* create kernel stacks memory objects and mappings */
         for(i = 0; i < SYSCFG_MAX_CPUS; i++) {
-            snprintf(name, SYS_MAX_OS_NAME_LEN, "kernel_cpu%d_stack", i);
+            snprintf(name, SYS_MAX_OS_NAME_LEN, VM_NAME_KERNEL_CPU_STACK_FMT, i);
             id = vm_create_physmem_object(name, kargs->phys_cpu_kstack[i].start,
                                           kargs->phys_cpu_kstack[i].size, VM_OBJECT_PROTECT_ALL);
             if(id == VM_INVALID_OBJECTID)
@@ -185,7 +186,8 @@ status_t vm_init(kernel_args_t *kargs)
         }
 
         /* create kernel_heap memory object and its mapping */
-        id = vm_create_virtmem_object("kernel_heap", kid, heap_base, heap_size, VM_OBJECT_PROTECT_ALL);
+        id = vm_create_virtmem_object(VM_NAME_KERNEL_HEAP, kid, heap_base, heap_size,
+                                      VM_OBJECT_PROTECT_ALL);
         if(id == VM_INVALID_OBJECTID)
             panic("vm_init: failed to create kernel_heap object!\n");
 
@@ -199,7 +201,7 @@ status_t vm_init(kernel_args_t *kargs)
             panic("vm_init: failed to init counters for kernel_heap object!\n");
 
         /* create bootfs_image memory object */
-        id = vm_create_physmem_object("bootfs_image", kargs->btfs_image_addr.start,
+        id = vm_create_physmem_object(VM_NAME_BOOTFS_IMAGE, kargs->btfs_image_addr.start,
                                       kargs->btfs_image_addr.size, VM_OBJECT_PROTECT_ALL);
         if(id == VM_INVALID_OBJECTID)
             panic("vm_init: failed to create bootfs_image object!\n");

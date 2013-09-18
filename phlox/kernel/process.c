@@ -367,6 +367,26 @@ void proc_detach_thread(process_t *proc, thread_t *thread)
     spin_unlock_irqrstor(&proc->lock, irqs_state);
 }
 
+/* delete process */
+status_t proc_destroy_process(proc_id pid)
+{
+    process_t *proc = proc_get_process_by_id(pid); /* get process data */
+
+    /* return error if process not found */
+    if(proc == NULL)
+        return ERR_MT_INVALID_HANDLE;
+
+    /* set death state */
+    proc->state = PROCESS_STATE_DEATH;
+
+    /* put process back, this may force actual destruction */
+    proc_put_process(proc);
+
+    /* return success */
+    return NO_ERROR;
+
+}
+
 /* returns kernel process id */
 proc_id proc_get_kernel_process_id(void)
 {

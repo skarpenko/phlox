@@ -25,6 +25,11 @@ process_t *proc_create_user_process(const char *name, process_t *parent,
     vm_address_space_t *aspace, const char *args, uint role);
 
 /*
+ * Destroy process by its id.
+*/
+status_t proc_destroy_process(proc_id pid);
+
+/*
  * Returns kernel process ID to caller
 */
 proc_id proc_get_kernel_process_id(void);

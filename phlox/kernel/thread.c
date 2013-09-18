@@ -680,7 +680,7 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
         return INVALID_THREADID;
 
     /* set thread data */
-    thread->name = kstrdup(name);
+    thread->name = (name ? kstrdup(name) : NULL);
     if(name && !thread->name) goto exit_on_error;
     thread->process = proc_get_kernel_process();
     thread->cpu = get_current_processor_struct();
@@ -794,7 +794,7 @@ thread_id thread_create_user_thread(const char *name, process_t *proc, addr_t en
         goto exit_on_error_unmap;
 
     /* set thread data */
-    thread->name = kstrdup(name);
+    thread->name = (name ? kstrdup(name) : NULL);
     if(name && !thread->name) goto exit_on_error_unmap;
     thread->cpu = get_current_processor_struct();
     thread->process = proc_inc_refcnt(proc);
@@ -863,6 +863,12 @@ exit_on_error_proc_detach:
     proc_put_process(thread->process);
     thread->process = NULL;
 
+    /* deinit thread structure */
+    deinit_thread_struct(thread);
+
+    /* move to deads */
+    move_thread_to_list(thread, DEAD_THREADS_LIST);
+
 exit_on_error_unmap:
     err = vm_unmap_object(proc_aid, stack_base);
     if(err != NO_ERROR)
@@ -871,11 +877,6 @@ exit_on_error_unmap:
 exit_on_error:
     vm_put_object(stack_obj_dat);
 
-    /* deinit thread structure */
-    deinit_thread_struct(thread);
-
-    /* move to deads */
-    move_thread_to_list(thread, DEAD_THREADS_LIST);
 
     /* return error state */
     return INVALID_THREADID;

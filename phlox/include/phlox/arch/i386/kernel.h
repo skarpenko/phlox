@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_I386_KERNEL_H_
@@ -29,15 +29,18 @@
 /*** User Memory Layout ***/
 
 /* User base address */
-#define USER_BASE 0x00000000
+#define USER_BASE 0x00001000
 
 /* User space size */
-#define USER_SIZE 0xC0000000
+#define USER_SIZE 0xBFFFE000 /* one page gap between user and kernel spaces */
 
 /* User space top address */
 #define USER_TOP (USER_SPACE + USER_SIZE - 1)
 
-/* a macro to test if a pointer is insude user space */
+/* User stack size (in pages) */
+#define USER_STACK_SIZE 256
+
+/* a macro to test if a pointer is inside user space */
 #define is_user_address(x) (((addr_t)(x)) >= USER_BASE && ((addr_t)(x)) <= USER_TOP)
 
 

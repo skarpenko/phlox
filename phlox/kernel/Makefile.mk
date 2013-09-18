@@ -18,7 +18,8 @@ PHLOXK_SRC +=                 \
 	$(LOCDIR)/thread.c    \
 	$(LOCDIR)/sem.c       \
 	$(LOCDIR)/elf_file.c  \
-	$(LOCDIR)/syscall.c
+	$(LOCDIR)/syscall.c   \
+	$(LOCDIR)/imgload.c
 
 PHLOXK_CFLAGS += $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
 

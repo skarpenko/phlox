@@ -16,6 +16,8 @@ enum PhloxGeneralErrors {
     ERR_NO_MEMORY,
     ERR_OUT_OF_RANGE,
     ERR_NAME_NOT_UNIQUE,
+    ERR_NO_OBJECT,
+    ERR_NO_PERM,
     ERR_GENERAL_LIMIT
 };
 
@@ -76,5 +78,16 @@ enum SystemCallsErrors {
     ERR_SCL_NOT_IMPLEMENTED,
     ERR_SCL_GENERAL_LIMIT
 };
+
+/* Binary image loader errors */
+enum ImageLoaderErrors {
+    ERR_ILD_GENERAL_BASE = 0x85000000,
+    ERR_ILD_GENERAL = ERR_ILD_GENERAL_BASE,
+    ERR_ILD_INVALID_IMAGE,
+    ERR_ILD_OPEN_FAILURE,
+    ERR_ILD_READ_ERROR,
+    ERR_ILD_GENERAL_LIMIT
+};
+
 
 #endif

@@ -20,7 +20,7 @@
 #include <phlox/sem.h>
 #include <phlox/klog.h>
 #include <phlox/debug.h>
-#include <boot/bootfs.h>
+#include <phlox/imgload.h>
 
 
 /* Global kernel args */
@@ -201,6 +201,11 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
 
     /* switch to next kernel start stage */
     _kernel_start_stage = K_SERVICES_STARTUP;
+
+    /* init image loader */
+    err = imgload_init();
+    if(err != NO_ERROR)
+        panic("Failed to init executable image loader with err = %x!\n", err);
 
     /* enable interrupts */
     local_irqs_enable();
@@ -537,7 +542,7 @@ int thread_proc0(void *data)
     kprint("thread_proc0: started id = %d\n", me);
 
     /* create user address space */
-    aid = vm_create_aspace(NULL, USER_BASE+PAGE_SIZE, USER_SIZE-2*PAGE_SIZE);
+    aid = vm_create_aspace(NULL, USER_BASE, USER_SIZE);
     if(aid == VM_INVALID_ASPACEID) {
        while(1) {
           kprint("thread_proc0: failed to create aspace!\n");

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_KERNEL_H_
@@ -27,6 +27,15 @@
 #define TOUCH(x) ((void)(x))
 #define TOUCH_ADDR(addr) \
     { char temp = *(volatile char*)(addr); (void)temp; }
+
+#define ADDR_RANGE_WITHIN(range_start,range_size,start,size) \
+    ((range_start)>=(start) && (((range_start)+(range_size)-1)<=((start)+(size)-1)))
+
+#define ADDR_RANGE_WITHIN_KSPACE(range_start,range_size) \
+    ADDR_RANGE_WITHIN(range_start, range_size, KERNEL_BASE, KERNEL_SIZE)
+
+#define ADDR_RANGE_WITHIN_USPACE(range_start,range_size) \
+    ADDR_RANGE_WITHIN(range_start, range_size, USER_BASE, USER_SIZE)
 
 #define containerof(ptr, type, member) \
     ((type *)((addr_t)(ptr) - offsetof(type, member)))
@@ -67,6 +76,12 @@ bool is_kernel_start_stage(int stage);
 
 /* returns true if specified stage was completed */
 bool is_kernel_start_stage_compl(int stage);
+
+/* copy data to user space */
+status_t cpy_to_uspace(void *usr_addr, const void *kern_addr, size_t n);
+
+/* copy data from user space */
+status_t cpy_from_uspace(void *kern_addr, const void *usr_addr, size_t n);
 
 
 #ifdef __cplusplus

@@ -251,7 +251,8 @@ interrupt_start:
  *   esi - arg3.
  * Return code:
  *   eax - low part;
- *   edx - high part.
+ *   edx - high part;
+ *   ecx - syscall status (0 - success).
  */
 .align 16
 .globl system_call

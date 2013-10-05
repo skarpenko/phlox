@@ -323,7 +323,7 @@ status_t imgload(const char *file, uint role)
     /** user space process creation starts here **/
 
     /* create user address space */
-    aid = vm_create_aspace(NULL, USER_BASE+PAGE_SIZE, USER_SIZE-2*PAGE_SIZE);
+    aid = vm_create_aspace(NULL, USER_BASE, USER_SIZE);
     if(aid == VM_INVALID_ASPACEID) {
         err = ERR_VM_GENERAL;
         goto exit_remove_objects;

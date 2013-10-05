@@ -82,7 +82,7 @@ $(call gen-explicit-c-rule,BOOTDECOMP,$(BUILD_DIR),$(LOCDIR),$(notdir $(BOOTDECO
 $(call def-target-vars,IMAGEZ,imagez)
 
 IMAGEZ_INI := $(LOCDIR)/bootfs.ini
-IMAGEZ_DEP = $(IMAGEZ_INI) $(MAKEBOOTFS) $(BOOTDECOMP) $(KINIT) $(PHLOXK)
+IMAGEZ_DEP = $(IMAGEZ_INI) $(MAKEBOOTFS) $(BOOTDECOMP) $(KINIT) $(PHLOXK) $(INIT)
 
 $(IMAGEZ):
 	$(Q)echo "Creating [$(IMAGEZ)]"

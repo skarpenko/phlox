@@ -7,7 +7,6 @@
 
 #define SYSCALL_NULL                    0
 #define SYSCALL_KLOG_PUTS               1
-#define SYSCALL_KLOG_GETS               2
-#define NR_SYSCALLS                     3
+#define NR_SYSCALLS                     2
 
 #endif

@@ -23,6 +23,11 @@
 #include <phlox/imgload.h>
 
 
+#define PRINT_KERNEL_MMAP 0
+
+/* Path to init service binary */
+#define INIT_SERVICE "service/init.elf"
+
 /* Global kernel args */
 kernel_args_t globalKargs;
 
@@ -31,22 +36,8 @@ static int _kernel_start_stage = K_KERNEL_STARTUP;
 
 void print_kernel_memory_map(void); /* for DEBUG only */
 
-/* for threading DEBUG */
-vuint thread0_ctr = 0;
-vuint thread1_ctr = 0;
-vuint thread2_ctr = 0;
-vuint thread_ctl_ctr = 0;
-void wait(long msec);
-int thread0(void *data);
-int thread1(void *data);
-int thread2(void *data);
-int thread_ctl(void *data);
-void timeout_call(timeout_id id, void *data);
-int thread_sem0(void *data);
-int thread_sem1(void *data);
-int thread_sem2(void *data);
-int thread_sem3(void *data);
-int thread_proc0(void *data);
+/* system init thread */
+static int init_thread(void *data);
 
 
 /* Main entry point on kernel start */
@@ -147,53 +138,22 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
        /* wait until BSP completes? */
     }
 
-
-    /* page fault handling test */
-    {
-        object_id id;
-        aspace_id kid = vm_get_kernel_aspace_id();
-        addr_t vaddr = 0;
-
-        /* create new object */
-        id = vm_create_object("for_page_fault_test", PAGE_SIZE, VM_OBJECT_PROTECT_ALL);
-
-        /* ... and map it */
-        vm_map_object(kid, id, VM_PROT_KERNEL_ALL, &vaddr);
-
-        kprint("\nPage fault test (touching address 0x%x)...", vaddr);
-        *((int *)vaddr) = 0; /* this initiates page fault */
-        kprint("PASSED\n");
-    }
-
-    /* kernel's memory map */
+#if PRINT_KERNEL_MMAP==1
+    /* kernel memory map */
     print_kernel_memory_map();
+#endif
 
     /* current thread */
     kprint("\nCurrent thread: id = %d, name = %s\n",
         thread_get_current_thread()->id,
         thread_get_current_thread()->name);
 
-    /* threading test */
+    /* create system initialization thread */
     {
         thread_id tid;
-        /* thread 0 */
-        tid = thread_create_kernel_thread("kernel_thread0", &thread0, NULL, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread0!\n");
-        /* thread 1 */
-        tid = thread_create_kernel_thread("kernel_thread1", &thread1, (void *)tid, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread1!\n");
-        /* thread 2 */
-        tid = thread_create_kernel_thread("kernel_thread2", &thread2, (void *)tid, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread2!\n");
-        /* threads controller */
-        tid = thread_create_kernel_thread("kernel_thread_ctl", &thread_ctl, NULL, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread_ctl!\n");
-        /* semaphores test */
-        tid = thread_create_kernel_thread("kernel_thread_sem0", &thread_sem0, NULL, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread_sem0!\n");
-        /* user-space processes test */
-        tid = thread_create_kernel_thread("kernel_thread_proc0", &thread_proc0, NULL, false);
-        if(tid == INVALID_THREADID) kprint("Failed to create thread_proc0!\n");
+        tid = thread_create_kernel_thread("kernel_init_thread", &init_thread, NULL, false);
+        if(tid == INVALID_THREADID)
+            panic("Failed to create system initialization thread.");
     }
 
     /* init console writer */
@@ -232,7 +192,6 @@ bool is_kernel_start_stage_compl(int stage)
     return (_kernel_start_stage > stage);
 }
 
-
 /*
  * Prints kernel's memory map.
  * used for debug and will be removed
@@ -261,371 +220,13 @@ void print_kernel_memory_map(void)
     vm_put_aspace(aspace);
 }
 
-/* thread 0 routine */
-int thread0(void *data)
+/* initialization thread */
+static int init_thread(void *data)
 {
-    thread_id me = thread_get_current_thread_id();
-
-    kprint("Thread0 (id = %d): started...\n", me);
-
-    kprint("Thread0: Wait for 5000 msec before start...\n");
-    thread_sleep(5000);
-
-    while(1) {
-        thread0_ctr++;
-        /* wait a little */
-        thread_sleep(50);
-    }
-}
-
-/* thread 1 routine */
-int thread1(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    thread_id slave = (thread_id)data;
-    bool slave_active = true;
-    bigtime_t curr_time;
-    bigtime_t time = timer_get_time();
-    bigtime_t self_suspend = time;
-
-    kprint("Thread1 (id = %d): started...\n", me);
-
-    kprint("Thread1: Wait for 7000 msec before start...\n");
-    thread_sleep(7000);
-
-    while(1) {
-        thread1_ctr++;
-
-        /* current time */
-        curr_time = timer_get_time();
-
-        /* simulate slave thread controlling */
-        if(curr_time-time > 5000) {
-
-           if(slave_active) {
-              slave_active = false;
-              /* put slave into sleep periodically */
-              if(thread_sleep_id(slave, 8333)) {
-                  kprint("Thread1: Failed to put slave into sleep!\n");
-              } else {
-                  kprint("Thread1: Slave goes to sleep!\n");
-              }
-              /** thread_suspend(slave); */
-           } else {
-              slave_active = true;
-              /** thread_resume(slave); */
-           }
-
-           time = timer_get_time();
-        }
-
-        /* suspend current thread periodically */
-        if(curr_time-self_suspend > 22000) {
-            thread_suspend_current();
-            self_suspend = timer_get_time();
-        }
-
-        /* wait a little */
-        thread_sleep(50);
-    }
-}
-/* thread 2 routine */
-int thread2(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    thread_id slave = (thread_id)data;
-    bigtime_t time = timer_get_time();
-
-    kprint("Thread2 (id = %d): started...\n", me);
-
-    kprint("Thread2: Wait for 9000 msec before start...\n");
-    thread_sleep(9000);
-
-    while(1) {
-        thread2_ctr++;
-
-        /* wake up our slave thread periodically */
-        if(timer_get_time()-time > 40000) {
-            thread_resume(slave);
-            time = timer_get_time();
-        }
-
-        /* wait a little */
-        thread_sleep(50);
-    }
-}
-
-/* timeout call routine */
-void timeout_call(timeout_id id, void *data)
-{
-    kprint("TIMEOUT CALL id = %d\n", id);
-    /* re-register call */
-    timer_timeout_sched(timeout_call, NULL, TIMER_MSEC_TO_TICKS(1000));
-}
-
-/* threads controller routine */
-int thread_ctl(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    timeout_id t_id;
-
-    kprint("Threads controller (id = %d): started...\n", me);
-
-    kprint("Threads controller: Wait for 20000 msec before start...\n");
-    thread_sleep(20000);
-
-    /* register timeout call */
-    t_id = timer_timeout_sched(timeout_call, NULL, TIMER_MSEC_TO_TICKS(1000));
-    /* timer_timeout_cancel(t_id); */
-
-    while(1) {
-        thread_ctl_ctr++;
-        if( !(thread_ctl_ctr % 10) ) {
-            kprint("Threads controller message: ctr0 = %u  ctr1 = %u  ctr2 = %u\n",
-                thread0_ctr, thread1_ctr, thread2_ctr);
-        }
-        /* pass control to next thread */
-        thread_yield();
-    }
-}
-
-/* semaphores test. thread 0 */
-int thread_sem0(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    thread_id tid;
-    sem_id sem;
-
-    kprint("thread_sem0: started id = %d\n", me);
-
-    sem = sem_create("sem_test", 2, 0);
-    if(sem != INVALID_SEMID)
-        kprint("thread_sem0: semaphore created id = %d\n", sem);
-    else
-        panic("thread_sem0: FAILED to create semaphore!\n");
-
-    /* thread1 */
-    tid = thread_create_kernel_thread("kernel_thread_sem1", &thread_sem1, NULL, false);
-    if(tid == INVALID_THREADID) kprint("Failed to create thread_sem1!\n");
-
-    /* thread2 */
-    tid = thread_create_kernel_thread("kernel_thread_sem2", &thread_sem2, NULL, false);
-    if(tid == INVALID_THREADID) kprint("Failed to create thread_sem2!\n");
-
-    /* thread3 */
-    tid = thread_create_kernel_thread("kernel_thread_sem3", &thread_sem3, NULL, false);
-    if(tid == INVALID_THREADID) kprint("Failed to create thread_sem3!\n");
-
-    /* wait */
-    thread_sleep(3000);
-
-    /* wake up threads */
-    sem_up(sem, 2);
-/*    sem_delete(sem); */
-
-    return 0;
-}
-
-/* semaphores test. thread 1 */
-int thread_sem1(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    sem_id sem;
     status_t err;
 
-    kprint("thread_sem1: started id = %d\n", me);
-
-    sem = sem_get_by_name("sem_test");
-    if(sem != INVALID_SEMID)
-        kprint("thread_sem1: semaphore found!\n");
-    else
-        kprint("thread_sem1: semaphore not found!\n");
-
-    kprint("thread_sem1: wait for semaphore acquire\n");
-    err = sem_down_ex(sem, 1, 2000, SEMF_TIMEOUT);
-    kprint("thread_sem1: semaphore acquired, err = 0x%x\n", err);
-
-    return 0;
-}
-
-/* semaphores test. thread 2 */
-int thread_sem2(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    sem_id sem;
-    status_t err;
-
-    kprint("thread_sem2: started id = %d\n", me);
-
-    sem = sem_get_by_name("sem_test");
-    if(sem != INVALID_SEMID)
-        kprint("thread_sem2: semaphore found!\n");
-    else
-        kprint("thread_sem2: semaphore not found!\n");
-
-    kprint("thread_sem2: wait for semaphore acquire\n");
-    err = sem_down(sem, 1);
-    kprint("thread_sem2: semaphore acquired, err = 0x%x\n", err);
-
-    return 0;
-}
-
-/* semaphores test. thread 3 */
-int thread_sem3(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    sem_id sem;
-    status_t err;
-
-    kprint("thread_sem3: started id = %d\n", me);
-
-    sem = sem_get_by_name("sem_test");
-    if(sem != INVALID_SEMID)
-        kprint("thread_sem3: semaphore found!\n");
-    else
-        kprint("thread_sem3: semaphore not found!\n");
-
-    kprint("thread_sem3: wait for semaphore acquire\n");
-    err = sem_down(sem, 1);
-    kprint("thread_sem3: semaphore acquired, err = 0x%x\n", err);
-
-    return 0;
-}
-
-/*** user-space process creation test ***/
-
-/* this code is copied to user-space for execution */
-asm (
-  ".text; "
-  ".global _userspace_func_start; "
-  ".type _userspace_func_start,@function; "
-  "_userspace_func_start: "
-  /* reserve 4-bytes for counter */
-  " nop; "
-  " nop; "
-  " nop; "
-  " nop; "
-  /* uncommenting this line should give GP fault because
-   * access to control registers is privileged.
-   */
-/*  " movl %cr0, %eax; " */
-  " movl $0x1000, %ebx; "  /* assume that user-space code mapped at 0x1000 */
-  " movl $0, %eax; "       /* initial counter value */
-  "1: "
-  " incl %eax; "           /* inclrement counter */
-  " movl %eax, (%ebx); "   /* copy value to 0x1000 */
-  " jmp 1b; "
-  ".global _userspace_func_end; "
-  ".type _userspace_func_end,@function; "
-  "_userspace_func_end: "
-  ".previous; "
-);
-
-extern unsigned char _userspace_func_start[];
-extern unsigned char _userspace_func_end[];
-
-/* User process creation test thread */
-int thread_proc0(void *data)
-{
-    thread_id me = thread_get_current_thread_id();
-    process_t *proc;
-    thread_id main_thread;
-    aspace_id aid;
-    object_id stkid;
-    object_id codeid;
-    vm_address_space_t *aspace;
-    addr_t vaddr;
-    status_t err;
-    unsigned char *p, *dst;
-    int *usr_cntr;
-
-    kprint("thread_proc0: started id = %d\n", me);
-
-    /* create user address space */
-    aid = vm_create_aspace(NULL, USER_BASE, USER_SIZE);
-    if(aid == VM_INVALID_ASPACEID) {
-       while(1) {
-          kprint("thread_proc0: failed to create aspace!\n");
-          thread_yield();
-       }
-    }
-
-    /* create user process */
-    aspace = vm_get_aspace_by_id(aid);
-    proc = proc_create_user_process("usr_prog0", proc_get_kernel_process(), aspace, NULL, PROCESS_ROLE_USER);
-    if(!proc) {
-       while(1) {
-           kprint("thread_proc0: failed to create process!\n");
-           thread_yield();
-       }
-    }
-
-    /* return address space */
-    vm_put_aspace(aspace);
-
-    /* create memory object for user thread stack */
-    stkid = vm_create_object(NULL, 8192, VM_PROT_USER_DEFAULT);
-    if(stkid == VM_INVALID_OBJECTID) {
-       while(1) {
-          kprint("thread_proc0: failed to create object!\n");
-          thread_yield();
-       }
-    }
-
-    /* create memory object for user code */
-    codeid = vm_create_object(NULL, 8192, VM_PROT_USER_ALL);
-    if(codeid == VM_INVALID_OBJECTID) {
-       while(1) {
-          kprint("thread_proc0: failed to create code object!\n");
-          thread_yield();
-       }
-    }
-
-    /* map user code memory to kernel space */
-    err = vm_map_object(vm_get_kernel_aspace_id(), codeid, VM_PROT_KERNEL_ALL, &vaddr);
-    if(err) {
-       while(1) {
-          kprint("thread_proc0: failed to map code to kernel space!\n");
-          thread_yield();
-       }
-    }
-
-    usr_cntr = (int *)vaddr; /* user space counter */
-    /* copy user code to mapped memory object */
-    dst = (unsigned char *)vaddr;
-    for(p = _userspace_func_start; p != _userspace_func_end; ++p, ++dst) {
-       *dst = *p;
-    }
-
-    /* map user code to user process address space */
-    err = vm_map_object(aid, codeid, VM_PROT_USER_ALL, &vaddr);
-    if(err) {
-       while(1) {
-          kprint("thread_proc0: failed to map code to user space!\n");
-          thread_yield();
-       }
-    }
-
-    /* create main user thread */
-    main_thread = thread_create_user_thread("main_thread", proc, vaddr, NULL, stkid, 0, false);
-    if(main_thread == INVALID_THREADID) {
-       while(1) {
-          kprint("thread_proc0: failed to create user thread!\n");
-          thread_yield();
-       }
-    }
-
-    /** at this point user code scheduled for execution or already executed **/
-
-    /* return process structure to the system */
-    proc_put_process(proc);
-
-    /* wait to ensure user code started execution */
-    thread_sleep(1000);
-
-    /* print counter value incremented by user code */
-    while(1) {
-        kprint("thread_proc0: user_counter = %d\n", *usr_cntr);
-        thread_sleep(10);
-    }
+    /* start init process */
+    err = imgload(INIT_SERVICE, PROCESS_ROLE_SERVICE);
+    if(err != NO_ERROR)
+        panic("Failed to load init %s: %x\n", INIT_SERVICE, err);
 }

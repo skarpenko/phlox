@@ -3,14 +3,21 @@
 * Distributed under the terms of the PhloxOS License.
 */
 
-#include <app/syscall.h>
+#include <app/syslib.h>
 
 int main(int argc, char **argv)
 {
-    char str[] = "\n=========================================================\n"
+    char *welcome = "\n======================================================\n"
         "Hello from user space!\n";
+    char *tests = "test/test_main.elf";
 
-    sys_klog_puts(str, sizeof(str));
+    /* welcome message */
+    klog_printf(welcome);
+
+    klog_printf("Running tests...\n");
+
+    if(service_load(tests))
+        klog_printf("FAILED to load %s!\n", tests);
 
     while(1)
         ;

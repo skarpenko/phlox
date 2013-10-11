@@ -18,3 +18,9 @@ status_t sys_klog_puts(const char *str, unsigned len)
 {
     return __syscall2(SYSCALL_KLOG_PUTS, (ulong)str, (ulong)len);
 }
+
+/* load new service from BootFS */
+status_t sys_svc_load(const char *path, unsigned len, unsigned role)
+{
+    return __syscall3(SYSCALL_SVC_LOAD, (ulong)path, (ulong)len, (ulong)role);
+}

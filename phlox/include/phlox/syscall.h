@@ -5,8 +5,11 @@
 #ifndef _PHLOX_SYSCALL_H
 #define _PHLOX_SYSCALL_H
 
+
 #define SYSCALL_NULL                    0
 #define SYSCALL_KLOG_PUTS               1
-#define NR_SYSCALLS                     2
+#define SYSCALL_SVC_LOAD                2
+#define NR_SYSCALLS                     3
+
 
 #endif

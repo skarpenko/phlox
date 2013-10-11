@@ -5,6 +5,7 @@ LIBPHLOX_SRC +=              \
 	$(LOCDIR)/ctype.c    \
 	$(LOCDIR)/vsprintf.c \
 	$(LOCDIR)/syscall.c  \
+	$(LOCDIR)/syslib.c   \
 	$(LOCDIR)/startup.c
 
 LIBPHLOX_CFLAGS += $(GLOBAL_CFLAGS) $(INCLUDES)

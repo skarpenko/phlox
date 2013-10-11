@@ -38,6 +38,16 @@ status_t sys_null(void);
  */
 status_t sys_klog_puts(const char *str, unsigned len);
 
+/*
+ * Load new system service from BootFS
+ *
+ * Arguments:
+ *   path  - path to executable;
+ *   len   - path length;
+ *   role  - role of the new service.
+ */
+status_t sys_svc_load(const char *path, unsigned len, unsigned role);
+
 
 #ifdef __cplusplus
 }

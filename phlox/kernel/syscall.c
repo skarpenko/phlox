@@ -7,6 +7,9 @@
 #include <phlox/errors.h>
 #include <phlox/heap.h>
 #include <phlox/klog.h>
+#include <phlox/imgload.h>
+#include <phlox/process.h>
+#include <phlox/thread.h>
 #include <phlox/syscall.h>
 
 
@@ -64,10 +67,44 @@ static status_t syscall_klog_puts(const char *str, unsigned len)
     return NO_ERROR;
 }
 
+/* Create user space process from ELF file stored on BootFS */
+static status_t syscall_svc_load(const char *path, unsigned len, unsigned role)
+{
+    char *tmp;
+    status_t err;
+
+    /* check path length */
+    if(len > 512)
+        return ERR_INVALID_ARGS;
+
+    /* allocate temporary buffer for userspace data */
+    tmp = (char *)kmalloc(len+1);
+    if(tmp == NULL)
+        return ERR_NO_MEMORY;
+
+    /* copy path to file from userspace */
+    err = cpy_from_uspace(tmp, path, len);
+    if(err != NO_ERROR) {
+        kfree(tmp);
+        return err;
+    }
+
+    tmp[len] = 0;
+
+    /* load image */
+    err = imgload(tmp, role);
+
+    kfree(tmp);
+
+    return err;
+}
+
+
 /* system calls table */
 const struct syscall_table_entry syscall_table[NR_SYSCALLS] = {
 /*  0 */    SYSCALL_ENTRY(syscall_null),
 /*  1 */    SYSCALL_ENTRY(syscall_klog_puts),
+/*  2 */    SYSCALL_ENTRY(syscall_svc_load),
 };
 
 /* number of entries at system calls table */

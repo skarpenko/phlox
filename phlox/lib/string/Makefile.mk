@@ -29,7 +29,7 @@ LIBSTRING_SRC +=    \
 	$(LOCDIR)/strtok.c    \
 	$(LOCDIR)/strxfrm.c
 
-LIBSTRING_CFLAGS += $(GLOBAL_CFLAGS) $(KERNEL_CFLAGS) $(INCLUDES)
+LIBSTRING_CFLAGS += $(GLOBAL_CFLAGS) $(INCLUDES)
 
 # Include arch-specific
 -include $(LOCDIR)/arch/$(ARCH)/Makefile.arch

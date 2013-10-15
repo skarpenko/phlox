@@ -2,6 +2,7 @@ LIBPHLOX_SRC +=                   \
 	$(LOCDIR)/arch_start.S    \
 	$(LOCDIR)/arch_syscall.S
 
-SERVICE_LDSCRIPT := $(LOCDIR)/service.ld
+SERVICE_LDSCRIPT  := $(LOCDIR)/service.ld
+SERVICE_ARCH_PATH := $(BUILD_DIR)/$(LOCDIR)
 
 LIBPHLOX_ASFLAGS += $(GLOBAL_ASFLAGS) $(GLOBAL_CFLAGS) $(INCLUDES)

@@ -229,4 +229,6 @@ static int init_thread(void *data)
     err = imgload(INIT_SERVICE, PROCESS_ROLE_SERVICE);
     if(err != NO_ERROR)
         panic("Failed to load init %s: %x\n", INIT_SERVICE, err);
+
+    return err;
 }

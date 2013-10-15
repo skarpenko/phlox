@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_SEM_H
@@ -74,6 +74,13 @@ sem_id sem_get_by_name(const char *name);
  *   new_owner - new owning process id.
 */
 status_t sem_change_owner(sem_id id, proc_id new_owner);
+
+/*
+ * Get semaphore owning process
+ * Params:
+ *   id - semaphore id.
+ */
+proc_id sem_get_owner(sem_id id);
 
 
 #endif

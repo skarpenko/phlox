@@ -5,6 +5,7 @@
 
 #include <app/syslib.h>
 
+
 int main(int argc, char **argv)
 {
     char *welcome = "\n======================================================\n"
@@ -16,8 +17,12 @@ int main(int argc, char **argv)
 
     klog_printf("Running tests...\n");
 
+    /* load tests binary */
     if(service_load(tests))
         klog_printf("FAILED to load %s!\n", tests);
+
+    /* suspend execution */
+    thread_suspend_current();
 
     while(1)
         ;

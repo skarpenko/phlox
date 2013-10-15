@@ -239,6 +239,12 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
 status_t vm_unmap_object(aspace_id aid, addr_t vaddr);
 
 /*
+ * Query id of mapped object at given virtual address
+ * of provided address space.
+ */
+object_id vm_query_object(aspace_id aid, addr_t vaddr);
+
+/*
  * Simulate page fault for given virtual address range.
  * Calls soft page fault handler for each page in range,
  * so already mapped pages will be remapped again.

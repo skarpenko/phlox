@@ -551,7 +551,7 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
     vm_mapping_t *mapping;
     status_t err;
 
-    /* get mapping */
+    /* get address space */
     aspace = vm_get_aspace_by_id(aid);
     if(aspace == NULL)
         return ERR_VM_INVALID_ASPACE;
@@ -594,10 +594,48 @@ exit_unmap:
     /* unlock address space */
     spin_unlock(&aspace->lock);
 
-    /* ... and but it back */
+    /* ... and put it back */
     vm_put_aspace(aspace);
 
     return err;
+}
+
+/* query mapped object id from given virtual address */
+object_id vm_query_object(aspace_id aid, addr_t vaddr)
+{
+    vm_address_space_t *aspace;
+    vm_mapping_t *mapping;
+    object_id id = VM_INVALID_OBJECTID;
+    status_t err;
+
+    /* get address space structure */
+    aspace = vm_get_aspace_by_id(aid);
+    if(aspace == NULL)
+        return id;
+
+    /* acquire lock */
+    spin_lock(&aspace->lock);
+
+    /* get mapping at provided virtual address */
+    err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
+    if(err != NO_ERROR)
+        goto exit_query;
+
+    /* check mapping type */
+    if(mapping->type != VM_MAPPING_TYPE_OBJECT)
+        goto exit_query;
+
+    /* object id */
+    id = mapping->object->id;
+
+exit_query:
+    /* unlock address space */
+    spin_unlock(&aspace->lock);
+
+    /* return aspace to kernel */
+    vm_put_aspace(aspace);
+
+    return id;
 }
 
 /* simulate page fault for given virtual address range */

@@ -35,10 +35,13 @@
 #define USER_SIZE 0xBFFFE000 /* one page gap between user and kernel spaces */
 
 /* User space top address */
-#define USER_TOP (USER_SPACE + USER_SIZE - 1)
+#define USER_TOP (USER_BASE + USER_SIZE - 1)
 
 /* User stack size (in pages) */
 #define USER_STACK_SIZE 256
+
+/* Maximum allowed user stack size (in pages) */
+#define USER_STACK_SIZE_MAX 2048
 
 /* a macro to test if a pointer is inside user space */
 #define is_user_address(x) (((addr_t)(x)) >= USER_BASE && ((addr_t)(x)) <= USER_TOP)

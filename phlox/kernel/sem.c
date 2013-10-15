@@ -709,10 +709,46 @@ status_t sem_change_owner(sem_id id, proc_id new_owner)
     sem->proc = proc;
     /* unlock new owner */
     spin_unlock(&proc->lock);
+    /* unlock semaphore data */
+    sem_unlock(sem);
+
+    /* restore local interrupts */
+    local_irqs_restore(irqs_state);
 
     /* put new owner process back */
     proc_put_process(proc);
 
     /* return success */
     return NO_ERROR;
+}
+
+/* get semaphore owning process */
+proc_id sem_get_owner(sem_id id)
+{
+    unsigned long irqs_state;
+    proc_id pid;
+    semaphore_t *sem;
+
+    /* disable local interrupts */
+    local_irqs_save_and_disable(irqs_state);
+
+    /* get semaphore data locked */
+    sem = get_sem_by_id(id);
+    if(sem == NULL) {
+        /* restore interrupts */
+        local_irqs_restore(irqs_state);
+        /* return error state */
+        return INVALID_PROCESSID;
+    }
+
+    /* process id */
+    pid = sem->proc->id;
+
+    /* unlock semaphore data */
+    sem_unlock(sem);
+
+    /* restore local interrupts */
+    local_irqs_restore(irqs_state);
+
+    return pid;
 }

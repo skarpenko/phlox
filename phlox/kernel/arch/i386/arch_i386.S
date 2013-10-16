@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 
@@ -223,10 +223,12 @@ FUNCTION(i386_dbg_regs_save):
     movl  %ebx, 0(%eax)
     movl  %dr6, %ebx       /* save dr6 */
     movl  %ebx, 4(%eax)
+#if 0 /* don't touch dr4 and dr5 */
     movl  %dr5, %ebx       /* save dr5 */
     movl  %ebx, 8(%eax)
     movl  %dr4, %ebx       /* save dr4 */
     movl  %ebx, 12(%eax)
+#endif
     movl  %dr3, %ebx       /* save dr3 */
     movl  %ebx, 16(%eax)
     movl  %dr2, %ebx       /* save dr2 */
@@ -246,10 +248,12 @@ FUNCTION(i386_dbg_regs_load):
     movl  %ebx, %dr7
     movl  4(%eax), %ebx    /* load dr6 */
     movl  %ebx, %dr6
+#if 0 /* don't touch dr4 and dr5 */
     movl  8(%eax), %ebx    /* load dr5 */
     movl  %ebx, %dr5
     movl  12(%eax), %ebx   /* load dr4 */
     movl  %ebx, %dr4
+#endif
     movl  16(%eax), %ebx   /* load dr3 */
     movl  %ebx, %dr3
     movl  20(%eax), %ebx   /* load dr2 */
@@ -268,8 +272,10 @@ FUNCTION(i386_dbg_regs_clear):
     /* clear debug registers */
     movl  %eax, %dr7
     movl  %eax, %dr6
+#if 0 /* don't touch dr4 and dr5 */
     movl  %eax, %dr5
     movl  %eax, %dr4
+#endif
     movl  %eax, %dr3
     movl  %eax, %dr2
     movl  %eax, %dr1

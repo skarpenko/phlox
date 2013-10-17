@@ -8,6 +8,7 @@
 #include <phlox/types.h>
 #include <phlox/ktypes.h>
 #include <phlox/kargs.h>
+#include <phlox/syscall.h>
 #include <phlox/thread_types.h>
 #include <phlox/arch/thread.h>
 
@@ -63,6 +64,47 @@ thread_id thread_get_current_thread_id(void);
  * Returns TRUE if current thread is a kernel thread
 */
 bool thread_is_kernel_thread(void);
+
+/*
+ * Returns TRUE if thread entered kernel
+*/
+static inline bool thread_in_kernel(void)
+{
+    return thread_get_current_thread()->in_kernel;
+}
+
+/*
+ * Returns TRUE if current context is interrupt
+*/
+static inline bool thread_in_interrupt(void)
+{
+    return thread_get_current_thread()->in_interrupt != 0;
+}
+
+/*
+ * Returns TRUE if current context is exception
+*/
+static inline bool thread_in_exception(void)
+{
+    return thread_get_current_thread()->in_exception != 0;
+}
+
+/*
+ * Returns TRUE if current context is system call
+*/
+static inline bool thread_in_syscall(void)
+{
+    return thread_get_current_thread()->in_syscall != INVALID_SYSCALL;
+}
+
+/*
+ * Returns system call number which thread entered
+ * If thread is not in a system call then return value is INVALID_SYSCALL.
+*/
+static inline int thread_syscall_no(void)
+{
+    return thread_get_current_thread()->in_syscall;
+}
 
 /*
  * Create new kernel-side thread of execution.

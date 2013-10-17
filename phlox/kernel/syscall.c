@@ -16,6 +16,14 @@
 #include <phlox/syscall.h>
 
 
+/* Routines called on syscall enter and leave
+ * Note: do_syscall_leave may not be called, for example,
+ *       if thread exitting
+ */
+void do_syscall_enter(const int syscall);
+void do_syscall_leave(void);
+
+
 /* generic syscall function */
 typedef void (*syscall_func)(void);
 
@@ -25,6 +33,27 @@ struct syscall_table_entry {
 };
 
 #define SYSCALL_ENTRY(func) { ((syscall_func)(func)) }
+
+
+/* do processing on syscall enter */
+void do_syscall_enter(const int syscall)
+{
+/*
+ * WARNING: syscall is a value on stack which is reused by syscall startup later.
+ *          Do not modify this value!
+ */
+    thread_t *th = thread_get_current_thread();
+    th->in_kernel = true;
+    th->in_syscall = syscall;
+}
+
+/* do processing on syscall leave */
+void do_syscall_leave(void)
+{
+    thread_t *th = thread_get_current_thread();
+    th->in_kernel = false;
+    th->in_syscall = INVALID_SYSCALL;
+}
 
 
 /* No-op syscall */

@@ -159,13 +159,13 @@ void _phlox_kernel_entry(kernel_args_t *kargs, uint num_cpu)
     /* init console writer */
     debug_init_console_writer();
 
-    /* switch to next kernel start stage */
-    _kernel_start_stage = K_SERVICES_STARTUP;
-
     /* init image loader */
     err = imgload_init();
     if(err != NO_ERROR)
         panic("Failed to init executable image loader with err = %x!\n", err);
+
+    /* switch to next kernel start stage */
+    _kernel_start_stage = K_SERVICES_STARTUP;
 
     /* enable interrupts */
     local_irqs_enable();
@@ -229,6 +229,9 @@ static int init_thread(void *data)
     err = imgload(INIT_SERVICE, PROCESS_ROLE_SERVICE);
     if(err != NO_ERROR)
         panic("Failed to load init %s: %x\n", INIT_SERVICE, err);
+
+    /* complete kernel initializations */
+    _kernel_start_stage = K_SYSTEM_READY;
 
     return err;
 }

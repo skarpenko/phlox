@@ -28,5 +28,8 @@
 /* Number of system calls */
 #define NR_SYSCALLS                         17
 
+/* Reserved system call value */
+#define INVALID_SYSCALL                     -1
+
 
 #endif

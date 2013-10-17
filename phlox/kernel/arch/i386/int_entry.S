@@ -4,6 +4,7 @@
 */
 #include <phlox/arch/i386/segments.h>
 
+
 /* Common entry for interrupts which provides error code
  */
 #define INTERRUPT_ERRC(name, vector) \
@@ -23,6 +24,11 @@ name: \
     pushl   $0; \
     pushl   $vector; \
     jmp     interrupt_start
+
+
+/* Functions defined at kernel/syscall.c */
+.extern do_sycall_enter  /* void do_syscall_enter(const int syscall) */
+.extern do_sycall_leave  /* void do_syscall_leave(void) */
 
 
 .text
@@ -222,7 +228,7 @@ interrupt_start:
      * a structure to avoid horrible GCC optimizations.
      */
     pushl   %esp
-     
+
     /* call to C-function */
     call    i386_handle_interrupt
 
@@ -276,13 +282,18 @@ system_call:
     cmp     nr_syscall_table_entries, %eax
     jge     invalid_syscall
 
-    /* TODO: do things before call */
-
-    /* push args and do call */
+    /* push args for system call */
     pushl   %esi  /* arg3 */
     pushl   %edx  /* arg2 */
     pushl   %ecx  /* arg1 */
     pushl   %ebx  /* arg0 */
+
+    /* do things on enter system call */
+    pushl   %eax  /* store syscall number */
+    call do_syscall_enter
+    popl    %eax  /* restore syscall number */
+
+    /* handle  system call */
     movl    $syscall_table, %ebp
     call    *(%ebp,%eax,4)
     addl    $16, %esp
@@ -292,7 +303,8 @@ system_call:
     movl    %ecx, 0x28(%esp)
     movl    %eax, 0x2c(%esp)
 
-    /* TODO: do things after call */
+    /* do things on leaving system call */
+    call do_syscall_leave
 
 syscall_exit:
     /* restore registers */

@@ -14,6 +14,7 @@
 #include <phlox/kernel.h>
 #include <phlox/vm_private.h>
 #include <phlox/scheduler.h>
+#include <phlox/thread.h>
 #include <phlox/interrupt.h>
 
 
@@ -201,8 +202,18 @@ static void print_int_frame(i386_int_frame_t *frame)
 void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t *frame)
 {
+    thread_t *th = NULL;
     bool resched_needed = resched_pending; resched_pending = false;
 
+    /* get current thread only if kernel startup stage completed */
+    if(is_kernel_start_stage_compl(K_KERNEL_STARTUP))
+        th = thread_get_current_thread();
+
+    /* if entering exception */
+    if(th && frame->vector <= 19)
+        ++th->in_exception;
+
+    /* handle vector */
     switch(frame->vector) {
         /* Divide Error Exception */
         case 0:
@@ -354,6 +365,8 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
             /* ensure that hardware interrupt occured */
             if(frame->vector >= IRQS_BASE_VECTOR &&
                frame->vector <  IRQS_BASE_VECTOR + IRQS_NUMBER) {
+                /* entering hardware interrupt */
+                if(th) ++th->in_interrupt;
                 /* acknowledge hardware interrupt */
                 interrupt_ack(frame->vector);
                 /* start interrupt handling */
@@ -361,10 +374,16 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
                 /* check result */
                 if(res & INT_FLAGS_RESCHED)
                     resched_needed = true;
+                /* leaving hardware interrupt */
+                if(th) --th->in_interrupt;
             }
         }
          break;
     }
+
+    /* if leaving exception */
+    if(th && frame->vector <= 19)
+        --th->in_exception;
 
     /* reschedule if needed */
     if(resched_needed) {

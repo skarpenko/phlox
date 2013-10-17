@@ -7,6 +7,7 @@
 #include <phlox/kernel.h>
 #include <phlox/param.h>
 #include <phlox/errors.h>
+#include <phlox/syscall.h>
 #include <phlox/heap.h>
 #include <phlox/list.h>
 #include <phlox/avl_tree.h>
@@ -319,6 +320,12 @@ static thread_t *get_thread_struct(void)
     /* executed at kernel side initially */
     thread->in_kernel = true;
 
+    /* reset counters */
+    thread->in_interrupt = 0;
+    thread->in_exception = 0;
+    thread->in_syscall   = INVALID_SYSCALL;
+
+
     return thread;
 }
 
@@ -365,6 +372,8 @@ static int stub_for_user_thread(void)
 
     /* notify scheduler about new thread start */
     sched_complete_context_switch();
+
+    thread->in_kernel = false; /* leaving kernel */
 
     /* pass control to user-space code */
     arch_thread_enter_uspace(thread);

@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2011, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_THREAD_TYPES_H_
@@ -71,6 +71,9 @@ typedef struct thread {
     uint             flags;              /* Thread flags */
     int              preempt_count;      /* Thread is not preempted while >0 */
     bool             in_kernel;          /* =true if in kernel */
+    int              in_interrupt;       /* >0 if in hardware interrupt */
+    int              in_exception;       /* >0 if in exception  */
+    int              in_syscall;         /* =syscall number if in system call */
     /* Fields used by scheduler */
     int              jiffies;            /* Current jiffies count */
     int              ijiffies;           /* Initial jiffies count */

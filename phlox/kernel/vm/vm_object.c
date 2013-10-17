@@ -619,7 +619,7 @@ error:
         page = vm_page_lookup(upage->ppn);
         ASSERT_MSG(page != NULL, "vm_create_virtmem_object(): on error page is NULL!");
         vm_page_set_state(page, VM_PAGE_STATE_UNUSED);
-        xlist_peek_next(item);
+        item = xlist_peek_next(item);
     }
 
     /* destroy object structures */

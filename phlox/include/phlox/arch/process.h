@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_ARCH_PROCESS_H_
@@ -26,7 +26,7 @@ status_t arch_process_init_per_cpu(kernel_args_t *kargs, uint curr_cpu);
 /*
  * Called during creating process for arch-specific initialization.
  */
-status_t arch_init_process_struct(arch_process_t *arch);
+status_t arch_init_process_struct(process_t *proc);
 
 
 #endif

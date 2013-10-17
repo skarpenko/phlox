@@ -1,11 +1,12 @@
 /*
-* Copyright 2007-2012, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #include <string.h>
 #include <arch/i386/fpu_data.h>
 #include <phlox/errors.h>
 #include <phlox/arch/i386/segments.h>
+#include <phlox/arch/i386/ustub_table.h>
 #include <phlox/processor.h>
 #include <phlox/thread.h>
 #include <phlox/thread_private.h>
@@ -86,7 +87,7 @@ void arch_thread_enter_uspace(thread_t *thread)
     TOUCH_ADDR(thread->ustack_top - 4);
 
     /* pass control to user code */
-    i386_enter_uspace(thread->entry, thread->data, thread->ustack_top, 0 /* ret addr */);
+    i386_enter_uspace(thread->entry, thread->data, thread->ustack_top, USER_STUB_THREAD_EXIT);
 }
 
 /* called after just created thread gets control */

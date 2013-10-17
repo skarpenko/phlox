@@ -696,6 +696,14 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     /* set pointer to thread struct at the bottom of kernel stack */
     *(thread_t **)(thread->kstack_base) = thread;
 
+    /* set entry point and user data */
+    thread->entry = (addr_t)func;
+    thread->data = data;
+
+    /* set default priority and scheduling policy */
+    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
+    thread->s_prio = thread->process->def_prio;
+
     /* init arch-specific parts, before setting other arch-dependend
      * options.
      */
@@ -705,14 +713,6 @@ thread_id thread_create_kernel_thread(const char *name, int (*func)(void *data),
     err = arch_thread_init_kstack(thread, &stub_for_kernel_thread);
     if(err != NO_ERROR)
         goto exit_on_error;
-
-    /* set entry point and user data */
-    thread->entry = (addr_t)func;
-    thread->data = data;
-
-    /* set default priority and scheduling policy */
-    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
-    thread->s_prio = thread->process->def_prio;
 
     /* attach to kernel process */
     proc_attach_thread(thread->process, thread);
@@ -815,6 +815,14 @@ thread_id thread_create_user_thread(const char *name, process_t *proc, addr_t en
     thread->ustack_base = stack_base;
     thread->ustack_top  = stack_base + stack_size;
 
+    /* set entry point and user data */
+    thread->entry = entry;
+    thread->data = data;
+
+    /* set default priority and scheduling policy */
+    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
+    thread->s_prio = thread->process->def_prio;
+
     /* init arch-specific parts, before setting other arch-dependend
      * options.
      */
@@ -824,14 +832,6 @@ thread_id thread_create_user_thread(const char *name, process_t *proc, addr_t en
     err = arch_thread_init_kstack(thread, &stub_for_user_thread);
     if(err != NO_ERROR)
         goto exit_on_error_proc_detach;
-
-    /* set entry point and user data */
-    thread->entry = entry;
-    thread->data = data;
-
-    /* set default priority and scheduling policy */
-    thread->sched_policy.raw = thread->process->def_sched_policy.raw;
-    thread->s_prio = thread->process->def_prio;
 
     /* attach to kernel process */
     proc_attach_thread(thread->process, thread);

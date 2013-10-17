@@ -2,6 +2,7 @@ PHLOXK_SRC +=                          \
 	$(LOCDIR)/atomic_init.c        \
 	$(LOCDIR)/atomic.S             \
 	$(LOCDIR)/arch_i386.S          \
+	$(LOCDIR)/ustub_table.S        \
 	$(LOCDIR)/processor.c          \
 	$(LOCDIR)/vm.c                 \
 	$(LOCDIR)/vm_translation_map.c \

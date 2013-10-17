@@ -7,27 +7,26 @@
 
 
 /* Phlox kernel system calls */
-enum PhloxSyscallNumbers {
-    SYSCALL_NULL,
-    SYSCALL_KLOG_PUTS,
-    SYSCALL_SVC_LOAD,
-    SYSCALL_CREATE_THREAD,
-    SYSCALL_THREAD_SUSPEND,
-    SYSCALL_THREAD_RESUME,
-    SYSCALL_THREAD_YIELD,
-    SYSCALL_THREAD_SLEEP,
-    SYSCALL_THREAD_EXIT,
-    SYSCALL_CURRENT_THREAD_ID,
-    SYSCALL_SEM_CREATE,
-    SYSCALL_SEM_DELETE,
-    SYSCALL_SEM_DOWN,
-    SYSCALL_SEM_UP,
-    SYSCALL_SEM_GET_BY_NAME,
-    SYSCALL_VIRTMEM_ALLOC,
-    SYSCALL_VIRTMEM_FREE,
-    /* Number of system calls */
-    NR_SYSCALLS
-};
+#define SYSCALL_NULL                         0
+#define SYSCALL_KLOG_PUTS                    1
+#define SYSCALL_SVC_LOAD                     2
+#define SYSCALL_CREATE_THREAD                3
+#define SYSCALL_THREAD_SUSPEND               4
+#define SYSCALL_THREAD_RESUME                5
+#define SYSCALL_THREAD_YIELD                 6
+#define SYSCALL_THREAD_SLEEP                 7
+#define SYSCALL_THREAD_EXIT                  8
+#define SYSCALL_CURRENT_THREAD_ID            9
+#define SYSCALL_SEM_CREATE                  10
+#define SYSCALL_SEM_DELETE                  11
+#define SYSCALL_SEM_DOWN                    12
+#define SYSCALL_SEM_UP                      13
+#define SYSCALL_SEM_GET_BY_NAME             14
+#define SYSCALL_VIRTMEM_ALLOC               15
+#define SYSCALL_VIRTMEM_FREE                16
+
+/* Number of system calls */
+#define NR_SYSCALLS                         17
 
 
 #endif

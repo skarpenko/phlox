@@ -131,7 +131,6 @@ static void remove_process_from_list(process_t *process)
 /* common routine for creating processes */
 static process_t *create_process_common(const char *name, const char *args)
 {
-    status_t err;
     process_t *proc;
 
     /* allocate process structure */
@@ -141,11 +140,6 @@ static process_t *create_process_common(const char *name, const char *args)
 
     /* init allocated memory with zeroes */
     memset(proc, 0, sizeof(process_t));
-
-    /* init arch-dependend part */
-    err = arch_init_process_struct(&proc->arch);
-    if(err != NO_ERROR)
-        goto error;
 
     /* if process has name - copy it into structure field */
     if(name) {
@@ -273,6 +267,13 @@ proc_id proc_create_kernel_process(const char* name)
     proc->def_sched_policy.raw =
         process_roles_props[proc->process_role].def_sched_policy.raw;
 
+    /* init arch-dependend part */
+    if(arch_init_process_struct(proc) != NO_ERROR) {
+        vm_put_aspace(proc->aspace);
+        destroy_process_common(proc);
+        return INVALID_PROCESSID;
+    }
+
     /* store as global */
     kernel_process = proc;
 
@@ -315,6 +316,10 @@ process_t *proc_create_user_process(const char *name, process_t *parent,
     proc->def_sched_policy.raw =
         process_roles_props[proc->process_role].def_sched_policy.raw;
     atomic_set((atomic_t*)&proc->ref_count, 1); /* already has one ref owned by caller */
+
+    /* init arch-dependend part */
+    if(arch_init_process_struct(proc) != NO_ERROR)
+        goto error_exit;
 
     /* add to processes list */
     put_process_to_list(proc);

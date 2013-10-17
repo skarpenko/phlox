@@ -16,7 +16,6 @@ static int sem_test_signaling_thread_func(void *data)
     /* signal semaphore */
     semaphore_up(*psid, 1);
 
-    sys_thread_exit(0);
     return 0;
 }
 

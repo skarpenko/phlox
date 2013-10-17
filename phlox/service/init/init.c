@@ -29,7 +29,7 @@ int main(int argc, char **argv)
         klog_printf("Tests execution completed!\n");
     }
 
-    /* suspend execution */
+    /* suspend execution as process termination is not implemented yet */
     thread_suspend_current();
 
     while(1)

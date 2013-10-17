@@ -14,7 +14,6 @@ static int thread_test_creation_func(void *data)
 {
     int *p = (int*)data;
     *p = 1;
-    sys_thread_exit(0);
     return 0;
 }
 
@@ -55,7 +54,6 @@ static int thread_test_sem_sync_func0(void *data)
 
     ++(*test_data->counter);
 
-    sys_thread_exit(0);
     return 0;
 }
 
@@ -70,7 +68,6 @@ static int thread_test_sem_sync_func1(void *data)
 
     ++(*test_data->counter);
 
-    sys_thread_exit(0);
     return 0;
 }
 
@@ -85,7 +82,6 @@ static int thread_test_sem_sync_func2(void *data)
 
     ++(*test_data->counter);
 
-    sys_thread_exit(0);
     return 0;
 }
 

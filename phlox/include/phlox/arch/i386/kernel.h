@@ -23,7 +23,7 @@
 #define KERNEL_STACK_SIZE 2
 
 /* a macro to test if a pointer is inside kernel space */
-#define is_kernel_address(x)  (((addr_t)(x)) & KERNEL_ADDR_MASK)
+#define is_kernel_address(x) (((addr_t)(x)) >= KERNEL_BASE && ((addr_t)(x)) <= KERNEL_TOP)
 
 
 /*** User Memory Layout ***/

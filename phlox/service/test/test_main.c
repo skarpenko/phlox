@@ -113,7 +113,7 @@ int main(int argc, char **argv)
     /* report to init service */
     signal_completion();
 
-    /* suspend execution */
+    /* suspend execution as process termination is not implemented yet */
     thread_suspend_current();
 
     while(1)

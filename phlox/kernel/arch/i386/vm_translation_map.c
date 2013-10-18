@@ -178,7 +178,12 @@ static void destroy_tmap(vm_translation_map_t *tmap)
 /* acquire translation map access lock */
 static status_t lock_tmap(vm_translation_map_t *tmap)
 {
-#warning "lock_tmap must be reimplemented!"
+/** WARNING: interrupts should be disabled due to spinlock. **/
+/*
+ * TODO: locking mechanisms here should be reimplemented
+ *       using more advanced techniques.
+ */
+
     spin_lock(&tmap->lock);
     tmap->arch.num_invalidate_pages = 0;
 
@@ -188,7 +193,12 @@ static status_t lock_tmap(vm_translation_map_t *tmap)
 /* release translation map access lock */
 static status_t unlock_tmap(vm_translation_map_t *tmap)
 {
-#warning "unlock_tmap must be reimplemented!"
+/** WARNING: interrupts should be disabled due to spinlock. **/
+/*
+ * TODO: locking mechanisms here should be reimplemented
+ *       using more advanced techniques.
+ */
+
     flush_tmap(tmap);
     spin_unlock(&tmap->lock);
 

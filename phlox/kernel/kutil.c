@@ -20,6 +20,7 @@ static status_t uspace_copy(void *usr_addr, void *kern_addr, size_t n, int to_us
     vm_address_space_t *aspace;
     vm_mapping_t *mapping;
     addr_t addr;
+    unsigned long irqstate;
     status_t err;
 
     /* basic check of address range */
@@ -33,13 +34,12 @@ static status_t uspace_copy(void *usr_addr, void *kern_addr, size_t n, int to_us
         return ERR_VM_NO_USR_ASPACE;
 
     /* capture the cpu to avoid thread preemption */
-    sched_capture_cpu();
+/*    sched_capture_cpu(); */
 
     /* acquire lock before touching address space */
-    /*TODO: replace spinlock with different mechanism. it's really dangerous
-     * to use spinlocks this way.
+    /* TODO: replace spinlock with better mechanism.
      */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
 
     /* get user space mapping */
     err = vm_aspace_get_mapping(aspace, (addr_t)usr_addr, &mapping);
@@ -87,7 +87,7 @@ static status_t uspace_copy(void *usr_addr, void *kern_addr, size_t n, int to_us
     /* unlock before touching address space as it may cause page fault which
      * will deadlock the system.
      */
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* do actual data copy */
     if(to_usr)
@@ -99,16 +99,16 @@ static status_t uspace_copy(void *usr_addr, void *kern_addr, size_t n, int to_us
     vm_put_aspace(aspace);
 
     /* release cpu and allow preemption */
-    sched_release_cpu();
+/*    sched_release_cpu(); */
 
     return NO_ERROR;
 
 err_ret_aspace:
     /* return address space to kernel */
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
     vm_put_aspace(aspace);
     /* unlock scheduler and allow preemption */
-    sched_release_cpu();
+/*    sched_release_cpu(); */
 
     return err;
 }

@@ -77,6 +77,12 @@ bool is_kernel_start_stage(int stage);
 /* returns true if specified stage was completed */
 bool is_kernel_start_stage_compl(int stage);
 
+/* returns true if kernel init stages completed */
+static inline bool is_kernel_ready(void)
+{
+    return is_kernel_start_stage_compl(K_KERNEL_STARTUP);
+}
+
 /* copy data to user space */
 status_t cpy_to_uspace(void *usr_addr, const void *kern_addr, size_t n);
 

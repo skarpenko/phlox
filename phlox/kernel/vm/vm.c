@@ -6,6 +6,7 @@
 #include <sys/debug.h>
 #include <phlox/errors.h>
 #include <phlox/param.h>
+#include <phlox/processor.h> /* need for IRQs save/restore macro */
 #include <phlox/spinlock.h>
 #include <phlox/vm_private.h>
 #include <phlox/vm_page.h>
@@ -305,6 +306,7 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     vm_mapping_t *mapping;
     vm_upage_t *upage;
     vm_page_t *page;
+    unsigned long irqstate;
     status_t err;
 
     /* get faulted address space */
@@ -319,8 +321,10 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     /* increment address space faults counter */
     atomic_inc((atomic_t*)&aspace->faults_count);
 
+    /** TODO: spinlocks are temporary solution here. **/
+
     /* acquire lock before touching address space */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
 
     /* get faulted mapping */
     err = vm_aspace_get_mapping(aspace, addr, &mapping);
@@ -378,7 +382,7 @@ static status_t vm_soft_page_fault(addr_t addr, bool is_write, bool is_exec, boo
     aspace->tmap.ops->unlock(&aspace->tmap);
 
     /* .. and finally unlock address space */
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* return address space to the kernel */
     vm_put_aspace(aspace);
@@ -412,6 +416,7 @@ status_t vm_map_object_aligned(aspace_id aid, object_id oid, uint protection, ui
     vm_address_space_t *aspace;
     vm_object_t *object;
     vm_mapping_t *mapping;
+    unsigned long irqstate;
     status_t err;
 
     /* get address space */
@@ -434,12 +439,10 @@ status_t vm_map_object_aligned(aspace_id aid, object_id oid, uint protection, ui
     }
 
     /* acquire locks.
-     * WARNING: If interrupts disabled this can lead into deadlock!
-     *          Spinlocks must be replaced with semaphores or mutexes!
+     * TODO: spinlocks must be replaced with semaphores or mutexes!
      */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
     spin_lock(&object->lock);
-#warning "vm_map_object(): Dangerous spinlocks sequence!"
 
     /* create mapping */
     err = vm_aspace_create_mapping(aspace, object->size, npg_align, &mapping);
@@ -466,7 +469,7 @@ exit_map:
     /* release locks */
     if(object != NULL)
         spin_unlock(&object->lock);
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* put structures back */
     if(object != NULL)
@@ -483,6 +486,7 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
     vm_address_space_t *aspace;
     vm_object_t *object;
     vm_mapping_t *mapping;
+    unsigned long irqstate;
     status_t err;
 
     /* get address space */
@@ -505,12 +509,10 @@ status_t vm_map_object_exactly(aspace_id aid, object_id oid, uint protection, ad
     }
 
     /* acquire locks.
-     * WARNING: If interrupts disabled this can lead into deadlock!
-     *          Spinlocks must be replaced with semaphores or mutexes!
+     * TODO: spinlocks must be replaced with semaphores or mutexes!
      */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
     spin_lock(&object->lock);
-#warning "vm_map_object_exactly(): Dangerous spinlocks sequence!"
 
     /* create mapping */
     err = vm_aspace_create_mapping_exactly(aspace, vaddr, object->size, &mapping);
@@ -534,7 +536,7 @@ exit_map:
     /* release locks */
     if(object != NULL)
         spin_unlock(&object->lock);
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* put structures back */
     if(object != NULL)
@@ -549,6 +551,7 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
 {
     vm_address_space_t *aspace;
     vm_mapping_t *mapping;
+    unsigned long irqstate;
     status_t err;
 
     /* get address space */
@@ -557,7 +560,7 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
         return ERR_VM_INVALID_ASPACE;
 
     /* acquire lock */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
 
     /* get mapping at provided virtual address */
     err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
@@ -592,7 +595,7 @@ status_t vm_unmap_object(aspace_id aid, addr_t vaddr)
 
 exit_unmap:
     /* unlock address space */
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* ... and put it back */
     vm_put_aspace(aspace);
@@ -606,6 +609,7 @@ object_id vm_query_object(aspace_id aid, addr_t vaddr)
     vm_address_space_t *aspace;
     vm_mapping_t *mapping;
     object_id id = VM_INVALID_OBJECTID;
+    unsigned long irqstate;
     status_t err;
 
     /* get address space structure */
@@ -614,7 +618,7 @@ object_id vm_query_object(aspace_id aid, addr_t vaddr)
         return id;
 
     /* acquire lock */
-    spin_lock(&aspace->lock);
+    irqstate = spin_lock_irqsave(&aspace->lock);
 
     /* get mapping at provided virtual address */
     err = vm_aspace_get_mapping(aspace, vaddr, &mapping);
@@ -630,7 +634,7 @@ object_id vm_query_object(aspace_id aid, addr_t vaddr)
 
 exit_query:
     /* unlock address space */
-    spin_unlock(&aspace->lock);
+    spin_unlock_irqrstor(&aspace->lock, irqstate);
 
     /* return aspace to kernel */
     vm_put_aspace(aspace);
@@ -661,12 +665,19 @@ status_t vm_simulate_pf(addr_t start, addr_t end)
 status_t vm_query_paddr(vm_address_space_t *aspace, addr_t vaddr, addr_t *out_paddr, uint *out_flags)
 {
     status_t err;
+    unsigned long irqstate;
     uint flags = 0;
+
+    /* disable local interrupts */
+    local_irqs_save_and_disable(irqstate);
 
     /* query physical address information from given translation map */
     aspace->tmap.ops->lock(&aspace->tmap);
     err = aspace->tmap.ops->query(&aspace->tmap, vaddr, out_paddr, &flags);
     aspace->tmap.ops->unlock(&aspace->tmap);
+
+    /* restore interrupts */
+    local_irqs_restore(irqstate);
 
     /* return flags if requested */
     if(out_flags)

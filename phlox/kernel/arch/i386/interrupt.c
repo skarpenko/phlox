@@ -205,8 +205,10 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
     thread_t *th = NULL;
     bool resched_needed = resched_pending; resched_pending = false;
 
-    /* get current thread only if kernel startup stage completed */
-    if(is_kernel_start_stage_compl(K_KERNEL_STARTUP))
+    /* get current thread only if kernel startup stage completed,
+     * which means threading is up and running.
+     */
+    if(is_kernel_ready())
         th = thread_get_current_thread();
 
     /* if entering exception */

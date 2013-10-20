@@ -198,6 +198,31 @@ static void print_int_frame(i386_int_frame_t *frame)
     kprint("\n");
 }
 
+/* print stack backtrace */
+static void print_backtrace(uint32 *sp)
+{
+    int i;
+    uint32 *stack_end;
+
+    /* align pointer to 4 bytes */
+    sp = (uint32 *)((addr_t)sp & ~3);
+    /* kernel stack end */
+    stack_end = (uint32 *)(((addr_t)sp & ~(KERNEL_STACK_SIZE*PAGE_SIZE-1))
+            + KERNEL_STACK_SIZE*PAGE_SIZE);
+
+    kprint("Stack backtrace:");
+
+    for(i=0 ; i < 24; ++sp, ++i) {
+        if(i % 4 == 0)
+            kprint("\n    %08x:", (addr_t)sp);
+        if(sp < stack_end)
+            kprint("  %08x", *sp);
+        else
+            kprint("  xxxxxxxx");
+    }
+    kprint("\n");
+}
+
 /* main interrupt handling routine */
 void i386_handle_interrupt(i386_int_frame_t *frame); /* lets compiler be happy */
 void i386_handle_interrupt(i386_int_frame_t *frame)
@@ -219,15 +244,17 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
     switch(frame->vector) {
         /* Divide Error Exception */
         case 0:
-           kprint("\n\nDivide Error Exception\n");
+           kprint("\n\nDivide Error Exception (#DE)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Debug Exception */
         case 1:
-           kprint("\n\nDebug Exception\n");
+           kprint("\n\nDebug Exception (#DB)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
@@ -235,34 +262,39 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
         case 2:
            kprint("\n\nNonmaskable Interrupt\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Breakpoint Exception */
         case 3:
-           kprint("\n\nBreakpoint Exception\n");
+           kprint("\n\nBreakpoint Exception (#BP)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Overflow Exception */
         case 4:
-           kprint("\n\nOverflow Exception\n");
+           kprint("\n\nOverflow Exception (#OF)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* BOUND Range Exceeded Exception */
         case 5:
-           kprint("\n\nBOUND Range Exceeded Exception\n");
+           kprint("\n\nBOUND Range Exceeded Exception (#BR)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Invalid Opcode Exception */
         case 6:
-           kprint("\n\nInvalid Opcode Exception\n");
+           kprint("\n\nInvalid Opcode Exception (#UD)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
@@ -273,7 +305,7 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
         /* Double Fault Exception */
         case 8:
-           kprint("\n\nDouble Fault Exception\n");
+           kprint("\n\nDouble Fault Exception (#DF)\n");
            panic(":(");
             break;
 
@@ -281,34 +313,39 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
         case 9:
            kprint("\n\nCoprocessor Segment Overrun\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Invalid TSS Exception */
         case 10:
-           kprint("\n\nInvalid TSS Exception\n");
+           kprint("\n\nInvalid TSS Exception (#TS)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Segment Not Present */
         case 11:
-           kprint("\n\nSegment Not Present\n");
+           kprint("\n\nSegment Not Present (#NP)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Stack Fault Exception */
         case 12:
-           kprint("\n\nStack Fault Exception\n");
+           kprint("\n\nStack Fault Exception (#SS)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* General Protection Exception */
         case 13:
-           kprint("\n\nGeneral Protection Exception\n");
+           kprint("\n\nGeneral Protection Exception (#GP)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
@@ -327,29 +364,33 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
 
         /* x87 FPU Floating-Point Error */
         case 16:
-           kprint("\n\nx87 FPU Floating-Point Error\n");
+           kprint("\n\nx87 FPU Floating-Point Error (#MF)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Alignment Check Exception */
         case 17:
-           kprint("\n\nAlignment Check Exception\n");
+           kprint("\n\nAlignment Check Exception (#AC)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* Machine-Check Exception */
         case 18:
-           kprint("\n\nMachine-Check Exception\n");
+           kprint("\n\nMachine-Check Exception (#MC)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
         /* SIMD Floating-Point Exception */
         case 19:
-           kprint("\n\nSIMD Floating-Point Exception\n");
+           kprint("\n\nSIMD Floating-Point Exception (#XM)\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 
@@ -357,6 +398,7 @@ void i386_handle_interrupt(i386_int_frame_t *frame)
         case 0xffffffff:
            kprint("\n\nUnhandled interrupt vector\n");
            print_int_frame(frame);
+           print_backtrace(&frame->user_esp);
            panic(":(");
             break;
 

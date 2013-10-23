@@ -35,7 +35,7 @@ static int thread_func(void *data)
     return 0;
 }
 
-static struct thread_data test_data = {0};
+static struct thread_data test_data = { 0, 0 };
 
 int test2(void)
 {

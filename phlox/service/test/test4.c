@@ -9,7 +9,7 @@
 
 /***** Semaphore signaling test ***********************************************/
 
-static int sem_test_signaling_thread_func(void *data)
+static int thread_func(void *data)
 {
     sem_id *psid = (sem_id*)data;
 
@@ -19,7 +19,7 @@ static int sem_test_signaling_thread_func(void *data)
     return 0;
 }
 
-int sem_test_signaling(void)
+int test4(void)
 {
     thread_id tid;
     sem_id sid;
@@ -32,7 +32,7 @@ int sem_test_signaling(void)
         return 0;
 
     /* create thread */
-    tid = sys_create_thread(sem_test_signaling_thread_func, &sid, false, 0);
+    tid = sys_create_thread(thread_func, &sid, false, 0);
     if(tid == INVALID_THREADID)
         return 0;
 

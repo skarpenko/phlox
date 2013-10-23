@@ -5,12 +5,28 @@
 #ifndef _PHLOX_ERRORS_H
 #define _PHLOX_ERRORS_H
 
+
+/*
+* Error code format
+*
+* 31 30  28 27        24 23        20 19                0
+* -------------------------------------------------------
+* |E|      |   Kernel   |   Minor    |                  |
+* |R| Rsvd | Sub-system | Sub-system |    Error Code    |
+* |F|      |    Code    |   Code     |                  |
+* -------------------------------------------------------
+*
+* ERF  - error flag (error code is always negative number);
+* Rsvd - reserved bits.
+*/
+
+
 /* No error */
 #define NO_ERROR  0x00000000
 
 /* General errors */
 enum PhloxGeneralErrors {
-    ERR_GENERAL_BASE = 0x80000000,
+    ERR_GENERAL_BASE = (int)0x80000000,
     ERR_GENERAL = ERR_GENERAL_BASE,
     ERR_INVALID_ARGS,
     ERR_NO_MEMORY,
@@ -23,7 +39,7 @@ enum PhloxGeneralErrors {
 
 /* Virtual memory errors */
 enum PhloxVirtualMemoryErrors {
-    ERR_VM_GENERAL_BASE = 0x81000000,
+    ERR_VM_GENERAL_BASE = (int)0x81000000,
     ERR_VM_GENERAL = ERR_VM_GENERAL_BASE,
     ERR_VM_INVALID_ASPACE,
     ERR_VM_INVALID_OBJECT,
@@ -41,7 +57,7 @@ enum PhloxVirtualMemoryErrors {
 
 /* Multithreading errors */
 enum PhloxMultithreadingErrors {
-    ERR_MT_GENERAL_BASE = 0x82000000,
+    ERR_MT_GENERAL_BASE = (int)0x82000000,
     ERR_MT_GENERAL = ERR_MT_GENERAL_BASE,
     ERR_MT_INVALID_HANDLE,
     ERR_MT_INVALID_STATE,
@@ -50,7 +66,7 @@ enum PhloxMultithreadingErrors {
 
 /* Semaphores errors */
 enum PhloxSemaphoresErrors {
-    ERR_SEM_GENERAL_BASE = 0x83000000,
+    ERR_SEM_GENERAL_BASE = (int)0x83000000,
     ERR_SEM_GENERAL = ERR_SEM_GENERAL_BASE,
     ERR_SEM_INVALID_HANDLE,
     ERR_SEM_INVALID_VALUE,
@@ -62,7 +78,7 @@ enum PhloxSemaphoresErrors {
 
 /* Mutexes errors */
 enum PhloxMutexesErrors {
-    ERR_MTX_GENERAL_BASE = 0x83100000,
+    ERR_MTX_GENERAL_BASE = (int)0x83100000,
     ERR_MTX_GENERAL = ERR_MTX_GENERAL_BASE,
     ERR_MTX_INVALID_MUTEX,
     ERR_MTX_SEM_FAILURE,
@@ -73,7 +89,7 @@ enum PhloxMutexesErrors {
 
 /* System calls errors */
 enum SystemCallsErrors {
-    ERR_SCL_GENERAL_BASE = 0x84000000,
+    ERR_SCL_GENERAL_BASE = (int)0x84000000,
     ERR_SCL_GENERAL = ERR_SCL_GENERAL_BASE,
     ERR_SCL_INVALID,
     ERR_SCL_NOT_IMPLEMENTED,
@@ -82,7 +98,7 @@ enum SystemCallsErrors {
 
 /* Binary image loader errors */
 enum ImageLoaderErrors {
-    ERR_ILD_GENERAL_BASE = 0x85000000,
+    ERR_ILD_GENERAL_BASE = (int)0x85000000,
     ERR_ILD_GENERAL = ERR_ILD_GENERAL_BASE,
     ERR_ILD_INVALID_IMAGE,
     ERR_ILD_OPEN_FAILURE,

@@ -1,0 +1,13 @@
+TODO list
+=========
+
+HIGH PRIORITY:
+* User process termination (normal condition or exception)
+
+MEDIUM PRIORITY:
+* Add flags to vm_object and vm_mapping which will help to limit access of user app to such objects.
+  For example, unmap of particular objects can be done only by kernel, as well as discovery and
+  mapping of objects. User application must not touch kernel VM objects.
+
+LOW PRIORITY:
+*

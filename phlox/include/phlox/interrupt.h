@@ -1,5 +1,5 @@
 /*
-* Copyright 2007-2009, Stepan V.Karpenko. All rights reserved.
+* Copyright 2007-2013, Stepan V.Karpenko. All rights reserved.
 * Distributed under the terms of the PhloxOS License.
 */
 #ifndef _PHLOX_INTERRUPT_H_
@@ -31,7 +31,7 @@ status_t interrupt_init(kernel_args_t *kargs);
  * hardware interrupt occurs.
  * (returns flags collected from handlers)
  */
-result_t handle_hw_interrupt(uint hw_vector);
+flags_t handle_hw_interrupt(uint hw_vector);
 
 /*
  * Enable hardware interrupt

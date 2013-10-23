@@ -1,10 +1,14 @@
 $(call def-target-vars,TEST_MAIN,test_main.elf)
 
-TEST_MAIN_SRC +=                 \
-	$(LOCDIR)/test_main.c    \
-	$(LOCDIR)/thread_tests.c \
-	$(LOCDIR)/sem_tests.c    \
-	$(LOCDIR)/mem_tests.c
+TEST_MAIN_SRC +=               \
+	$(LOCDIR)/test_main.c  \
+	$(LOCDIR)/test0.c      \
+	$(LOCDIR)/test1.c      \
+	$(LOCDIR)/test2.c      \
+	$(LOCDIR)/test3.c      \
+	$(LOCDIR)/test4.c      \
+	$(LOCDIR)/test5.c      \
+	$(LOCDIR)/test6.c
 
 TEST_MAIN_DEP = $(LIBPHLOX) $(LIBSTRING)
 

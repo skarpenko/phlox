@@ -18,45 +18,45 @@ struct test_spec {
 /* Tests table */
 struct test_spec tests_table[] = {
     {
-        .name   = "Thread creation                      ",
+        .name   = TEST0_NAME,
         .skip   = 0,
-        .func   = thread_test_creation,
+        .func   = test0,
         .result = 0
     },
     {
-        .name   = "Semaphore signaling                  ",
+        .name   = TEST1_NAME,
         .skip   = 0,
-        .func   = sem_test_signaling,
+        .func   = test1,
         .result = 0
     },
     {
-        .name   = "Virtual memory allocation            ",
+        .name   = TEST2_NAME,
         .skip   = 0,
-        .func   = mem_test_virtmem_alloc,
+        .func   = test2,
         .result = 0
     },
     {
-        .name   = "Synchronizing threads with semaphore ",
+        .name   = TEST3_NAME,
         .skip   = 0,
-        .func   = thread_test_sem_sync,
+        .func   = test3,
         .result = 0
     },
     {
-        .name   = "Thread suspend and resume            ",
+        .name   = TEST4_NAME,
         .skip   = 0,
-        .func   = thread_test_suspend_resume,
+        .func   = test4,
         .result = 0
     },
     {
-        .name   = "Threads creation stress test         ",
-        .skip   = 1,
-        .func   = thread_test_creation_stress,
+        .name   = TEST5_NAME,
+        .skip   = 0,
+        .func   = test5,
         .result = 0
     },
     {
-        .name   = "Virtual memory allocation stress test",
+        .name   = TEST6_NAME,
         .skip   = 0,
-        .func   = mem_test_virtmem_alloc_stress,
+        .func   = test6,
         .result = 0
     },
 };
@@ -66,8 +66,12 @@ const int nr_tests = sizeof(tests_table) / sizeof(tests_table[0]);
 static void run_tests()
 {
     int i;
+    char test_name[40];
     for(i = 0; i < nr_tests; ++i) {
-        klog_printf("%d. %s ... ", i, tests_table[i].name);
+        /* test number and name */
+        snprintf(test_name, sizeof(test_name), "%s", tests_table[i].name);
+        klog_printf("%d. %-40s ... ", i, test_name);
+
         /* ignore tests marked to skip */
         if(tests_table[i].skip) {
             klog_printf("SKIPPED     (%d of %d)\n", i+1, nr_tests);
